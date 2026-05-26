@@ -1427,18 +1427,18 @@ function loadEditAndClose(id) {
   }
 }
 
-function viewFromVP(id) {
+function editFromVP(id) {
   for (var i = 0; i < DB.length; i++) {
     if (String(DB[i].id) === String(id)) {
-      cur = i; curId = id; fSet(DB[i]); setMode("view");
+      cur = i; curId = id; fSet(DB[i]); setMode("edit");
       document.getElementById("navId").value = i + 1;
       closeVP(); closeLP();
       window.scrollTo({top: 0, behavior: "smooth"});
+      showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।", "info");
       return;
     }
   }
 }
-
 function delFromVP(id) {
   if (!confirm("ID: " + id + " \u2014 \u099f\u09cd\u09b0\u09cd\u09af\u09be\u09b6\u09c7 \u09aa\u09be\u09a0\u09be\u09ac\u09c7\u09a8?")) return;
   for (var i = 0; i < DB.length; i++) {
