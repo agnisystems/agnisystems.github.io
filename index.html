@@ -1372,7 +1372,8 @@ function openVP(id, mode) {
   if (mode === "pending" && isA) {
     foot.innerHTML += '<button class="pbtn green" onclick="approveP(\'' + (rec.pendingId||id) + '\')">&#10004; Approve</button>';
     foot.innerHTML += '<button class="pbtn red"   onclick="rejectP(\''  + (rec.pendingId||id) + '\')">✕ Reject</button>';
-  } else if (mode === "list" && isA) {
+} else if (mode === "list" && isA) {
+    foot.innerHTML += '<button class="pbtn green" onclick="viewFromVP(\'' + id + '\')">&#128065; View</button>';
     foot.innerHTML += '<button class="pbtn blue" onclick="editFromVP(\'' + id + '\')">&#9999; Edit</button>';
     foot.innerHTML += '<button class="pbtn red"  onclick="delFromVP(\''  + id + '\')">&#128465; Delete</button>';
   } else if (mode === "list" && !isA) {
@@ -1426,13 +1427,13 @@ function loadEditAndClose(id) {
   }
 }
 
-function editFromVP(id) {
+function viewFromVP(id) {
   for (var i = 0; i < DB.length; i++) {
     if (String(DB[i].id) === String(id)) {
       cur = i; curId = id; fSet(DB[i]); setMode("view");
       document.getElementById("navId").value = i + 1;
       closeVP(); closeLP();
-      showPop("\u270f\ufe0f \u09aa\u09b0\u09bf\u09ac\u09b0\u09cd\u09a4\u09a8 \u0995\u09b0\u09c7 Save \u0995\u09b0\u09c1\u09a8\u0964", "info");
+      window.scrollTo({top: 0, behavior: "smooth"});
       return;
     }
   }
