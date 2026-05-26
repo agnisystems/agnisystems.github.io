@@ -3,24 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  	<script type="text/JavaScript">
-			// Courtesy OF MD ARAFAT
-			function killCopy(e){
-			return false
-			}
-			function reEnable(){
-			return true
-			}
-			document.onselectstart=new Function ("return false")
-			if (window.sidebar){
-			document.onmousedown=killCopy
-			document.onclick=reEnable
-			}
-	</script>
+
 <title>Agni Systems Limited</title>
   <link rel="shortcut icon" type="image/x-icon" href="logo.png">
-  <!-- Jquery Needed for F12 -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1973,45 +1959,6 @@ window.addEventListener("load", function() {
 
 
 
-  <script>
-  // Disable Right Click
-  window.oncontextmenu = () => false;
 
-  // Function to block certain keys
-  function blockKeys(e) {
-    // F12
-    if (e.key === "F12") {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      return false;
-    }
-
-    // Ctrl + S
-    if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      return false;
-    }
-
-    // Ctrl + U
-    if (e.ctrlKey && (e.key === "u" || e.key === "U")) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      return false;
-    }
-
-    // Ctrl + Shift + I / J
-    if (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J")) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      return false;
-    }
-  }
-
-  // Attach listeners
-  ["keydown", "keypress", "keyup"].forEach(evt => {
-    document.addEventListener(evt, blockKeys, true); // capture phase
-  });
-</script>
 </body>
 </html>
