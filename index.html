@@ -1426,6 +1426,20 @@ function loadEditAndClose(id) {
     }
   }
 }
+function viewFromVP(id) {
+  for (var i = 0; i < DB.length; i++) {
+    if (String(DB[i].id) === String(id)) {
+      cur = i; curId = id;
+      fSet(DB[i]);
+      setMode("view");
+      document.getElementById("navId").value = i + 1;
+      closeVP(); closeLP();
+      window.scrollTo({top: 0, behavior: "smooth"});
+      return;
+    }
+  }
+  showPop("রেকর্ড পাওয়া যায়নি।", "error");
+}   
 
 function editFromVP(id) {
   for (var i = 0; i < DB.length; i++) {
