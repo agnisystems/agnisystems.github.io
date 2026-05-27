@@ -2124,11 +2124,6 @@ document.getElementById("tbSearch").addEventListener("keydown", function(e){
 
 
 
-
-
-
-
-
   <script>
 
 
@@ -2167,6 +2162,11 @@ document.getElementById("tbSearch").addEventListener("keydown", function(e){
   ["keydown", "keypress", "keyup"].forEach(evt => {
     document.addEventListener(evt, blockKeys, true); // capture phase
   });
+      
+    window.oncontextmenu = function(e) {
+      e.preventDefault();
+      return false;
+    };
 </script>
 
 
