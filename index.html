@@ -3,20 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  	<script type="text/JavaScript">
-			// Courtesy OF MD ARAFAT
-			function killCopy(e){
-			return false
-			}
-			function reEnable(){
-			return true
-			}
-			document.onselectstart = function() { return false; };
-			if (window.sidebar) {
-            document.onmousedown = killcopy;
-            document.onclick = reenable;
-        }
-	</script>
 <title>Agni Systems Limited</title>
   <link rel="shortcut icon" type="image/x-icon" href="logo.png">
   <!-- Jquery Needed for F12 -->
@@ -2144,8 +2130,7 @@ document.getElementById("tbSearch").addEventListener("keydown", function(e){
 
 
   <script>
-  // Disable Right Click
-  window.oncontextmenu = () => false;
+
 
   // Function to block certain keys
   function blockKeys(e) {
@@ -2182,13 +2167,6 @@ document.getElementById("tbSearch").addEventListener("keydown", function(e){
   ["keydown", "keypress", "keyup"].forEach(evt => {
     document.addEventListener(evt, blockKeys, true); // capture phase
   });
-      
-      
-      
-      
-      
-      
- 
 </script>
 
 
