@@ -1836,16 +1836,24 @@ function createUser() {
 }
 
 function delUser(u) {
-  if (u === CODER_ID) { showPop("\u26a1 Coder \u09b8\u09c1\u09b0\u0995\u09cd\u09b7\u09bf\u09a4\u0964 \u0995\u09c7\u0989 \u09ae\u09c1\u099b\u09a4\u09c7 \u09aa\u09be\u09b0\u09ac\u09c7 \u09a8\u09be\u0964", "error"); return; }
-  if (u === currentUser.username) { showPop("\u09a8\u09bf\u099c\u09c7\u0995\u09c7 \u09ae\u09c1\u099b\u09a4\u09c7 \u09aa\u09be\u09b0\u09ac\u09c7\u09a8 \u09a8\u09be\u0964", "error"); return; }
-  if (!confirm("User '" + u + "' \u09ae\u09c1\u099b\u09ac\u09c7\u09a8?")) return;
-var users = getUsers();
+  if (u === CODER_ID) { showPop("⚡ Coder সুরক্ষিত। কেউ মুছতে পারবে না।", "error"); return; }
+  if (u === currentUser.username) { showPop("নিজেকে মুছতে পারবেন না।", "error"); return; }
+  if (!confirm("User '" + u + "' মুছবেন?")) return;
+  var users = getUsers();
   delete users[u];
-saveUsers(users, function(ok) {
-    renderUsers();
-    showPop("🗑 User '" + u + "' মুছা হয়েছে।", "info");
-  });
-}  // delUser শেষ
+  // Cache আপডেট করো আগে
+  _cachedUsers = JSON.parse(JSON.stringify(users));
+  // Firebase থেকে document সরাসরি delete করো
+  fsdb.collection("appusers").doc(u).delete()
+    .then(function() {
+      renderUsers();
+      showPop("🗑 User '" + u + "' মুছা হয়েছে।", "info");
+    })
+    .catch(function(e) {
+      console.error(e);
+      showPop("Firebase delete ব্যর্থ!", "error");
+    });
+}
 
 var _editingUser = null;
 
