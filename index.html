@@ -2044,6 +2044,59 @@ window.addEventListener("load", function() {
 
   }); // loadUsersFromFirebase callback শেষ
 }); // window load শেষ
+
+function doTopSearch(q) {
+  q = (q || "").trim().toLowerCase();
+  if (!q) return;
+  var doSearch = function() {
+    var filtered = [];
+    for (var i = 0; i < DB.length; i++) {
+      var c = DB[i];
+      if ((c.id     && c.id.toLowerCase().indexOf(q)     >= 0) ||
+          (c.name   && c.name.toLowerCase().indexOf(q)   >= 0) ||
+          (c.mobile && c.mobile.toLowerCase().indexOf(q) >= 0)) {
+        filtered.push(c);
+      }
+    }
+    if (!filtered.length) {
+      showPop("কোনো ফলাফল পাওয়া যায়নি।", "warning");
+      document.getElementById("tbSearch").value = "";
+      return;
+    }
+    if (filtered.length === 1) {
+      cur = 0;
+      for (var i = 0; i < DB.length; i++) {
+        if (String(DB[i].id) === String(filtered[0].id)) { cur = i; break; }
+      }
+      curId = filtered[0].id;
+      fSet(filtered[0]);
+      pageMode = "view";
+      document.body.className = "md-view user-view";
+      document.getElementById("modeInd").textContent = "👁 ভিউ";
+      document.getElementById("modeInd").style.background = "#fef3c7";
+      document.getElementById("modeInd").style.color = "#92400e";
+      ["bLock","bPend","bReq","bOk"].forEach(function(b){ document.getElementById(b).classList.remove("show"); });
+      document.getElementById("btnSave").style.display = "none";
+      document.getElementById("btnReq").style.display = "none";
+      document.getElementById("btnLoadEdit").style.display = "none";
+      document.getElementById("navId").value = cur + 1;
+      document.getElementById("tbSearch").value = "";
+      window.scrollTo({top:0, behavior:"smooth"});
+      return;
+    }
+    _lm = "list"; _la = filtered;
+    document.getElementById("lpTtl").textContent = "🔍 ফলাফল — " + filtered.length + " টি";
+    document.getElementById("lpBody").innerHTML = buildList(filtered, "list");
+    document.getElementById("lsIn").value = q;
+    document.getElementById("lpBg").classList.add("on");
+    document.getElementById("tbSearch").value = "";
+  };
+  if (DB.length > 0) { doSearch(); } else { cloudSync(function(){ doSearch(); }); }
+}
+
+document.getElementById("tbSearch").addEventListener("keydown", function(e){
+  if (e.key === "Enter") doTopSearch(this.value);
+});
 </script>
 
 <!-- Edit User Popup -->
@@ -2135,59 +2188,7 @@ window.addEventListener("load", function() {
       
       
       
-function doTopSearch(q) {
-  q = (q || "").trim().toLowerCase();
-  if (!q) return;
-  var doSearch = function() {
-    var filtered = [];
-    for (var i = 0; i < DB.length; i++) {
-      var c = DB[i];
-      if ((c.id     && c.id.toLowerCase().indexOf(q)     >= 0) ||
-          (c.name   && c.name.toLowerCase().indexOf(q)   >= 0) ||
-          (c.mobile && c.mobile.toLowerCase().indexOf(q) >= 0)) {
-        filtered.push(c);
-      }
-    }
-    if (!filtered.length) {
-      showPop("কোনো ফলাফল পাওয়া যায়নি।", "warning");
-      document.getElementById("tbSearch").value = "";
-      return;
-    }
-    if (filtered.length === 1) {
-      cur = 0;
-      for (var i = 0; i < DB.length; i++) {
-        if (String(DB[i].id) === String(filtered[0].id)) { cur = i; break; }
-      }
-      curId = filtered[0].id;
-      fSet(filtered[0]);
-      pageMode = "view";
-      document.body.className = "md-view user-view";
-      document.getElementById("modeInd").textContent = "👁 ভিউ";
-      document.getElementById("modeInd").style.background = "#fef3c7";
-      document.getElementById("modeInd").style.color = "#92400e";
-      ["bLock","bPend","bReq","bOk"].forEach(function(b){ document.getElementById(b).classList.remove("show"); });
-      document.getElementById("btnSave").style.display = "none";
-      document.getElementById("btnReq").style.display = "none";
-      document.getElementById("btnLoadEdit").style.display = "none";
-      document.getElementById("navId").value = cur + 1;
-      document.getElementById("tbSearch").value = "";
-      window.scrollTo({top:0, behavior:"smooth"});
-      return;
-    }
-    _lm = "list"; _la = filtered;
-    document.getElementById("lpTtl").textContent = "🔍 ফলাফল — " + filtered.length + " টি";
-    document.getElementById("lpBody").innerHTML = buildList(filtered, "list");
-    document.getElementById("lsIn").value = q;
-    document.getElementById("lpBg").classList.add("on");
-    document.getElementById("tbSearch").value = "";
-  };
-  if (DB.length > 0) { doSearch(); } else { cloudSync(function(){ doSearch(); }); }
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-  var ts = document.getElementById("tbSearch");
-  if (ts) ts.addEventListener("keydown", function(e){ if(e.key==="Enter") doTopSearch(this.value); });
-});   
+ 
 </script>
 
 
