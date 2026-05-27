@@ -11,11 +11,11 @@
 			function reEnable(){
 			return true
 			}
-			document.onselectstart=new Function ("return false")
-			if (window.sidebar){
-			document.onmousedown=killCopy
-			document.onclick=reEnable
-			}
+			document.onselectstart = function() { return false; };
+			if (window.sidebar) {
+            document.onmousedown = killcopy;
+            document.onclick = reenable;
+        }
 	</script>
 <title>Agni Systems Limited</title>
   <link rel="shortcut icon" type="image/x-icon" href="logo.png">
