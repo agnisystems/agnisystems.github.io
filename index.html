@@ -286,11 +286,25 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
 
 <div id="appWrap">
   <div id="topbar">
+   
     <div class="tb-nav">
       <button onclick="prevRec()">◀</button>
       <input type="text" id="navId" placeholder="#"/>
       <button onclick="nextRec()">▶</button>
     </div>
+      
+      
+       <div class="tb-space"></div>
+        <div style="position:relative;flex-shrink:0;">
+          <input type="text" id="tbSearch" placeholder="🔍 ID / নাম / মোবাইল..." 
+            style="padding:5px 12px 5px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:12px;width:200px;outline:none;font-family:'Hind Siliguri',sans-serif;"
+            oninput="doTopSearch(this.value)"
+            onfocus="this.style.borderColor='var(--pri)'"
+            onblur="this.style.borderColor='rgba(255,255,255,.15)'"/>
+          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.4;pointer-events:none">🔍</span>
+        </div>
+   
+    
     <div class="tb-sep"></div>
     <button class="tb-btn ghost" onclick="showList()">📃 List</button>
     <button class="tb-btn ghost" id="tbPend" style="display:none" onclick="showPending()">⌛ Pending <span id="tbPN" style="background:rgba(255,255,255,.18);padding:1px 5px;border-radius:7px;font-size:10px;margin-left:2px">0</span></button>
