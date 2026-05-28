@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Agni Systems Limited</title>
+  <link rel="shortcut icon" type="image/x-icon" href="logo.png">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --pri:#16a34a; --pri2:#15803d;
+  --nav:#0f172a; --nav2:#1e293b;
+  --acc:#f59e0b; --red:#dc2626; --blue:#2563eb;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Hind Siliguri",sans-serif;background:#f1f5f9;color:#1e293b;transition:background .3s;}
+body.md-view.user-view .a4-page input{pointer-events:none;}
+
+/* ═══════════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════════ */
+#loginScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--nav);
+  display:flex;justify-content:center;align-items:center;
+  overflow:hidden;transition:background .4s;
+}
+#loginScreen::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px);
+  background-size:40px 40px;
+  animation:gridMove 20s linear infinite;
+  pointer-events:none;transition:background-image .4s;
+}
+#loginScreen::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,transparent 30%,rgba(0,0,0,.65) 100%);
+  pointer-events:none;transition:background .4s;
+}
+@keyframes gridMove{0%{background-position:0 0}100%{background-position:40px 40px}}
+
+.lg-orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.38;animation:orbFloat 8s ease-in-out infinite alternate;}
+.lg-orb1{width:420px;height:420px;top:-80px;right:-80px;background:var(--pri);}
+.lg-orb2{width:300px;height:300px;bottom:-60px;left:-60px;background:var(--blue);animation-delay:-4s;}
+@keyframes orbFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(30px,30px) scale(1.12)}}
+
+.lg-card{
+  position:relative;z-index:2;
+  background:rgba(255,255,255,.07);backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.14);border-radius:22px;
+  padding:36px 34px 30px;width:420px;max-width:95vw;
+  box-shadow:0 32px 80px rgba(0,0,0,.5);
+  transition:background .3s,border .3s,box-shadow .3s;
+}
+.lg-brand{text-align:center;margin-bottom:24px;}
+.lg-logo{width:64px;height:64px;margin:0 auto 12px;background:linear-gradient(135deg,var(--pri),var(--pri2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 24px rgba(22,163,74,.4);}
+.lg-brand h1{font-size:18px;font-weight:700;color:#fff;transition:color .3s;}
+.lg-brand p{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;transition:color .3s;}
+
+.lg-field{margin-bottom:14px;}
+.lg-field label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;transition:color .3s;}
+.lg-wrap{position:relative;}
+.lg-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.4;pointer-events:none;}
+.lg-input{display:block;width:100%;padding:12px 14px 12px 40px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:14px;color:#fff;outline:none;font-family:"Hind Siliguri",sans-serif;transition:border .2s,background .3s,color .3s;}
+.lg-input:focus{border-color:var(--pri);}
+.lg-input::placeholder{color:rgba(255,255,255,.3);transition:color .3s;}
+.lg-remember{display:flex;align-items:center;gap:8px;margin:-4px 0 16px;cursor:pointer;}
+.lg-remember input{width:15px;height:15px;accent-color:var(--pri);}
+.lg-remember span{font-size:13px;color:rgba(255,255,255,.45);transition:color .3s;}
+.lg-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:"Hind Siliguri",sans-serif;transition:all .2s;}
+.lg-btn:hover{transform:translateY(-1px);}
+.lg-err{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);color:#fca5a5;font-size:13px;padding:10px 14px;border-radius:8px;margin-top:14px;display:none;text-align:center;}
+.lg-foot{text-align:center;margin-top:16px;font-size:11px;color:rgba(255,255,255,.2);transition:color .3s;}
+.lg-foot a{color:rgba(255,255,255,.35);transition:color .3s;}
+
+/* ── LOGIN LIGHT MODE ── */
+body.lg-light #loginScreen{
+  background:#e8eef6;
+}
+body.lg-light #loginScreen::before{
+  background-image:
+    linear-gradient(rgba(0,0,0,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,0,0,.06) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+body.lg-light #loginScreen::after{
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,transparent 30%,rgba(0,0,0,.08) 100%);
+}
+body.lg-light .lg-orb{opacity:.12;}
+body.lg-light .lg-orb1{background:var(--pri);}
+body.lg-light .lg-orb2{background:#60a5fa;}
+body.lg-light .lg-card{
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(0,0,0,.1);
+  box-shadow:0 20px 60px rgba(0,0,0,.12);
+}
+body.lg-light .lg-brand h1{color:#1e293b;}
+body.lg-light .lg-brand p{color:#64748b;}
+body.lg-light .lg-field label{color:#64748b;}
+body.lg-light .lg-input{
+  background:rgba(0,0,0,.05);
+  border:1.5px solid rgba(0,0,0,.15);
+  color:#1e293b;
+}
+body.lg-light .lg-input::placeholder{color:#94a3b8;}
+body.lg-light .lg-remember span{color:#64748b;}
+body.lg-light .lg-foot{color:#94a3b8;}
+body.lg-light .lg-foot a{color:#475569;}
+
+/* ═══════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════ */
+#sidebar{
+  display:none;position:fixed;left:0;top:0;bottom:0;width:218px;
+  background:var(--nav);border-right:1px solid rgba(255,255,255,.07);
+  z-index:200;flex-direction:column;box-shadow:3px 0 20px rgba(0,0,0,.25);
+  transition:background .3s,border-color .3s;
+}
+.sb-brand{padding:14px 13px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:9px;transition:border-color .3s;}
+.sb-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.sb-brand-txt{color:#fff;font-weight:700;font-size:12px;line-height:1.3;transition:color .3s;}
+.sb-brand-sub{font-size:10px;color:rgba(255,255,255,.3);font-weight:400;transition:color .3s;}
+.sb-user{padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);transition:border-color .3s,background .3s;}
+.sb-uname{font-size:12px;font-weight:700;color:#fff;transition:color .3s;}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.35);margin-top:1px;transition:color .3s;}
+.sb-ubadge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;margin-top:3px;}
+.sb-ubadge.admin{background:rgba(245,158,11,.2);color:#f59e0b;border:1px solid rgba(245,158,11,.3);}
+.sb-ubadge.user{background:rgba(255,255,255,.08);color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.12);}
+.sb-ubadge.coder{background:rgba(99,102,241,.2);color:#818cf8;border:1px solid rgba(99,102,241,.3);}
+.sb-sec{padding:9px 13px 3px;font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;transition:color .3s;}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 13px;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:all .15s;position:relative;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:var(--pri);}
+.sb-item.new-item{color:var(--pri);font-weight:700;}
+.sb-item.new-item:hover{background:rgba(22,163,74,.08);}
+.sb-ico{font-size:14px;width:18px;text-align:center;}
+.sb-badge{margin-left:auto;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;min-width:17px;text-align:center;}
+.sb-badge.green{background:var(--pri);color:#fff;}
+.sb-badge.red{background:var(--red);color:#fff;}
+.sb-badge.gold{background:var(--acc);color:#000;}
+.sb-div{height:1px;background:rgba(255,255,255,.06);margin:5px 0;transition:background .3s;}
+
+.sb-themes{padding:9px 13px;}
+.sb-themes p{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;transition:color .3s;}
+.sb-tm-row{display:flex;gap:5px;margin-bottom:7px;}
+.sb-tm-btn{
+  flex:1;padding:6px 4px;border:1px solid rgba(255,255,255,.12);
+  border-radius:7px;background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.55);font-size:11px;font-weight:700;
+  cursor:pointer;font-family:"Hind Siliguri",sans-serif;transition:all .2s;text-align:center;
+}
+.sb-tm-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+.sb-tm-btn.active{border-color:var(--pri);background:rgba(22,163,74,.18);color:#fff;}
+.sb-hex-row{display:flex;gap:5px;align-items:center;}
+.sb-hex-in{
+  flex:1;min-width:0;padding:5px 7px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  border-radius:7px;font-size:11px;color:#fff;outline:none;
+  font-family:"JetBrains Mono",monospace;transition:border .2s,background .3s,color .3s;
+}
+.sb-hex-in:focus{border-color:var(--pri);}
+.sb-hex-prev{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.15);flex-shrink:0;}
+.sb-hex-go{padding:5px 8px;background:var(--pri);border:none;border-radius:7px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:"Hind Siliguri",sans-serif;white-space:nowrap;}
+
+.sb-logout{margin-top:auto;border-top:1px solid rgba(255,255,255,.07);padding:11px 13px;transition:border-color .3s;}
+.sb-logout button{
+  width:100%;padding:9px 8px;
+  background:linear-gradient(135deg,rgba(220,38,38,.55),rgba(185,28,28,.65));
+  border:1px solid rgba(220,38,38,.35);border-radius:9px;color:#fff;
+  font-size:12px;font-weight:700;cursor:pointer;font-family:"Hind Siliguri",sans-serif;
+  transition:all .25s;letter-spacing:.3px;
+  box-shadow:0 2px 8px rgba(220,38,38,.15),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.sb-logout button:hover{
+  background:linear-gradient(135deg,rgba(220,38,38,.18),rgba(185,28,28,.22));
+  color:#fff;border-color:rgba(220,38,38,.7);
+  box-shadow:0 4px 16px rgba(220,38,38,.35),inset 0 1px 0 rgba(255,255,255,.1);
+  transform:translateY(-1px);
+}
+
+/* ── SIDEBAR LIGHT MODE ── */
+body.lg-light #sidebar{
+  background:#f1f5f9;
+  border-right-color:#e2e8f0;
+  box-shadow:3px 0 20px rgba(0,0,0,.08);
+}
+body.lg-light .sb-brand{border-bottom-color:#e2e8f0;}
+body.lg-light .sb-brand-txt{color:#1e293b;}
+body.lg-light .sb-brand-sub{color:#64748b;}
+body.lg-light .sb-user{border-bottom-color:#e2e8f0;background:rgba(0,0,0,.02);}
+body.lg-light .sb-uname{color:#1e293b;}
+body.lg-light .sb-urole{color:#64748b;}
+body.lg-light .sb-ubadge.user{background:rgba(0,0,0,.06);color:#475569;border-color:rgba(0,0,0,.12);}
+body.lg-light .sb-sec{color:#94a3b8;}
+body.lg-light .sb-item{color:#475569;}
+body.lg-light .sb-item:hover{background:rgba(0,0,0,.05);color:#1e293b;}
+body.lg-light .sb-item.active{background:rgba(0,0,0,.07);color:#1e293b;border-left-color:var(--pri);}
+body.lg-light .sb-item.new-item{color:var(--pri);}
+body.lg-light .sb-item.new-item:hover{background:rgba(22,163,74,.07);}
+body.lg-light .sb-div{background:#e2e8f0;}
+body.lg-light .sb-themes p{color:#94a3b8;}
+body.lg-light .sb-tm-btn{
+  border-color:rgba(0,0,0,.12);
+  background:rgba(0,0,0,.04);
+  color:rgba(0,0,0,.5);
+}
+body.lg-light .sb-tm-btn:hover{background:rgba(0,0,0,.09);color:#1e293b;}
+body.lg-light .sb-tm-btn.active{border-color:var(--pri);background:rgba(22,163,74,.1);color:#1e293b;}
+body.lg-light .sb-hex-in{
+  background:rgba(0,0,0,.04);
+  border-color:rgba(0,0,0,.12);
+  color:#1e293b;
+}
+body.lg-light .sb-hex-prev{border-color:rgba(0,0,0,.15);}
+body.lg-light .sb-logout{border-top-color:#e2e8f0;}
+body.lg-light .sb-logout button{
+  background:rgba(220,38,38,.07);
+  border-color:rgba(220,38,38,.25);
+  color:#dc2626;
+  box-shadow:none;
+}
+body.lg-light .sb-logout button:hover{
+  background:rgba(220,38,38,.13);
+  border-color:rgba(220,38,38,.45);
+}
+
+/* ═══════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════ */
+#appWrap{display:none;margin-left:218px;}
+#topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--nav2);border-bottom:1px solid rgba(255,255,255,.07);
+  box-shadow:0 2px 14px rgba(0,0,0,.28);
+  padding:0 14px;height:46px;display:flex;align-items:center;gap:7px;
+  overflow-x:auto;transition:background .3s,border-color .3s,box-shadow .3s;
+}
+#topbar::-webkit-scrollbar{height:2px;}
+.tb-nav{display:inline-flex;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;overflow:hidden;flex-shrink:0;transition:background .3s,border-color .3s;}
+.tb-nav button{background:transparent;border:none;color:rgba(255,255,255,.55);padding:5px 9px;cursor:pointer;font-size:12px;transition:.15s;}
+.tb-nav button:hover{background:rgba(255,255,255,.1);color:#fff;}
+.tb-nav input{width:42px;text-align:center;border:none;background:transparent;color:#fff;padding:5px 3px;font-size:12px;font-family:"JetBrains Mono",monospace;outline:none;transition:color .3s;}
+.tb-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 11px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Hind Siliguri",sans-serif;color:#fff;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+.tb-btn:hover{filter:brightness(1.15);}
+.tb-btn.ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+.tb-btn.ghost:hover{background:rgba(255,255,255,.13);color:#fff;}
+.tb-sep{width:1px;height:20px;background:rgba(255,255,255,.1);flex-shrink:0;transition:background .3s;}
+.tb-space{flex:1;}
+#syncBadge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+#syncBadge.synced{background:rgba(22,163,74,.2);color:#4ade80;}
+#syncBadge.syncing{background:rgba(245,158,11,.2);color:#fbbf24;}
+#syncBadge.error{background:rgba(220,38,38,.2);color:#f87171;}
+
+/* ── TOPBAR LIGHT MODE ── */
+body.lg-light #topbar{
+  background:#e2e8f0;
+  border-bottom-color:#cbd5e1;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+body.lg-light .tb-nav{
+  background:rgba(0,0,0,.06);
+  border-color:rgba(0,0,0,.1);
+}
+body.lg-light .tb-nav button{color:#475569;}
+body.lg-light .tb-nav button:hover{background:rgba(0,0,0,.08);color:#1e293b;}
+body.lg-light .tb-nav input{color:#1e293b;}
+body.lg-light .tb-btn.ghost{
+  background:rgba(0,0,0,.06);
+  color:#475569;
+  border-color:rgba(0,0,0,.12);
+}
+body.lg-light .tb-btn.ghost:hover{background:rgba(0,0,0,.11);color:#1e293b;}
+body.lg-light .tb-sep{background:rgba(0,0,0,.12);}
+body.lg-light #tbSearch{
+  background:rgba(0,0,0,.06) !important;
+  border-color:rgba(0,0,0,.12) !important;
+  color:#1e293b !important;
+}
+body.lg-light #tbSearch::placeholder{color:#94a3b8 !important;}
+
+/* ═══════════════════════════════════════════
+   MAIN CONTENT / A4
+═══════════════════════════════════════════ */
+#mainContent{padding:13px 13px 50px;}
+.layout{display:flex;gap:13px;width:calc(210mm + 194px);max-width:calc(100vw - 20px);margin:0 auto;align-items:flex-start;}
+.a4-col{flex:1;min-width:0;order:1;}
+.right-bar{width:176px;flex-shrink:0;position:sticky;top:58px;display:flex;flex-direction:column;gap:9px;order:2;}
+.rc{background:#fff;border-radius:11px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;}
+.rc-head{padding:8px 13px;font-size:11px;font-weight:700;letter-spacing:.5px;color:#fff;background:var(--nav2);text-transform:uppercase;}
+.rc-body{padding:9px;display:flex;flex-direction:column;gap:6px;}
+.rc-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px 7px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:"Hind Siliguri",sans-serif;color:#fff;transition:all .18s;box-shadow:0 2px 7px rgba(0,0,0,.1);}
+.rc-btn:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.rc-btn.save{background:linear-gradient(135deg,var(--pri),var(--pri2));}
+.rc-btn.cancel{background:#f1f5f9;color:#64748b;box-shadow:none;border:1.5px solid #e2e8f0;}
+.rc-btn.cancel:hover{background:#e2e8f0;color:#334155;}
+.rc-btn.print{background:linear-gradient(135deg,#dc2626,#b91c1c);}
+.rc-btn.req{background:linear-gradient(135deg,#ea580c,#c2410c);}
+.mode-ind{border-radius:9px;padding:7px 11px;font-size:12px;font-weight:700;text-align:center;}
+.sb-info{background:#f8fafc;border:1px solid #e2e8f0;border-radius:11px;padding:11px 13px;font-size:11px;color:#64748b;line-height:1.8;}
+.sb-info .ir{display:flex;justify-content:space-between;}
+.sb-info .iv{font-weight:700;color:#1e293b;font-family:"JetBrains Mono",monospace;font-size:12px;}
+
+/* A4 page modes */
+body.md-disabled .a4-page{background:#f8fafc;border-left:4px solid #cbd5e1;pointer-events:none;opacity:.65;}
+body.md-new      .a4-page{background:#fff;border-left:4px solid var(--pri);}
+body.md-view     .a4-page{background:#fffbf0;border-left:4px solid var(--acc);}
+body.md-pending  .a4-page{background:#fff7ed;border-left:4px solid #f97316;}
+body.md-edit     .a4-page{background:#fff;border-left:4px solid var(--blue);}
+body.md-disabled .a4-page input{pointer-events:none;}
+body.md-view.user-view .a4-page input{pointer-events:none;}
+body.md-view.user-view .a4-page input[type=radio]{pointer-events:none;}
+body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
+.a4-page{width:210mm;min-height:297mm;padding:10mm;background:#fff;box-shadow:0 0 18px rgba(0,0,0,.11);display:flex;flex-direction:column;transition:background .3s,border-left .3s;flex-shrink:0;}
+.hdr-wrap{display:flex;align-items:center;justify-content:center;padding:5px 10px;position:relative;}
+.hdr-num{border:1.5px solid #000;padding:5px 10px;min-width:50px;text-align:center;font-size:14px;font-weight:bold;background:#f2f2f2;font-family:"JetBrains Mono",monospace;position:absolute;left:10px;border-radius:4px;}
+.hdr-ctr{text-align:center;flex:1;}
+.hdr-ctr img{width:48px;height:auto;display:block;margin:0 auto;}
+.hdr-ctr h1{margin:0;font-size:16px;}
+.hdr-ctr h2{margin:0;font-size:12px;font-weight:600;}
+.hdr-ctr h3{margin:0;font-size:11px;text-decoration:underline;}
+.tbl{width:100%;border-collapse:collapse;margin-top:9px;table-layout:fixed;}
+.tbl td{border:1px solid #000;padding:2px 4px;font-size:10px;min-height:18px;}
+.tbl-lbl{background:#f2f2f2;width:35%;}
+.tbl-lbl label{display:block;cursor:pointer;}
+.cb-row{display:flex;align-items:center;font-size:10px;gap:5px;flex-wrap:wrap;padding:3px 5px;}
+.cb-row input[type=radio],.cb-row input[type=checkbox]{width:12px;height:12px;accent-color:var(--pri);flex-shrink:0;}
+.tbl td input[type=text]{display:block;width:100%;padding:2px 4px;font-size:11px;border:none;outline:none;background:transparent;font-family:"Hind Siliguri",sans-serif;}
+#eqTbl input[type=text]{width:100%;padding:1px 2px;font-size:10px;border:none;outline:none;background:transparent;}
+.price{border:none!important;background:transparent;width:100%;height:20px;text-align:center;padding:0;font-size:10px;}
+.sec-hdr{font-weight:bold;font-size:12px;margin-top:8px;border-bottom:1px solid #000;display:inline-block;}
+.terms{font-size:10px;line-height:1.4;margin-top:8px;}
+.sig-wrap{display:flex;justify-content:space-between;margin-top:28px;}
+.sig-box{width:40%;border-top:1px solid #000;font-size:11px;padding-top:4px;}
+.banner{border-radius:9px;padding:9px 14px;margin-bottom:9px;font-size:12px;align-items:center;gap:7px;display:none;}
+.banner.show{display:flex;}
+.b-lock{background:#f8fafc;border:2px solid #cbd5e1;color:#475569;}
+.b-pend{background:#fff7ed;border:2px solid #fb923c;color:#9a3412;}
+.b-req{background:#fefce8;border:2px solid var(--acc);color:#92400e;}
+.b-ok{background:#f0fdf4;border:2px solid #4ade80;color:#166534;}
+.audit{background:#f0fdf4;border:1px solid #a7f3d0;border-radius:7px;padding:9px 13px;margin-top:7px;font-size:10px;color:#065f46;display:none;line-height:1.6;}
+.audit.on{display:block;}
+
+/* ═══════════════════════════════════════════
+   POPUPS
+═══════════════════════════════════════════ */
+.pop-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(4px);}
+.pop-bg.on{display:flex;}
+#popBg{z-index:4000;}
+#admBg{z-index:2000;}
+#editUserBg{z-index:3000;}
+.pop{width:540px;max-width:96%;background:#fff;border-radius:15px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;}
+.pop.wide{width:860px;}
+.pop-hdr{background:var(--nav2);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+.pop-hdr h3{margin:0;font-size:15px;font-weight:600;}
+.pop-x{background:rgba(255,255,255,.1);border:none;color:#fff;width:26px;height:26px;border-radius:6px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.pop-x:hover{background:rgba(255,255,255,.2);}
+.pop-body{padding:18px;font-size:14px;line-height:1.7;color:#334155;min-height:45px;}
+.pop-foot{padding:12px 18px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap;}
+.pbtn{padding:7px 18px;border:none;border-radius:7px;font-size:13px;cursor:pointer;font-weight:600;color:#fff;font-family:"Hind Siliguri",sans-serif;transition:all .15s;}
+.pbtn:hover{filter:brightness(1.1);}
+.pbtn.grey{background:#94a3b8;}.pbtn.green{background:var(--pri);}.pbtn.red{background:#dc2626;}.pbtn.blue{background:#2563eb;}.pbtn.orange{background:#ea580c;}
+.pop.success .pop-hdr{background:var(--pri);}.pop.error .pop-hdr{background:#dc2626;}.pop.warning .pop-hdr{background:var(--acc);}.pop.info .pop-hdr{background:#2563eb;}
+.ltbl{width:100%;border-collapse:collapse;font-size:12px;}
+.ltbl thead tr{background:#f8fafc;position:sticky;top:0;}
+.ltbl th{padding:8px 9px;font-weight:600;color:#64748b;border-bottom:2px solid #e2e8f0;text-align:left;white-space:nowrap;}
+.ltbl tbody tr{border-bottom:1px solid #f1f5f9;transition:.15s;}
+.ltbl tbody tr:hover{background:#f8fafc;}
+.ltbl td{padding:7px 9px;}
+.abtn{padding:3px 9px;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:600;color:#fff;margin:1px;transition:.15s;font-family:"Hind Siliguri",sans-serif;}
+.abtn:hover{filter:brightness(1.15);}
+.abtn.v{background:#ea580c;}.abtn.d{background:#dc2626;}.abtn.ok{background:var(--pri);}.abtn.no{background:#6b7280;}.abtn.res{background:var(--pri);}
+.ls-wrap{padding:11px 15px;background:#f8fafc;border-bottom:1px solid #e2e8f0;}
+.ls-wrap input{width:100%;padding:8px 13px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:"Hind Siliguri",sans-serif;transition:.2s;}
+.ls-wrap input:focus{border-color:var(--pri);}
+.empty{text-align:center;padding:36px 20px;color:#64748b;}
+.empty .ei{font-size:36px;margin-bottom:9px;}
+.adm-sec{margin-bottom:18px;}
+.adm-sec h4{font-size:13px;font-weight:700;color:#334155;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;}
+.adm-in{width:100%;padding:8px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:"Hind Siliguri",sans-serif;margin-bottom:7px;transition:.2s;}
+.adm-in:focus{border-color:var(--pri);}
+.u-item{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;margin-bottom:5px;font-size:12px;}
+.u-nm{font-weight:700;font-family:"JetBrains Mono",monospace;}
+.u-role{padding:2px 7px;border-radius:9px;font-size:10px;font-weight:700;}
+.u-role.admin{background:#fef3c7;color:#92400e;}
+.u-role.user{background:#dbeafe;color:#1e40af;}
+.vtbl{width:100%;border-collapse:collapse;font-size:12px;}
+.vtbl td{padding:6px 11px;border-bottom:1px solid #f0f0f0;}
+.vtbl tr:nth-child(even){background:#fafafa;}
+.vtbl .vl{background:#fff8f0;color:#7d5a00;font-weight:700;width:33%;border-right:1px solid #ffe0b2;}
+.asec{background:#eff6ff;font-weight:bold;font-size:11px;padding:6px 11px;border-bottom:1px solid #bfdbfe;color:#1e40af;}
+
+@media print{
+  body{background:#fff;}
+  #sidebar,#appWrap #topbar,#mainContent .right-bar,.banner,.audit,.pop-bg{display:none!important;}
+  #appWrap{margin-left:0!important;}
+  .layout{width:auto!important;display:block!important;}
+  .a4-page{box-shadow:none;background:#fff!important;border:none!important;pointer-events:all!important;opacity:1!important;}
+  #loginScreen{display:none!important;}
+}
+</style>
+</head>
+<body class="md-disabled">
+
+<div id="loginScreen">
+  <div class="lg-orb lg-orb1"></div>
+  <div class="lg-orb lg-orb2"></div>
+  <div class="lg-card">
+    <div class="lg-brand">
+      <div class="lg-logo" id="lgLogo"><img src="logo.png" alt="" style="width:42px" onerror="this.parentElement.innerHTML='&#128293;'"/></div>
+      <h1>AGNI SYSTEMS LIMITED</h1>
+      <p>Customer Management Portal</p>
+    </div>
+    <div class="lg-field">
+      <label>USER ID</label>
+      <div class="lg-wrap"><span class="lg-icon">👤</span>
+        <input class="lg-input" type="text" id="lusr" placeholder="User ID লিখুন" autocomplete="username"/>
+      </div>
+    </div>
+    <div class="lg-field">
+      <label>PASSWORD</label>
+      <div class="lg-wrap"><span class="lg-icon">🔑</span>
+        <input class="lg-input" type="password" id="lpass" placeholder="Password লিখুন" autocomplete="current-password"/>
+      </div>
+    </div>
+    <label class="lg-remember"><input type="checkbox" id="lrem"/><span>লগইন মনে রাখুন</span></label>
+    <button class="lg-btn" id="lbtn">🔒 Login করুন</button>
+    <div class="lg-err" id="lerr">❌ User ID বা Password ভুল!</div>
+    <div class="lg-foot">© 2025 Agni Systems Limited · Panchagarh</div>
+    <div class="lg-foot">Developed by <a href="https://wa.me/8801786945337">Arafat Ahmed</a> · 2026</div>
+  </div>
+</div>
+
+<div id="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo" id="sbLogo">🔥</div>
+    <div><div class="sb-brand-txt">AGNI SYSTEMS</div><div class="sb-brand-sub">Management Portal</div></div>
+  </div>
+  <div class="sb-user">
+    <div class="sb-uname" id="sbUname">-</div>
+    <div class="sb-urole" id="sbUrole">-</div>
+    <span class="sb-ubadge user" id="sbUbadge">User</span>
+  </div>
+  <div class="sb-sec">মেইন মেনু</div>
+  <div class="sb-item new-item" onclick="startNew()"><span class="sb-ico">✚</span> নতুন এন্ট্রি</div>
+  <div class="sb-item" onclick="showList()"><span class="sb-ico">📋</span> Data List <span class="sb-badge green" id="sBadgeList">0</span></div>
+  <div class="sb-item" onclick="goDisabled()"><span class="sb-ico">👁</span> ভিউ মোড</div>
+  <div class="sb-item" id="sMyReqs" style="display:none" onclick="showMyApproved()"><span class="sb-ico">✅</span> Approved <span class="sb-badge green" id="sBadgeMyApr">0</span></div>
+  <div class="sb-div"></div>
+  <div class="sb-sec">ডাউনলোড</div>
+  <div class="sb-item" id="sExcel" style="display:none" onclick="doExcel()"><span class="sb-ico">📊</span> Excel Export</div>
+  <div class="sb-item" id="sExport" style="display:none" onclick="doExport()"><span class="sb-ico">⬇</span> JSON Export</div>
+  <div class="sb-item" id="sImport" style="display:none" onclick="doImport()"><span class="sb-ico">⬆</span> Import</div>
+  <div class="sb-item" id="sTrash" style="display:none" onclick="showTrash()"><span class="sb-ico">🚮</span> Trash</div>
+  <div class="sb-div" id="sdAdmin" style="display:none"></div>
+  <div class="sb-sec" id="ssAdmin" style="display:none">Admin</div>
+  <div class="sb-item" id="sPend" style="display:none" onclick="showPending()"><span class="sb-ico">⌛</span> Pending <span class="sb-badge red" id="sBadgePend">0</span></div>
+  <div class="sb-item" id="sEditReq" style="display:none" onclick="showEditReqs()"><span class="sb-ico">✍🏻</span> Edit Requests <span class="sb-badge gold" id="sBadgeER">0</span></div>
+  <div class="sb-item" id="sAdmin" style="display:none" onclick="openAdmin()"><span class="sb-ico">⚙</span> Admin Panel</div>
+  <div class="sb-div"></div>
+  <div class="sb-themes">
+    <p>🎨 থিম</p>
+    <div class="sb-tm-row">
+      <button class="sb-tm-btn" id="sbTmLight" onclick="applyTheme('light')">☀️ Light</button>
+      <button class="sb-tm-btn" id="sbTmDark"  onclick="applyTheme('dark')">🌙 Dark</button>
+    </div>
+    <div class="sb-hex-row">
+      <div class="sb-hex-prev" id="sbHexPrev" style="background:#16a34a"></div>
+      <input class="sb-hex-in" type="text" id="sbHexIn" maxlength="7" placeholder="#hex" oninput="sbHexPreview()"/>
+      <button class="sb-hex-go" onclick="applyHexTheme('sbHexIn')">✓</button>
+    </div>
+  </div>
+  <div class="sb-logout"><button onclick="doLogout()">Log out</button></div>
+  <input type="file" id="impFile" accept=".json" style="display:none"/>
+</div>
+
+<div id="appWrap">
+  <div id="topbar">
+    <div class="tb-nav">
+      <button onclick="prevRec()">◀</button>
+      <input type="text" id="navId" placeholder="#"/>
+      <button onclick="nextRec()">▶</button>
+    </div>
+    <div class="tb-space"></div>
+    <div style="position:relative;flex-shrink:0;">
+      <input type="text" id="tbSearch" placeholder="ID / নাম / মোবাইল..."
+        style="padding:5px 12px 5px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:12px;width:200px;outline:none;font-family:'Hind Siliguri',sans-serif;"
+        onfocus="this.style.borderColor='var(--pri)'"
+        onblur="this.style.borderColor=''"/>
+      <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.4;pointer-events:none">🔍</span>
+    </div>
+    <div class="tb-sep"></div>
+    <button class="tb-btn ghost" onclick="showList()">📃 List</button>
+    <button class="tb-btn ghost" id="tbPend" style="display:none" onclick="showPending()">⌛ Pending <span id="tbPN" style="background:rgba(255,255,255,.18);padding:1px 5px;border-radius:7px;font-size:10px;margin-left:2px">0</span></button>
+    <button class="tb-btn ghost" id="tbER" style="display:none" onclick="showEditReqs()">✍🏻 Edit Requests <span id="tbERN" style="background:rgba(255,255,255,.18);padding:1px 5px;border-radius:7px;font-size:10px;margin-left:2px">0</span></button>
+    <div class="tb-space"></div>
+    <span id="syncBadge" class="syncing">↻ সংযোগ</span>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" style="background:linear-gradient(135deg,rgba(220,38,38,.55),rgba(185,28,28,.65));color:#FFF;" onclick="doLogout()">Log out</button>
+  </div>
+  <div id="mainContent">
+  <div class="layout">
+    <div class="a4-col">
+      <div class="a4-page" id="page1">
+        <div class="banner b-lock show" id="bLock"><span>🔒</span><span>এন্ট্রি লক। <b>নতুন এন্ট্রি</b> বা <b>List</b> ব্যবহার করুন।</span></div>
+        <div class="banner b-pend" id="bPend"><span>⌛</span><span>এই রেকর্ড <b>Admin অনুমোদনের অপেক্ষায়</b>।</span></div>
+        <div class="banner b-req" id="bReq"><span>✍🏻</span><span id="bReqTxt">Edit Request পাঠানো হয়েছে।</span></div>
+        <div class="banner b-ok" id="bOk"><span></span><span>Admin অনুমোদন করেছেন। পরিবর্তন করে <b>Save</b> করুন।</span></div>
+        <div class="hdr-wrap">
+          <div class="hdr-num" id="hdrNum">#0001</div>
+          <div class="hdr-ctr">
+            <img src="logo.png" alt="Logo" onerror="this.style.display='none'"/>
+            <h1>AGNI SYSTEMS LIMITED</h1>
+            <h2>ইন্টারনেট সেবা ব্যবহার সংক্রান্ত অঙ্গীকারনামা</h2>
+            <h3>Internet Service and Equipment Usage Agreement</h3>
+          </div>
+        </div>
+        <table class="tbl">
+          <tr><td class="tbl-lbl"><label for="fId">গ্রাহক আইডি (Customer ID):</label></td><td><input type="text" id="fId"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fName">নাম / প্রতিষ্ঠানের নাম (Name/Company Name):</label></td><td><input type="text" id="fName"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fLogin">লগইন আইডি (Login ID):</label></td><td><input type="text" id="fLogin"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fPass">পাসওয়ার্ড (Password):</label></td><td><input type="text" id="fPass"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fMob">মোবাইল (Mobile):</label></td><td><input type="text" id="fMob" maxlength="11"/></td></tr>
+          <tr><td class="tbl-lbl">গ্রাহকের ধরন (Customer Type):</td><td><div class="cb-row">
+            <input type="radio" name="ct" value="Home" id="ctH"/><label for="ctH" style="font-size:10px;cursor:pointer">Home</label>
+            <input type="radio" name="ct" value="Office" id="ctO"/><label for="ctO" style="font-size:10px;cursor:pointer">Office</label>
+            <input type="radio" name="ct" value="Mess" id="ctM"/><label for="ctM" style="font-size:10px;cursor:pointer">Mess</label>
+          </div></td></tr>
+          <tr><td class="tbl-lbl">প্যাকেজের ধরন (Package Type):</td><td><div class="cb-row">
+            <input type="radio" name="pt" value="25 Mbps" id="p25"/><label for="p25" style="font-size:10px;cursor:pointer">25</label>
+            <input type="radio" name="pt" value="30 Mbps" id="p30"/><label for="p30" style="font-size:10px;cursor:pointer">30</label>
+            <input type="radio" name="pt" value="35 Mbps" id="p35"/><label for="p35" style="font-size:10px;cursor:pointer">35</label>
+            <input type="radio" name="pt" value="40 Mbps" id="p40"/><label for="p40" style="font-size:10px;cursor:pointer">40</label>
+            <input type="radio" name="pt" value="50 Mbps" id="p50"/><label for="p50" style="font-size:10px;cursor:pointer">50</label>
+            <input type="radio" name="pt" value="60 Mbps" id="p60"/><label for="p60" style="font-size:10px;cursor:pointer">60</label>
+            <input type="radio" name="pt" value="70 Mbps" id="p70"/><label for="p70" style="font-size:10px;cursor:pointer">70</label>
+            <input type="radio" name="pt" value="80 Mbps" id="p80"/><label for="p80" style="font-size:10px;cursor:pointer">80</label>
+            <input type="radio" name="pt" value="100 Mbps" id="p100"/><label for="p100" style="font-size:10px;cursor:pointer">100</label>
+          </div></td></tr>
+          <tr><td class="tbl-lbl"><label for="fRch">রিচার্জ:</label></td><td><input type="text" id="fRch"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fNid">জাতীয় পরিচয়পত্র/পাসপোর্ট (NID/Passport):</label></td><td><input type="text" id="fNid"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fDob">জন্ম তারিখ (DD/MM/YYYY):</label></td><td><input type="text" id="fDob" placeholder="DD/MM/YYYY" maxlength="10"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fHouse">বাসা নং এবং ফ্ল্যাট/তলা (House No.Flat/Level):</label></td><td><input type="text" id="fHouse"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fArea">এলাকা (Area):</label></td><td><input type="text" id="fArea"/></td></tr>
+          <tr><td class="tbl-lbl">থানা (Thana):</td><td><input type="text" id="fThana" value="PANCHAGARH SADAR"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fConn">সংযোগের তারিখ (Connection Date):</label></td><td><input type="text" id="fConn" placeholder="DD/MM/YYYY" maxlength="10"/></td></tr>
+          <tr><td class="tbl-lbl"><label for="fRem">মন্তব্য (Remarks):</label></td><td><input type="text" id="fRem"/></td></tr>
+        </table>
+        <div class="sec-hdr" style="margin-top:14px;font-size:13px">অঙ্গীকারকারীর বিবরণ,</div>
+        <p style="font-size:11px;margin:3px 0">আমি <b>AGNI SYSTEMS LTD</b> থেকে ইন্টারনেট সেবা গ্রহণের জন্য নিম্নলিখিত প্রয়োজনীয় সরঞ্জামাদি গ্রহণ করছি এবং শর্তাবলী মেনে চলার অঙ্গীকার করছি।</p>
+        <table class="tbl" style="text-align:center;margin-top:7px" id="eqTbl">
+          <colgroup><col style="width:24px"/><col style="width:108px"/><col style="width:34px"/><col style="width:34px"/><col style="width:34px"/><col style="width:34px"/><col style="width:158px"/><col style="width:58px"/></colgroup>
+          <tr style="font-weight:bold;background:#f2f2f2"><td>ক্রমিক</td><td>সরঞ্জামের নাম</td><td colspan="2">মডেল</td><td colspan="2">সংখ্যা</td><td>সিরিয়াল নাম্বার</td><td>মূল্য</td></tr>
+          <tr><td>1.</td><td>রাউটার</td><td colspan="2"><input type="text" id="eRm" style="text-align:center"/></td><td colspan="2"><input type="text" id="eRq" style="text-align:center"/></td><td><input type="text" id="eRs" style="text-align:center"/></td><td><input type="text" id="eRp" class="price"/></td></tr>
+          <tr><td rowspan="2">2.</td><td rowspan="2">ক্যাবল</td><td colspan="2"><input type="text" id="eC1m" style="text-align:center"/></td><td colspan="2"><input type="text" id="eC1q" style="text-align:center"/></td><td><input type="text" id="eC1s" style="text-align:center"/></td><td><input type="text" id="eC1p" class="price"/></td></tr>
+          <tr><td colspan="2"><input type="text" id="eC2m" style="text-align:center"/></td><td colspan="2"><input type="text" id="eC2q" style="text-align:center"/></td><td><input type="text" id="eC2s" style="text-align:center"/></td><td><input type="text" id="eC2p" class="price"/></td></tr>
+          <tr><td>3.</td><td>ONU</td><td colspan="2"><input type="text" id="eOm" style="text-align:center"/></td><td colspan="2"><input type="text" id="eOq" style="text-align:center"/></td><td><input type="text" id="eOs" style="text-align:center"/></td><td><input type="text" id="eOp" class="price"/></td></tr>
+          <tr><td rowspan="2">4.</td><td rowspan="2">TJ Box</td><td colspan="2">2</td><td colspan="2"><input type="text" id="eTq" style="text-align:center"/></td><td rowspan="2"><input type="text" id="eTs" style="text-align:center"/></td><td rowspan="2"><input type="text" id="eTp" class="price" style="height:38px"/></td></tr>
+          <tr><td>4</td><td>8</td><td><input type="text" id="eT4" style="text-align:center"/></td><td><input type="text" id="eT8" style="text-align:center"/></td></tr>
+          <tr><td>5.</td><td>প্যাচকোড</td><td colspan="2"><input type="text" id="ePm" style="text-align:center"/></td><td colspan="2"><input type="text" id="ePq" style="text-align:center"/></td><td><input type="text" id="ePs" style="text-align:center"/></td><td><input type="text" id="ePp" class="price"/></td></tr>
+          <tr><td>6.</td><td>Splitter</td>
+            <td colspan="4" style="text-align:left;padding-left:7px">
+              <label style="font-size:10px;cursor:pointer"><input type="checkbox" name="spl" value="1*2"/> 1*2</label>
+              <label style="font-size:10px;cursor:pointer;margin-left:5px"><input type="checkbox" name="spl" value="1*4"/> 1*4</label>
+              <label style="font-size:10px;cursor:pointer;margin-left:5px"><input type="checkbox" name="spl" value="1*8"/> 1*8</label>
+              <label style="font-size:10px;cursor:pointer;margin-left:5px"><input type="checkbox" name="spl" value="1*16"/> 1*16</label>
+            </td>
+            <td><input type="text" id="eSs" style="text-align:center"/></td>
+            <td><input type="text" id="eSp" class="price"/></td>
+          </tr>
+          <tr><td colspan="7" style="text-align:right;font-weight:bold">মোট:</td><td id="totPrice" style="font-size:14px;font-weight:bold;text-align:center">0</td></tr>
+        </table>
+        <div class="audit" id="auditBar"></div>
+      </div>
+      <div class="a4-page" style="margin-top:13px">
+        <div class="sec-hdr" style="font-weight:bold;font-size:19px">সরঞ্জাম ব্যবহার ও রক্ষণাবেক্ষণ:</div>
+        <div class="terms">১. আমি সরবরাহকৃত সরঞ্জামগুলি যথাযথভাবে ব্যবহার করব এবং সেগুলোর কোন ক্ষতি হতে দেব না।<br/><br/>২. সরঞ্জামগুলো ইন্টারনেট সেবা গ্রহনের জন্য ব্যবহার ছাড়া অন্য কোন উদ্দেশ্যে ব্যবহার করব না।</div>
+        <br/><br/>
+        <div class="sec-hdr" style="font-weight:bold;font-size:19px">সরঞ্জাম ফেরত প্রদান প্রসঙ্গে:</div>
+        <div class="terms">কোন কারণবশত যদি আমি ইন্টারনেট সেবা গ্রহণ বন্ধ করি, তবে আমি সরবরাহকৃত সমস্ত সরঞ্জাম অবিলম্বে <strong>AGNI SYSTEMS LTD</strong> কে ফেরত দেব।</div>
+        <br/><br/>
+        <div class="sec-hdr" style="font-weight:bold;font-size:19px">ক্ষতি বা চুরির দায়িত্ব:</div>
+        <div class="terms">সরবরাহকৃত সরঞ্জামের কোন ক্ষতি হলে বা চুরি হলে, আমি কর্তৃপক্ষকে এর যথাযথ ক্ষতিপূরণ বা মূল্য প্রদান করতে বাধ্য থাকব।</div>
+        <br/><br/>
+        <div class="sec-hdr" style="font-weight:bold;font-size:19px">চুক্তির কার্যকারিতা:</div>
+        <div class="terms">এই চুক্তি উভয় পক্ষের মধ্যে স্বাক্ষরিত হওয়ার পর কার্যকর হবে।</div>
+        <br/><br/>
+        <h2 style="text-align:center">উভয় পক্ষের সাক্ষর:</h2>
+        <br/>
+        <div class="sig-wrap">
+          <div class="sig-box">সেবাপ্রদানকারী:<br/>নাম: ................................<br/>পদবি: ................................<br/>তারিখ: ................................</div>
+          <div class="sig-box">গ্রাহক:<br/>
+            <span style="position:relative;display:inline-block;width:100%">নাম: ................................<br/><span id="sigName" style="position:absolute;top:0;left:27px"></span></span>
+            <span style="position:relative;display:inline-block;width:100%">মোবাইল: ................................<br/><span id="sigMob" style="position:absolute;top:0;left:52px"></span></span>
+            স্থাক্ষর: ................................
+          </div>
+        </div>
+        <div style="margin-top:18px;font-size:11px;color:#555;border:1px solid #ddd;padding:9px;border-radius:4px"><b>বিঃদ্রঃ</b> গ্রাহক যদি পূর্বের ইন্টারনেট সেবাদাতা প্রতিষ্ঠানের সরঞ্জাম ব্যবহার করে <strong>AGNI SYSTEMS LTD</strong>-এর সংযোগ গ্রহণ করেন, তবে উক্ত সরঞ্জামের কোনো প্রকার ত্রুটির জন্য <strong>AGNI SYSTEMS LTD</strong> দায়বদ্ধ থাকবে না।</div>
+      </div>
+    </div>
+    <div class="right-bar">
+      <div class="mode-ind" id="modeInd" style="background:#f1f5f9;color:#64748b">🔒 লক</div>
+      <div class="rc">
+        <div class="rc-head">📋 একশন</div>
+        <div class="rc-body">
+          <button class="rc-btn save" id="btnSave" style="display:none" onclick="doSave()">💾 Save</button>
+          <button class="rc-btn req" id="btnReq" style="display:none" onclick="sendReq()">📨 Edit Request</button>
+          <button class="rc-btn" id="btnLoadEdit" style="display:none;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="loadEditCur()">এডিট শুরু</button>
+          <button class="rc-btn cancel" onclick="goDisabled()">✕ Cancel</button>
+          <button class="rc-btn print" onclick="window.print()">🖨 Print</button>
+        </div>
+      </div>
+      <div class="sb-info">
+        <div class="ir"><span style="font-size:10px;color:#64748b">রেকর্ড</span><span class="iv" id="sbSer">-</span></div>
+        <div class="ir"><span style="font-size:10px;color:#64748b">মোট গ্রাহক</span><span class="iv" id="sbTot">0</span></div>
+        <div class="ir"><span style="font-size:10px;color:#64748b">মোট মূল্য</span><span class="iv" id="sbPrc">0</span></div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- Main popup -->
+<div class="pop-bg" id="popBg"><div class="pop" id="popBox">
+  <div class="pop-hdr"><h3 id="popTtl">বার্তা</h3><button class="pop-x" onclick="closePop()">✕</button></div>
+  <div class="pop-body" id="popMsg"></div>
+  <div class="pop-foot"><button class="pbtn grey" onclick="closePop()">OK</button></div>
+</div></div>
+
+<!-- View popup -->
+<div class="pop-bg" id="vpBg"><div class="pop wide" id="vpBox">
+  <div class="pop-hdr"><h3 id="vpTtl">রেকর্ড</h3><button class="pop-x" onclick="closeVP()">✕</button></div>
+  <div class="pop-body" id="vpBody" style="max-height:62vh;overflow-y:auto;padding:0"></div>
+  <div class="pop-foot" id="vpFoot"></div>
+</div></div>
+
+<!-- List popup -->
+<div class="pop-bg" id="lpBg"><div class="pop wide">
+  <div class="pop-hdr"><h3 id="lpTtl">তালিকা</h3><button class="pop-x" onclick="closeLP()">✕</button></div>
+  <div class="ls-wrap"><input type="text" id="lsIn" placeholder="🔍 ID / নাম / মোবাইল..." oninput="filterL()"/></div>
+  <div class="pop-body" id="lpBody" style="max-height:430px;overflow-y:auto;padding:0"></div>
+  <div class="pop-foot"><button class="pbtn grey" onclick="closeLP()">বন্ধ করুন</button></div>
+</div></div>
+
+<!-- Admin popup -->
+<div class="pop-bg" id="admBg"><div class="pop" style="width:620px;max-width:97%">
+  <div class="pop-hdr"><h3>⚙ Admin Panel</h3><button class="pop-x" onclick="closeAdm()">✕</button></div>
+  <div class="pop-body" style="max-height:68vh;overflow-y:auto">
+    <div class="adm-sec">
+      <h4>👤 নতুন User তৈরি করুন</h4>
+      <input class="adm-in" type="text" id="aUsr" placeholder="Username"/>
+      <input class="adm-in" type="text" id="aDispName" placeholder="পূর্ণ নাম"/>
+      <input class="adm-in" type="text" id="aUID" placeholder="User ID (password হিসেবে ব্যবহার হবে)"/>
+      <select class="adm-in" id="aRole">
+        <option value="user">👤 User</option>
+        <option value="admin">👑 Admin</option>
+      </select>
+      <button class="pbtn green" onclick="createUser()">তৈরি করুন</button>
+    </div>
+    <div class="adm-sec"><h4>📋 User তালিকা</h4><div id="uList"></div></div>
+    <div class="adm-sec">
+      <h4>🔑 নিজের Password পরিবর্তন</h4>
+      <input class="adm-in" type="password" id="aOld" placeholder="পুরনো Password"/>
+      <input class="adm-in" type="password" id="aNew" placeholder="নতুন Password"/>
+      <button class="pbtn blue" onclick="changePass()">পরিবর্তন করুন</button>
+    </div>
+  </div>
+  <div class="pop-foot"><button class="pbtn grey" onclick="closeAdm()">বন্ধ করুন</button></div>
+</div></div>
+
+<!-- Edit User Popup -->
+<div class="pop-bg" id="editUserBg">
+  <div class="pop" style="width:440px;max-width:96%">
+    <div class="pop-hdr">
+      <h3 id="editUserTitle">✏️ User Edit</h3>
+      <button class="pop-x" onclick="cancelEditUser()">✕</button>
+    </div>
+    <div class="pop-body">
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">USER ID</label>
+        <input class="adm-in" type="text" id="eUsr" disabled style="background:#f1f5f9;color:#475569;cursor:not-allowed;margin-bottom:0"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">পূর্ণ নাম</label>
+        <input class="adm-in" type="text" id="eDispName" placeholder="পূর্ণ নাম লিখুন" style="margin-bottom:0"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">নতুন Password <span style="font-weight:400;color:#94a3b8">(না দিলে আগেরটি থাকবে)</span></label>
+        <input class="adm-in" type="password" id="ePas" placeholder="নতুন Password" style="margin-bottom:0"/>
+      </div>
+      <div style="margin-bottom:4px">
+        <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">ROLE</label>
+        <select class="adm-in" id="eRole" style="margin-bottom:0">
+          <option value="user">👤 User</option>
+          <option value="admin">👑 Admin</option>
+        </select>
+      </div>
+    </div>
+    <div class="pop-foot">
+      <button class="pbtn grey" onclick="cancelEditUser()">✕ Cancel</button>
+      <button class="pbtn green" onclick="saveEditUser()">✓ Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ============================================================
+// THEMES — সম্পূর্ণ পুনর্লিখিত, সব bug ঠিক
+// ============================================================
+var THEME_PRESETS = {
+  light: { pri:"#16a34a", pri2:"#15803d", nav:"#f1f5f9", nav2:"#e2e8f0", bodyBg:"#e8eef6" },
+  dark:  { pri:"#16a34a", pri2:"#15803d", nav:"#0f172a", nav2:"#1e293b", bodyBg:"#f1f5f9" }
+};
+
+var curTheme      = localStorage.getItem("agni_theme") || "dark";
+var curCustomHex  = localStorage.getItem("agni_custom_hex") || "";
+
+function hexToRgb(hex) {
+  hex = hex.replace(/^#/, "");
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var n = parseInt(hex, 16);
+  return {r:(n>>16)&255, g:(n>>8)&255, b:n&255};
+}
+function darkenHex(hex, pct) {
+  var c = hexToRgb(hex), f = 1 - pct;
+  return "#" + [Math.round(c.r*f), Math.round(c.g*f), Math.round(c.b*f)]
+    .map(function(v){ return v.toString(16).padStart(2,"0"); }).join("");
+}
+
+function applyTheme(key) {
+  curTheme = key;
+  localStorage.setItem("agni_theme", key);
+
+  var isLight  = (key === "light");
+  var isCustom = (key === "custom");
+  var r = document.documentElement;
+
+  var pri, pri2, nav, nav2, bodyBg;
+
+  if (isCustom && curCustomHex) {
+    pri    = curCustomHex;
+    pri2   = darkenHex(curCustomHex, 0.10);
+    nav    = darkenHex(curCustomHex, 0.75);
+    nav2   = darkenHex(curCustomHex, 0.62);
+    bodyBg = "#f1f5f9"; // main bg সবসময় neutral
+  } else {
+    var t  = THEME_PRESETS[isLight ? "light" : "dark"];
+    pri = t.pri; pri2 = t.pri2; nav = t.nav; nav2 = t.nav2; bodyBg = t.bodyBg;
+  }
+
+  // 1. CSS variables সেট
+  r.style.setProperty("--pri",  pri);
+  r.style.setProperty("--pri2", pri2);
+  r.style.setProperty("--nav",  nav);
+  r.style.setProperty("--nav2", nav2);
+
+  // 2. Body background
+  document.body.style.background = bodyBg;
+
+  // 3. lg-light class — এটাই সব CSS override চালু/বন্ধ করে
+  if (isLight) {
+    document.body.classList.add("lg-light");
+  } else {
+    document.body.classList.remove("lg-light");
+  }
+
+  // 4. Sidebar ও Topbar — inline style সরিয়ে দাও (CSS vars + class দিয়ে handle হবে)
+  var sb = document.getElementById("sidebar");
+  var tb = document.getElementById("topbar");
+  if (sb) { sb.style.background = ""; sb.style.borderRightColor = ""; }
+  if (tb) { tb.style.background = ""; tb.style.borderBottomColor = ""; }
+
+  // 5. Login screen background
+  var ls = document.getElementById("loginScreen");
+  if (ls) {
+    if (isLight) {
+      ls.style.background = "#e8eef6";
+    } else if (isCustom) {
+      ls.style.background = nav;
+    } else {
+      // Dark: CSS var --nav দিয়ে handle
+      ls.style.background = nav;
+    }
+  }
+
+  // 6. Custom theme orb colors
+  var orb1 = document.querySelector(".lg-orb1");
+  var orb2 = document.querySelector(".lg-orb2");
+  if (orb1) orb1.style.background = isCustom ? pri  : "";
+  if (orb2) orb2.style.background = isCustom ? pri2 : "";
+
+  // 7. Hex preview circles
+  if (curCustomHex) {
+    var sbP = document.getElementById("sbHexPrev");
+    if (sbP) sbP.style.background = curCustomHex;
+  }
+
+  updateThemeBtns(key);
+}
+
+function updateThemeBtns(key) {
+  var map = { sbTmLight:"light", sbTmDark:"dark" };
+  var ids = Object.keys(map);
+  for (var i = 0; i < ids.length; i++) {
+    var el = document.getElementById(ids[i]);
+    if (!el) continue;
+    if (key === map[ids[i]]) el.classList.add("active");
+    else el.classList.remove("active");
+  }
+}
+
+function sbHexPreview() {
+  var val = document.getElementById("sbHexIn").value.trim();
+  if (!val.startsWith("#")) val = "#" + val;
+  var prev = document.getElementById("sbHexPrev");
+  if (/^#[0-9a-fA-F]{6}$/.test(val) && prev) prev.style.background = val;
+}
+
+function applyHexTheme(inputId) {
+  var val = document.getElementById(inputId).value.trim();
+  if (!val.startsWith("#")) val = "#" + val;
+  if (!/^#[0-9a-fA-F]{6}$/.test(val)) {
+    showPop("সঠিক ৬ সংখ্যার Hex কোড দিন।\nযেমন: #a3c45f", "warning");
+    return;
+  }
+  curCustomHex = val;
+  localStorage.setItem("agni_custom_hex", val);
+  var el = document.getElementById("sbHexIn");
+  if (el) el.value = val;
+  applyTheme("custom");
+}
+
+function buildDots() {} // legacy — no-op
+
+// ============================================================
+// USERS
+// ============================================================
+var CODER_ID   = "coder";
+var CODER_PASS = "coder@2026";
+var CODER_DATA = {pass: CODER_PASS, role: "coder", display: "Arafat"};
+
+var DEFAULT_USERS = {
+  "coder":     {pass: "coder@2026", role: "coder",  display: "Coder"},
+  "admin":     {pass: "104883",     role: "admin",  display: "Admin"},
+  "panchanet": {pass: "991428",     role: "user",   display: "Panchanet"}
+};
+
+var _cachedUsers = null;
+
+function getUsers() {
+  var users = _cachedUsers
+    ? JSON.parse(JSON.stringify(_cachedUsers))
+    : JSON.parse(JSON.stringify(DEFAULT_USERS));
+  users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+  return users;
+}
+
+function saveUsers(u, cb) {
+  u[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+  _cachedUsers = JSON.parse(JSON.stringify(u));
+  var entries = Object.keys(u), saved = 0;
+  for (var i = 0; i < entries.length; i++) {
+    (function(key) {
+      fsdb.collection("appusers").doc(key).set(u[key])
+        .then(function() { saved++; if (saved === entries.length && cb) cb(true); })
+        .catch(function(e) { console.error(e); if (cb) cb(false); });
+    })(entries[i]);
+  }
+  if (entries.length === 0 && cb) cb(true);
+}
+
+function loadUsersFromFirebase(cb) {
+  fsdb.collection("appusers").get()
+    .then(function(snap) {
+      var users = JSON.parse(JSON.stringify(DEFAULT_USERS));
+      snap.forEach(function(d) { users[d.id] = d.data(); });
+      users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+      _cachedUsers = JSON.parse(JSON.stringify(users));
+      cb(users);
+    })
+    .catch(function(e) {
+      console.error(e);
+      _cachedUsers = JSON.parse(JSON.stringify(DEFAULT_USERS));
+      cb(_cachedUsers);
+    });
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+function loadSaved() {
+  try {
+    var s = JSON.parse(localStorage.getItem("agni_saved") || "null");
+    if (s) {
+      document.getElementById("lusr").value   = s.u || "";
+      document.getElementById("lpass").value  = s.p || "";
+      document.getElementById("lrem").checked = true;
+    }
+  } catch(e) {}
+}
+
+function doLogin() {
+  var u    = document.getElementById("lusr").value.trim();
+  var p    = document.getElementById("lpass").value.trim();
+  var err  = document.getElementById("lerr");
+  var users = getUsers();
+  if (users[u] && users[u].pass === p) {
+    currentUser = {username: u, role: users[u].role, display: users[u].display || u};
+    localStorage.setItem("agni_session", JSON.stringify({u: u, p: p}));
+    if (document.getElementById("lrem").checked) {
+      localStorage.setItem("agni_saved", JSON.stringify({u: u, p: p}));
+    } else {
+      localStorage.removeItem("agni_saved");
+    }
+    err.style.display = "none";
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("sidebar").style.display     = "flex";
+    document.getElementById("appWrap").style.display     = "block";
+    setupRole();
+    initApp();
+  } else {
+    err.style.display = "block";
+    document.getElementById("lpass").value = "";
+    document.getElementById("lpass").focus();
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem("agni_session");
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("sidebar").style.display     = "none";
+  document.getElementById("appWrap").style.display     = "none";
+  document.body.className = "md-disabled";
+  // theme class আবার লাগাও
+  if (curTheme === "light") document.body.classList.add("lg-light");
+  pageMode = "disabled";
+}
+
+function setupRole() {
+  var role = currentUser.role;
+  var priv = isPrivileged();
+  document.getElementById("sbUname").textContent = currentUser.display;
+  document.getElementById("sbUrole").textContent = currentUser.username;
+  var badge = document.getElementById("sbUbadge");
+  if (role === "coder") {
+    badge.textContent = "⚡ Coder"; badge.className = "sb-ubadge coder";
+  } else if (role === "admin") {
+    badge.textContent = "👑 Admin"; badge.className = "sb-ubadge admin";
+  } else {
+    badge.textContent = "👤 User";  badge.className = "sb-ubadge user";
+  }
+  var adminIds = ["sExcel","sExport","sImport","sTrash","sdAdmin","ssAdmin","sPend","sEditReq","sAdmin","tbPend","tbER"];
+  for (var i = 0; i < adminIds.length; i++) {
+    var el = document.getElementById(adminIds[i]);
+    if (!el) continue;
+    if (adminIds[i] === "tbPend" || adminIds[i] === "tbER") {
+      el.style.display = priv ? "inline-flex" : "none";
+    } else if (adminIds[i] === "sdAdmin" || adminIds[i] === "ssAdmin") {
+      el.style.display = priv ? "block" : "none";
+    } else {
+      el.style.display = priv ? "flex" : "none";
+    }
+  }
+  var myReqEl = document.getElementById("sMyReqs");
+  if (myReqEl) myReqEl.style.display = "none";
+}
+
+var currentUser = null;
+function isPrivileged() { return currentUser && (currentUser.role === "admin" || currentUser.role === "coder"); }
+
+// ============================================================
+// FIREBASE
+// ============================================================
+var FC = {
+  apiKey:"AIzaSyBpob-vMoKJZ66CSPJCVrnBp8CFuDztw7w",
+  authDomain:"agni-systems.firebaseapp.com",
+  projectId:"agni-systems",
+  storageBucket:"agni-systems.firebasestorage.app",
+  messagingSenderId:"604966730988",
+  appId:"1:604966730988:web:366c16f42ea0d8278639c9"
+};
+if (!firebase.apps.length) firebase.initializeApp(FC);
+var fsdb = firebase.firestore();
+
+var DB=[],TRASH=[],PENDING=[],EREQS=[],cur=-1,curId=null,pageMode="disabled";
+var EQ=["eRm","eRq","eRs","eRp","eC1m","eC1q","eC1s","eC1p","eC2m","eC2q","eC2s","eC2p",
+        "eOm","eOq","eOs","eOp","eTq","eTs","eTp","eT4","eT8","ePm","ePq","ePs","ePp","eSs","eSp"];
+
+function sync2(s, m) {
+  var el = document.getElementById("syncBadge");
+  el.className = s;
+  el.textContent = (s==="synced"?"● ":(s==="syncing"?"↻ ":"✕ ")) + m;
+}
+function flat(o) {
+  var f={};
+  Object.keys(o).forEach(function(k){ f[k] = (o[k]==null)?"":o[k]; });
+  return f;
+}
+function nowStr() {
+  var d=new Date();
+  return d.toLocaleDateString("en-GB")+", "+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
+}
+function mkAudit(action) {
+  return {action:action, by:currentUser.username, display:currentUser.display, role:currentUser.role, time:nowStr(), ts:Date.now()};
+}
+function fbSet(col,id,data,cb){
+  fsdb.collection(col).doc(String(id)).set(flat(data))
+    .then(function(){if(cb)cb(true);}).catch(function(e){console.error(e);if(cb)cb(false);});
+}
+function fbDel(col,id,cb){
+  fsdb.collection(col).doc(String(id)).delete()
+    .then(function(){if(cb)cb(true);}).catch(function(e){console.error(e);if(cb)cb(false);});
+}
+function fbGetAll(col,cb){
+  fsdb.collection(col).get()
+    .then(function(snap){var a=[];snap.forEach(function(d){a.push(d.data());});cb(a);})
+    .catch(function(e){console.error(e);cb([]);});
+}
+function cloudSync(cb){
+  sync2("syncing","লোড হচ্ছে...");
+  var done=0,res={c:[],t:[],p:[],e:[]};
+  function check(){
+    done++;
+    if(done===4){
+      DB=res.c;TRASH=res.t;PENDING=res.p;EREQS=res.e;
+      DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});
+      sync2("synced","● সংযুক্ত");
+      updateBadges();
+      if(cb)cb();
+    }
+  }
+  fbGetAll("customers",function(r){res.c=r;check();});
+  fbGetAll("trash",    function(r){res.t=r;check();});
+  fbGetAll("pending",  function(r){res.p=r;check();});
+  fbGetAll("editreqs", function(r){res.e=r;check();});
+}
+function nextId(){
+  var all=DB.concat(TRASH).concat(PENDING),max=0;
+  for(var i=0;i<all.length;i++){var n=Number(all[i].id)||0;if(n>max)max=n;}
+  return String(max+1).padStart(4,"0");
+}
+function updateBadges(){
+  document.getElementById("sBadgeList").textContent=DB.length;
+  document.getElementById("sbTot").textContent=DB.length;
+  var pc=PENDING.length;
+  document.getElementById("sBadgePend").textContent=pc;
+  document.getElementById("tbPN").textContent=pc;
+  var ec=EREQS.length;
+  document.getElementById("sBadgeER").textContent=ec;
+  var tbERN=document.getElementById("tbERN");if(tbERN)tbERN.textContent=ec;
+  if(currentUser&&isPrivileged()){
+    document.getElementById("sPend").style.display    = pc>0?"flex":"none";
+    document.getElementById("sEditReq").style.display = ec>0?"flex":"none";
+  }
+  if(currentUser&&!isPrivileged()){
+    var myApr=0;
+    for(var i=0;i<EREQS.length;i++){
+      if(EREQS[i].requestedBy===currentUser.username&&EREQS[i].status==="approved")myApr++;
+    }
+    var badge=document.getElementById("sBadgeMyApr");
+    var item =document.getElementById("sMyReqs");
+    if(badge)badge.textContent=myApr;
+    if(item) item.style.display=myApr>0?"flex":"none";
+  }
+}
+function updateTotal(){
+  var t=0,inputs=document.querySelectorAll(".price");
+  for(var i=0;i<inputs.length;i++)t+=Number(inputs[i].value)||0;
+  document.getElementById("totPrice").textContent=t;
+  document.getElementById("sbPrc").textContent=t;
+}
+function autoSlash(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.addEventListener("input",function(){
+    var v=this.value.replace(/\D/g,"").slice(0,8);
+    var f=v.length>=2?v.slice(0,2)+"/":v;
+    if(v.length>=4)f+=v.slice(2,4)+"/";
+    else if(v.length>2)f+=v.slice(2);
+    if(v.length>4)f+=v.slice(4);
+    this.value=f;
+  });
+}
+
+// ============================================================
+// FORM
+// ============================================================
+function fGet(){
+  var splVals=[],splInputs=document.querySelectorAll('[name="spl"]:checked');
+  for(var i=0;i<splInputs.length;i++)splVals.push(splInputs[i].value);
+  var d={
+    id:document.getElementById("fId").value.trim(),
+    name:document.getElementById("fName").value.trim(),
+    login:document.getElementById("fLogin").value.trim(),
+    pass:document.getElementById("fPass").value.trim(),
+    mobile:document.getElementById("fMob").value.trim(),
+    recharge:document.getElementById("fRch").value.trim(),
+    nid:document.getElementById("fNid").value.trim(),
+    dob:document.getElementById("fDob").value.trim(),
+    house:document.getElementById("fHouse").value.trim(),
+    area:document.getElementById("fArea").value.trim(),
+    thana:document.getElementById("fThana").value.trim(),
+    conn:document.getElementById("fConn").value.trim(),
+    remark:document.getElementById("fRem").value.trim(),
+    customer_type:"",package_type:"",splitter_type:splVals.join(","),totalPrice:0
+  };
+  var ct=document.querySelector('[name="ct"]:checked');if(ct)d.customer_type=ct.value;
+  var pt=document.querySelector('[name="pt"]:checked');if(pt)d.package_type=pt.value;
+  for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);d[EQ[i]]=el?el.value:"";}
+  var prices=document.querySelectorAll(".price");
+  for(var i=0;i<prices.length;i++)d.totalPrice+=Number(prices[i].value)||0;
+  return d;
+}
+function fSet(d){
+  var map={fId:"id",fName:"name",fLogin:"login",fPass:"pass",fMob:"mobile",
+           fRch:"recharge",fNid:"nid",fDob:"dob",fHouse:"house",fArea:"area",
+           fThana:"thana",fConn:"conn",fRem:"remark"};
+  Object.keys(map).forEach(function(k){
+    var el=document.getElementById(k);
+    if(el)el.value=d[map[k]]||(k==="fThana"?"PANCHAGARH SADAR":"");
+  });
+  document.querySelectorAll('[name="ct"]').forEach(function(r){r.checked=(r.value===d.customer_type);});
+  document.querySelectorAll('[name="pt"]').forEach(function(r){r.checked=(r.value===d.package_type);});
+  var sv=(d.splitter_type||"").split(",");
+  document.querySelectorAll('[name="spl"]').forEach(function(r){r.checked=(sv.indexOf(r.value)>=0);});
+  for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value=d[EQ[i]]||"";}
+  document.getElementById("sigName").textContent=d.name  ||"";
+  document.getElementById("sigMob").textContent =d.mobile||"";
+  updateTotal();
+  var idx=-1;
+  for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(d.id)){idx=i;break;}}
+  if(idx>=0){
+    document.getElementById("hdrNum").textContent="#"+String(idx+1).padStart(4,"0");
+    document.getElementById("sbSer").textContent =String(idx+1).padStart(4,"0");
+  }
+  showAudit(d.auditLog||null);
+}
+function fClear(){
+  ["fId","fName","fLogin","fPass","fMob","fRch","fNid","fDob","fHouse","fArea","fConn","fRem"].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value="";
+  });
+  document.getElementById("fThana").value="PANCHAGARH SADAR";
+  for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value="";}
+  document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function(r){r.checked=false;});
+  document.getElementById("totPrice").textContent="0";
+  document.getElementById("sbPrc").textContent="0";
+  document.getElementById("sigName").textContent="";
+  document.getElementById("sigMob").textContent="";
+  document.getElementById("sbSer").textContent="-";
+  var ab=document.getElementById("auditBar");ab.className="audit";ab.innerHTML="";
+}
+function showAudit(log){
+  var bar=document.getElementById("auditBar");
+  if(!log||!log.length){bar.className="audit";bar.innerHTML="";return;}
+  var al=function(a){
+    return a==="created"?"✅ তৈরি":a==="updated"?"✏️ আপডেট":a==="approved"?"✔️ অনুমোদন":"পরিবর্তন";
+  };
+  bar.className="audit on";
+  var html="<b>🗒 ইতিহাস:</b><br>";
+  var rev=log.slice().reverse();
+  for(var i=0;i<rev.length;i++){
+    var e=rev[i];
+    html+='<div style="padding:2px 0;border-bottom:1px dotted #a7f3d0">';
+    html+="🕐 <b>"+e.time+"</b> — "+e.display+" ("+e.by+") — "+al(e.action);
+    html+="</div>";
+  }
+  bar.innerHTML=html;
+}
+
+// ============================================================
+// MODE
+// ============================================================
+function setMode(mode){
+  pageMode=mode;
+  // md- class set করার আগে lg-light preserve করো
+  var wasLight=document.body.classList.contains("lg-light");
+  document.body.className="md-"+mode;
+  if(wasLight)document.body.classList.add("lg-light");
+
+  var ind=document.getElementById("modeInd");
+  var bSave=document.getElementById("btnSave");
+  var bReq=document.getElementById("btnReq");
+  var bLoadEd=document.getElementById("btnLoadEdit");
+  ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
+  bSave.style.display=bReq.style.display=bLoadEd.style.display="none";
+
+  var modeMap={
+    "disabled":{txt:"🔒 লক",   bg:"#f1f5f9",col:"#64748b",ban:"bLock"},
+    "new":     {txt:"✚ নতুন",  bg:"#dcfce7",col:"#166534",ban:null},
+    "view":    {txt:"👁 ভিউ",   bg:"#fef3c7",col:"#92400e",ban:null},
+    "pending": {txt:"⏳ Pending",bg:"#ffedd5",col:"#9a3412",ban:"bPend"},
+    "edit":    {txt:"✏️ Edit",   bg:"#dbeafe",col:"#1e40af",ban:"bOk"}
+  };
+  var m=modeMap[mode]||modeMap["disabled"];
+  ind.textContent=m.txt;ind.style.background=m.bg;ind.style.color=m.col;
+  if(m.ban)document.getElementById(m.ban).classList.add("show");
+
+  var isA=isPrivileged();
+  if(mode==="view"&&!isA)document.body.classList.add("user-view");
+  else document.body.classList.remove("user-view");
+
+  if(mode==="new"||mode==="edit"){
+    bSave.style.display="flex";
+  } else if(mode==="view"&&isA){
+    bSave.style.display="flex";
+  } else if(mode==="view"&&!isA){
+    var pendReq=null,aprReq=null;
+    for(var i=0;i<EREQS.length;i++){
+      if(String(EREQS[i].recordId)===String(curId)&&EREQS[i].requestedBy===currentUser.username){
+        if(EREQS[i].status==="approved")aprReq=EREQS[i];
+        else if(EREQS[i].status==="pending")pendReq=EREQS[i];
+      }
+    }
+    if(aprReq){document.getElementById("bOk").classList.add("show");bLoadEd.style.display="flex";}
+    else if(pendReq){
+      document.getElementById("bReq").classList.add("show");
+      document.getElementById("bReqTxt").textContent="Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।";
+    } else {bReq.style.display="flex";}
+  }
+}
+
+function startNew(){fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("new");document.getElementById("fId").focus();}
+function goDisabled(){fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("disabled");}
+
+// ============================================================
+// SAVE
+// ============================================================
+function doSave(){
+  if(!currentUser)return;
+  var d=fGet();
+  if(!d.name){showPop("গ্রাহকের নাম লিখুন","warning");return;}
+var isA=isPrivileged();
+  if(!d.id){d.id=nextId();document.getElementById("fId").value=d.id;}
+  var existIdx=-1;
+  for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(d.id)){existIdx=i;break;}}
+  if(existIdx>=0 && pageMode==="new"){
+    showPop("এই ID ("+d.id+") ইতিমধ্যে আছে! অন্য ID ব্যবহার করুন।","error");return;
+  }
+  var prevLog=(existIdx>=0&&DB[existIdx].auditLog)?DB[existIdx].auditLog:[];
+  if(isA){
+    d.auditLog=prevLog.concat([mkAudit(existIdx>=0?"updated":"created")]);
+    sync2("syncing","সেভ হচ্ছে...");
+    fbSet("customers",d.id,d,function(ok){
+      if(!ok){showPop("Firebase সেভ ব্যর্থ!","error");return;}
+      if(existIdx>=0)DB[existIdx]=d;
+      else{DB.push(d);DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});}
+      curId=d.id;setMode("view");showAudit(d.auditLog);updateBadges();
+      showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!","success");
+    });
+  } else if(pageMode==="edit"){
+    d.auditLog=prevLog.concat([mkAudit("updated")]);
+    sync2("syncing","সেভ হচ্ছে...");
+    fbSet("customers",d.id,d,function(ok){
+      if(!ok){showPop("Firebase সেভ ব্যর্থ!","error");return;}
+      if(existIdx>=0)DB[existIdx]=d;else DB.push(d);
+      for(var i=0;i<EREQS.length;i++){
+        if(String(EREQS[i].recordId)===String(d.id)&&EREQS[i].requestedBy===currentUser.username&&EREQS[i].status==="approved"){
+          fbDel("editreqs",EREQS[i].reqId,function(){});EREQS.splice(i,1);break;
+        }
+      }
+      updateBadges();showAudit(d.auditLog);curId=d.id;setMode("view");
+      showPop("✅ সেভ হয়েছে!\nপুনরায় সম্পাদনা করতে Admin-এর কাছে নতুন Edit Request পাঠাতে হবে।","success");
+    });
+  } else {
+    d.pendingId="p_"+Date.now();d._by=currentUser.username;d._byd=currentUser.display;d._t=nowStr();
+    d.auditLog=prevLog.concat([mkAudit("created")]);
+    fbSet("pending",d.pendingId,d,function(ok){
+      if(ok){PENDING.push(d);updateBadges();showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।\nAdmin অনুমোদন করলে সার্ভারে সেভ হবে।","info");goDisabled();}
+      else showPop("পাঠানো ব্যর্থ!","error");
+    });
+  }
+}
+
+// ============================================================
+// EDIT REQUEST
+// ============================================================
+function sendReq(){if(!currentUser||isPrivileged()||!curId)return;sendReqFor(curId);}
+function sendReqFor(recordId){
+  if(!currentUser||isPrivileged())return;
+  for(var i=0;i<EREQS.length;i++){
+    if(String(EREQS[i].recordId)===String(recordId)&&EREQS[i].requestedBy===currentUser.username){
+      if(EREQS[i].status==="approved")showPop("✅ Request অনুমোদিত হয়েছে। List থেকে Edit Mode ব্যবহার করুন।","info");
+      else showPop("পাঠানো Request অনুমোদনের অপেক্ষায় আছে।","info");
+      return;
+    }
+  }
+  var rec=null;
+  for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(recordId)){rec=DB[i];break;}}
+  var req={reqId:"er_"+Date.now(),recordId:recordId,recordName:rec?rec.name:"",requestedBy:currentUser.username,requestedDisplay:currentUser.display,requestedTime:nowStr(),status:"pending"};
+  fbSet("editreqs",req.reqId,req,function(ok){
+    if(ok){EREQS.push(req);updateBadges();closeVP();showPop("📨 Edit Request Admin এর কাছে পাঠানো হয়েছে!\nAdmin অনুমোদন করলে Edit করতে পারবেন।","success");}
+  });
+}
+function loadEditCur(){
+  if(!curId)return;
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(curId)){cur=i;fSet(DB[i]);setMode("edit");document.getElementById("navId").value=i+1;showPop("✏️ Edit মোড সক্রিয়! পরিবর্তন করে Save করুন।","info");return;}
+  }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function prevRec(){
+  if(!DB.length){showPop("কোনো ডাটা নেই","warning");return;}
+  cur=(cur-1+DB.length)%DB.length;curId=DB[cur].id;fSet(DB[cur]);setMode("view");document.getElementById("navId").value=cur+1;
+}
+function nextRec(){
+  if(!DB.length){showPop("কোনো ডাটা নেই","warning");return;}
+  cur=(cur+1)%DB.length;curId=DB[cur].id;fSet(DB[cur]);setMode("view");document.getElementById("navId").value=cur+1;
+}
+document.getElementById("navId").addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+  var s=parseInt(this.value);
+  if(!s||s<1||s>DB.length){showPop("সঠিক নম্বর দিন","warning");return;}
+  cur=s-1;curId=DB[cur].id;fSet(DB[cur]);setMode("view");
+});
+
+// ============================================================
+// LIST
+// ============================================================
+var _la=[],_lm="list";
+function showList(){
+  cloudSync(function(){
+    _lm="list";_la=DB.slice();
+    document.getElementById("lpTtl").textContent="📋 গ্রাহক তালিকা — মোট: "+DB.length+" জন";
+    document.getElementById("lpBody").innerHTML=buildList(DB,"list");
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+  });
+}
+function filterL(){
+  var q=document.getElementById("lsIn").value.toLowerCase();
+  var filtered=_la.filter(function(c){
+    return [c.id,c.name,c.mobile,c.login].some(function(f){return f&&f.toLowerCase().indexOf(q)>=0;});
+  });
+  document.getElementById("lpBody").innerHTML=buildList(filtered,_lm);
+}
+function closeLP(){document.getElementById("lpBg").classList.remove("on");}
+function buildList(arr,mode){
+  if(!arr.length)return'<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>';
+  var isA=isPrivileged();
+  var h='<table class="ltbl"><thead><tr><th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th><th>সংযোগ তারিখ</th><th>একশন</th></tr></thead><tbody>';
+  for(var i=0;i<arr.length;i++){
+    var c=arr[i],vid=c.id||c.pendingId;
+    var viewBtn;
+    if(!isA&&mode==="list"){
+      viewBtn='<button class="abtn v" onclick="openFullPage(\''+vid+'\')">👁 View</button>';
+    } else {
+      viewBtn='<button class="abtn v" onclick="openVP(\''+vid+'\',\''+mode+'\')">👁 View</button>';
+    }
+    var btns=viewBtn;
+    if(!isA&&mode==="list"){
+      var hasPend=false,hasApr=false;
+      for(var j=0;j<EREQS.length;j++){
+        if(String(EREQS[j].recordId)===String(vid)&&EREQS[j].requestedBy===currentUser.username){
+          if(EREQS[j].status==="approved")hasApr=true;else hasPend=true;
+        }
+      }
+      if(hasApr)btns+='<button class="abtn ok" onclick="goEditFromApproved(\''+vid+'\',\'\')">✏ Edit</button>';
+      else if(hasPend)btns+='<button class="abtn" style="background:#94a3b8;cursor:not-allowed" disabled>⏳ অপেক্ষায়</button>';
+      else btns+='<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\''+vid+'\')">📨 Request</button>';
+    }
+    if(isA&&mode==="list")btns+='<button class="abtn d" onclick="delFromList(\''+c.id+'\')">🗑</button>';
+    if(isA&&mode==="pending"){
+      btns='<button class="abtn ok" onclick="approveP(\''+c.pendingId+'\')">✔</button>'+viewBtn+'<button class="abtn no" onclick="rejectP(\''+c.pendingId+'\')">✕</button>';
+    }
+    h+='<tr>';
+    h+='<td style="color:#94a3b8;text-align:center">'+(i+1)+'</td>';
+    h+='<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#2563eb">'+(c.id||c.pendingId||"")+'</td>';
+    h+='<td style="font-weight:500">'+(c.name||"")+'</td>';
+    h+='<td>'+(c.mobile||"")+'</td>';
+    h+='<td><span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600">'+(c.package_type||"—")+'</span></td>';
+    h+='<td>'+(c.conn||"—")+'</td>';
+    h+='<td>'+btns+'</td></tr>';
+  }
+  h+='</tbody></table>';
+  return h;
+}
+
+// ============================================================
+// VIEW POPUP
+// ============================================================
+function openVP(id,mode){
+  var rec=null;
+  if(mode==="pending"){for(var i=0;i<PENDING.length;i++){if(String(PENDING[i].pendingId)===String(id)||String(PENDING[i].id)===String(id)){rec=PENDING[i];break;}}}
+  else{for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(id)){rec=DB[i];break;}}}
+  if(!rec){showPop("পাওয়া যায়নি","error");return;}
+  curId=id;
+  var isA=isPrivileged();
+  var rows=[
+    ["গ্রাহক ID",rec.id],["নাম",rec.name],["লগিন ID",rec.login],["পাসওয়ার্ড",rec.pass],
+    ["মোবাইল",rec.mobile],["ধরন",rec.customer_type],["প্যাকেজ",rec.package_type],
+    ["রিচার্জ",rec.recharge],["NID",rec.nid],["জন্ম তারিখ",rec.dob],
+    ["বাসা",rec.house],["এলাকা",rec.area],["থানা",rec.thana],
+    ["সংযোগ তারিখ",rec.conn],["মন্তব্য",rec.remark],["Splitter",rec.splitter_type],
+    ["রাউটার মডেল",rec.eRm],["রাউটার Serial",rec.eRs],["রাউটার মূল্য",rec.eRp],
+    ["ONU মডেল",rec.eOm],["ONU Serial",rec.eOs],["ONU মূল্য",rec.eOp],
+    ["মোট মূল্য",rec.totalPrice]
+  ];
+  var al=function(a){return a==="created"?"✅ তৈরি":a==="updated"?"✏️ আপডেট":a==="approved"?"✔️ অনুমোদন":"পরিবর্তন";};
+  var log=rec.auditLog||[];
+  var auditH="";
+  if(log.length){
+    auditH='<div class="asec">🗒 ইতিহাস</div><table class="vtbl">';
+    var rev=log.slice().reverse();
+    for(var i=0;i<rev.length;i++){
+      var e=rev[i];
+      auditH+='<tr><td class="vl" style="background:#eff6ff;color:#1e40af;white-space:nowrap">🕐 '+e.time+'</td>';
+      auditH+='<td><b>'+e.display+'</b> ('+e.by+') — '+al(e.action)+'</td></tr>';
+    }
+    auditH+='</table>';
+  }
+var tbody='<table class="vtbl">';
+  for(var ri=0;ri<rows.length;ri++)tbody+='<tr><td class="vl">'+rows[ri][0]+'</td><td>'+(rows[ri][1]||"—")+'</td></tr>';
+  tbody+='</table>';
+  document.getElementById("vpBody").innerHTML=tbody+auditH;
+  var foot=document.getElementById("vpFoot");foot.innerHTML="";
+  if(mode==="pending"&&isA){
+    foot.innerHTML+='<button class="pbtn green" onclick="approveP(\''+(rec.pendingId||id)+'\')">✔ Approve</button>';
+    foot.innerHTML+='<button class="pbtn red"   onclick="rejectP(\''+  (rec.pendingId||id)+'\')">✕ Reject</button>';
+  } else if(mode==="list"&&isA){
+    foot.innerHTML+='<button class="pbtn green" onclick="viewFromVP(\''+id+'\')">👁 View</button>';
+    foot.innerHTML+='<button class="pbtn blue"  onclick="editFromVP(\''+id+'\')">✏ Edit</button>';
+    foot.innerHTML+='<button class="pbtn red"   onclick="delFromVP(\'' +id+'\')">🗑 Delete</button>';
+  } else if(mode==="list"&&!isA){
+    var pendReq=null,aprReq=null;
+    for(var ei=0;ei<EREQS.length;ei++){
+      if(String(EREQS[ei].recordId)===String(id)&&EREQS[ei].requestedBy===currentUser.username){
+        if(EREQS[ei].status==="approved")aprReq=EREQS[ei];else pendReq=EREQS[ei];
+      }
+    }
+    if(aprReq)foot.innerHTML+='<button class="pbtn green" onclick="loadEditAndClose(\''+id+'\')">✏ Edit Mode</button>';
+    else if(pendReq)foot.innerHTML+='<button class="pbtn grey" style="opacity:.6;cursor:not-allowed">⏳ অনুমোদনের অপেক্ষায়</button>';
+    else foot.innerHTML+='<button class="pbtn orange" onclick="sendReqFor(\''+id+'\')">📨 Edit Request</button>';
+  }
+  foot.innerHTML+='<button class="pbtn grey" onclick="closeVP()">বন্ধ করুন</button>';
+  document.getElementById("lpBg").classList.remove("on");
+  document.getElementById("vpBg").classList.add("on");
+}
+function closeVP(){document.getElementById("vpBg").classList.remove("on");curId=null;}
+
+function openFullPage(id){
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(id)){
+      cur=i;curId=id;fSet(DB[i]);setMode("view");
+      document.getElementById("navId").value=i+1;closeLP();
+      window.scrollTo({top:0,behavior:"smooth"});return;
+    }
+  }
+  showPop("রেকর্ড পাওয়া যায়নি।","error");
+}
+function viewFromVP(id){
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(id)){
+      cur=i;curId=id;fSet(DB[i]);
+      var wasLight=document.body.classList.contains("lg-light");
+      document.body.className="md-view user-view";
+      if(wasLight)document.body.classList.add("lg-light");
+      var ind=document.getElementById("modeInd");
+      ind.textContent="👁 ভিউ";ind.style.background="#fef3c7";ind.style.color="#92400e";
+      ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
+      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display="none";
+      document.getElementById("navId").value=i+1;
+      closeVP();closeLP();window.scrollTo({top:0,behavior:"smooth"});return;
+    }
+  }
+  showPop("রেকর্ড পাওয়া যায়নি।","error");
+}
+function loadEditAndClose(id){
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
+  }
+}
+function editFromVP(id){
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();window.scrollTo({top:0,behavior:"smooth"});showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
+  }
+}
+function delFromVP(id){
+  if(!confirm("ID: "+id+" — ট্র্যাশে পাঠাবেন?"))return;
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(id)){
+      var rec=DB[i];DB.splice(i,1);TRASH.push(rec);
+      fbDel("customers",id,function(){});fbSet("trash",id,rec,function(){});
+      updateBadges();showPop("🗑 ট্র্যাশে পাঠানো হয়েছে।","success");closeVP();goDisabled();return;
+    }
+  }
+}
+
+// ============================================================
+// MY APPROVED REQUESTS
+// ============================================================
+function showMyApproved(){
+  if(!currentUser||isPrivileged())return;
+  cloudSync(function(){
+    var myList=EREQS.filter(function(r){return r.requestedBy===currentUser.username&&r.status==="approved";});
+    document.getElementById("lpTtl").textContent="✅ Approved Requests ("+myList.length+")";
+    if(!myList.length){
+      document.getElementById("lpBody").innerHTML='<div class="empty"><div class="ei">✅</div><p>কোনো Approved Request নেই।</p></div>';
+    } else {
+      var h='<table class="ltbl"><thead><tr><th>#</th><th>রেকর্ড ID</th><th>গ্রাহক</th><th>অনুমোদনের সময়</th><th>একশন</th></tr></thead><tbody>';
+      for(var i=0;i<myList.length;i++){
+        var rq=myList[i];
+        h+='<tr><td style="color:#94a3b8;text-align:center">'+(i+1)+'</td>';
+        h+='<td style="font-family:\'JetBrains Mono\',monospace;color:#2563eb;font-weight:700">'+rq.recordId+'</td>';
+        h+='<td style="font-weight:500">'+(rq.recordName||"—")+'</td>';
+        h+='<td style="font-size:11px;color:#64748b">'+(rq.requestedTime||"")+'</td>';
+        h+='<td><button class="abtn ok" onclick="goEditFromApproved(\''+rq.recordId+'\',\''+rq.reqId+'\')">✏ Edit Mode</button></td></tr>';
+      }
+      h+='</tbody></table>';
+      document.getElementById("lpBody").innerHTML=h;
+    }
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+  });
+}
+function goEditFromApproved(recordId,reqId){
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(recordId)){
+      cur=i;curId=recordId;fSet(DB[i]);setMode("edit");
+      document.getElementById("navId").value=i+1;closeLP();
+      showPop("✏️ Edit মোড সক্রিয়! পরিবর্তন করে Save করুন।","info");return;
+    }
+  }
+  showPop("রেকর্ড পাওয়া যায়নি।","error");
+}
+
+// ============================================================
+// PENDING
+// ============================================================
+function showPending(){
+  if(!currentUser||!isPrivileged())return;
+  cloudSync(function(){
+    _lm="pending";_la=PENDING.slice();
+    document.getElementById("lpTtl").textContent="⏳ Pending — "+PENDING.length+" টি";
+    document.getElementById("lpBody").innerHTML=buildList(PENDING,"pending");
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+  });
+}
+function approveP(pid){
+  var rec=null;
+  for(var i=0;i<PENDING.length;i++){if(String(PENDING[i].pendingId)===String(pid)){rec=PENDING[i];break;}}
+  if(!rec){showPop("পাওয়া যায়নি","error");return;}
+  var prevLog=rec.auditLog||[];
+  rec.auditLog=prevLog.concat([mkAudit("approved")]);
+  if(!rec.id)rec.id=nextId();
+  fbSet("customers",rec.id,rec,function(ok){
+    if(!ok)return;
+    fbDel("pending",pid,function(){});
+    for(var i=0;i<PENDING.length;i++){if(String(PENDING[i].pendingId)===String(pid)){PENDING.splice(i,1);break;}}
+    var found=false;
+    for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(rec.id)){DB[i]=rec;found=true;break;}}
+    if(!found){DB.push(rec);DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});}
+    updateBadges();showPop("✔️ Approved! সার্ভারে সেভ হয়েছে।","success");closeVP();showPending();
+  });
+}
+function rejectP(pid){
+  if(!confirm("এই Pending বাতিল করবেন?"))return;
+  fbDel("pending",pid,function(){});
+  for(var i=0;i<PENDING.length;i++){if(String(PENDING[i].pendingId)===String(pid)){PENDING.splice(i,1);break;}}
+  updateBadges();showPop("✕ বাতিল।","warning");closeVP();showPending();
+}
+
+// ============================================================
+// EDIT REQUESTS
+// ============================================================
+function showEditReqs(){
+  if(!currentUser||!isPrivileged())return;
+  cloudSync(function(){
+    document.getElementById("lpTtl").textContent="✍🏻 Edit Requests ("+EREQS.length+")";
+    if(!EREQS.length){
+      document.getElementById("lpBody").innerHTML='<div class="empty"><div class="ei">✅</div><p>কোনো Request নেই।</p></div>';
+    } else {
+      var h='<table class="ltbl"><thead><tr><th>#</th><th>রেকর্ড ID</th><th>গ্রাহক</th><th>রিকোয়েস্টকারী</th><th>সময়</th><th>Status</th><th>একশন</th></tr></thead><tbody>';
+      for(var i=0;i<EREQS.length;i++){
+        var rq=EREQS[i];
+        var statBg=rq.status==="approved"?"#dcfce7":"#fef9c3";
+        var statCol=rq.status==="approved"?"#166534":"#92400e";
+        var statTxt=rq.status==="approved"?"✅ Approved":"⏳ Pending";
+        var btns=rq.status==="pending"
+          ?'<button class="abtn ok" onclick="approveER(\''+rq.reqId+'\')">✔</button><button class="abtn no" onclick="rejectER(\''+rq.reqId+'\')">✕</button>'
+          :'<button class="abtn no" onclick="rejectER(\''+rq.reqId+'\')">🗑</button>';
+        h+='<tr>';
+        h+='<td style="color:#94a3b8;text-align:center">'+(i+1)+'</td>';
+        h+='<td style="font-family:\'JetBrains Mono\',monospace;color:#2563eb">'+rq.recordId+'</td>';
+        h+='<td>'+(rq.recordName||"—")+'</td>';
+        h+='<td><span style="background:#ede9fe;color:#4c1d95;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600">'+rq.requestedDisplay+'</span></td>';
+        h+='<td style="font-size:11px;color:#64748b">'+rq.requestedTime+'</td>';
+        h+='<td><span style="padding:2px 7px;border-radius:9px;font-size:11px;font-weight:700;background:'+statBg+';color:'+statCol+'">'+statTxt+'</span></td>';
+        h+='<td>'+btns+'</td></tr>';
+      }
+      h+='</tbody></table>';
+      document.getElementById("lpBody").innerHTML=h;
+    }
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+  });
+}
+function approveER(rid){
+  for(var i=0;i<EREQS.length;i++){
+    if(EREQS[i].reqId===rid){
+      EREQS[i].status="approved";
+      fbSet("editreqs",rid,EREQS[i],function(ok){if(ok){showPop("✔️ অনুমোদিত!","success");showEditReqs();}});
+      return;
+    }
+  }
+}
+function rejectER(rid){
+  if(!confirm("এই Request বাতিল করবেন?"))return;
+  fbDel("editreqs",rid,function(){});
+  for(var i=0;i<EREQS.length;i++){if(EREQS[i].reqId===rid){EREQS.splice(i,1);break;}}
+  updateBadges();showPop("✕ বাতিল।","warning");showEditReqs();
+}
+
+// ============================================================
+// DELETE / TRASH
+// ============================================================
+function delFromList(id){
+  for(var i=0;i<DB.length;i++){
+    if(DB[i].id===id){
+      if(!confirm("ID: "+id+" — ট্র্যাশে পাঠাবেন?"))return;
+      var rec=DB[i];DB.splice(i,1);TRASH.push(rec);
+      fbDel("customers",id,function(){});fbSet("trash",id,rec,function(){});
+      updateBadges();closeLP();showList();return;
+    }
+  }
+}
+function showTrash(){
+  if(!currentUser||!isPrivileged())return;
+  cloudSync(function(){
+    document.getElementById("lpTtl").textContent="🗑 Trash — "+TRASH.length+" টি";
+    if(!TRASH.length){
+      document.getElementById("lpBody").innerHTML='<div class="empty"><div class="ei">🗑</div><p>Trash খালি।</p></div>';
+    } else {
+      var h='<table class="ltbl"><thead><tr><th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>একশন</th></tr></thead><tbody>';
+      for(var i=0;i<TRASH.length;i++){
+        var c=TRASH[i];
+        h+='<tr><td style="text-align:center;color:#94a3b8">'+(i+1)+'</td>';
+        h+='<td style="font-family:\'JetBrains Mono\',monospace;color:#dc2626">'+c.id+'</td>';
+        h+='<td>'+(c.name||"")+'</td><td>'+(c.mobile||"")+'</td>';
+        h+='<td><button class="abtn res" onclick="restoreR(\''+c.id+'\')">♻ Restore</button><button class="abtn d" onclick="permDel(\''+c.id+'\')">✕ মুছুন</button></td></tr>';
+      }
+      h+='</tbody></table>';
+      document.getElementById("lpBody").innerHTML=h;
+    }
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+  });
+}
+function restoreR(oldId){
+  for(var i=0;i<TRASH.length;i++){
+    if(String(TRASH[i].id)===String(oldId)){
+      var rec=TRASH[i],newId=nextId(),nr={};
+      Object.keys(rec).forEach(function(k){nr[k]=rec[k];});nr.id=newId;
+      fbSet("customers",newId,nr,function(ok){
+        if(!ok){showPop("Restore ব্যর্থ","error");return;}
+        fbDel("trash",oldId,function(){});TRASH.splice(i,1);DB.push(nr);
+        DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});
+        updateBadges();showPop("♻ Restore হয়েছে। নতুন ID: "+newId,"success");showTrash();
+      });return;
+    }
+  }
+}
+function permDel(id){
+  for(var i=0;i<TRASH.length;i++){
+    if(String(TRASH[i].id)===String(id)){
+      if(!confirm("স্থায়ীভাবে মুছবেন? ফেরানো যাবে না।"))return;
+      TRASH.splice(i,1);fbDel("trash",id,function(){});showTrash();return;
+    }
+  }
+}
+
+// ============================================================
+// EXCEL / EXPORT / IMPORT
+// ============================================================
+function doExcel(){
+  if(!currentUser||!isPrivileged())return;
+  cloudSync(function(){
+    if(!DB.length){showPop("ডাটা নেই","warning");return;}
+    var h=["#","ID","নাম","Login","Pass","Mobile","Type","Package","Recharge","NID","DOB","House","Area","Thana","Conn","Remarks","Router M","Router Q","Router S","Router P","Cable1 M","Cable1 Q","Cable1 S","Cable1 P","Cable2 M","Cable2 Q","Cable2 S","Cable2 P","ONU M","ONU Q","ONU S","ONU P","TJ Q","TJ S","TJ P","TJ 4","TJ 8","PC M","PC Q","PC S","PC P","Splitter","Spl S","Spl P","Total","Created By","Updated By"];
+    var rows=[];
+    for(var i=0;i<DB.length;i++){
+      var c=DB[i],log=c.auditLog||[];
+      var cb=log.length?log[0].display:"";
+      var lu=log.length?log[log.length-1].display+" ("+log[log.length-1].time+")":"";
+      rows.push([i+1,c.id||"",c.name||"",c.login||"",c.pass||"",c.mobile||"",c.customer_type||"",c.package_type||"",c.recharge||"",c.nid||"",c.dob||"",c.house||"",c.area||"",c.thana||"",c.conn||"",c.remark||"",c.eRm||"",c.eRq||"",c.eRs||"",c.eRp||"",c.eC1m||"",c.eC1q||"",c.eC1s||"",c.eC1p||"",c.eC2m||"",c.eC2q||"",c.eC2s||"",c.eC2p||"",c.eOm||"",c.eOq||"",c.eOs||"",c.eOp||"",c.eTq||"",c.eTs||"",c.eTp||"",c.eT4||"",c.eT8||"",c.ePm||"",c.ePq||"",c.ePs||"",c.ePp||"",c.splitter_type||"",c.eSs||"",c.eSp||"",c.totalPrice||0,cb,lu]);
+    }
+    var wb=XLSX.utils.book_new();
+    var ws=XLSX.utils.aoa_to_sheet([h].concat(rows));
+    XLSX.utils.book_append_sheet(wb,ws,"Customers");
+    XLSX.writeFile(wb,"Agni-"+new Date().toISOString().slice(0,10)+".xlsx");
+    showPop("✅ Excel ডাউনলোড! "+DB.length+" জন।","success");
+  });
+}
+function doExport(){
+  if(!DB.length){showPop("ডাটা নেই","warning");return;}
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(DB,null,2)],{type:"application/json"}));
+  a.download="customers-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();showPop("✅ Export সম্পন্ন!","success");
+}
+function doImport(){document.getElementById("impFile").click();}
+document.getElementById("impFile").addEventListener("change",function(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var imp=JSON.parse(ev.target.result);if(!Array.isArray(imp))imp=[imp];
+      var n=0;
+      for(var i=0;i<imp.length;i++){
+        var rec=imp[i];if(!rec.id)continue;
+        var exists=false;
+        for(var j=0;j<DB.length;j++){if(String(DB[j].id)===String(rec.id)){exists=true;break;}}
+        if(!exists){if(!rec.auditLog)rec.auditLog=[mkAudit("created")];DB.push(rec);n++;fbSet("customers",rec.id,rec,function(){});}
+      }
+      DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});updateBadges();
+      showPop(imp.length+" রেকর্ড ইম্পোর্ট, "+n+" নতুন।","success");
+    }catch(err){showPop("JSON Error: "+err.message,"error");}
+  };
+  reader.readAsText(file);e.target.value="";
+});
+
+// ============================================================
+// ADMIN PANEL
+// ============================================================
+function openAdmin(){if(!currentUser||!isPrivileged())return;renderUsers();document.getElementById("admBg").classList.add("on");}
+function closeAdm(){document.getElementById("admBg").classList.remove("on");}
+function renderUsers(){
+  var users=getUsers();
+  var html="";
+  Object.keys(users).forEach(function(u){
+    var info=users[u];
+    var roleLabel;
+    if(info.role==="coder")roleLabel='<span style="background:rgba(99,102,241,.15);color:#6366f1;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;border:1px solid rgba(99,102,241,.3)">⚡ Coder</span>';
+    else if(info.role==="admin")roleLabel='<span class="u-role admin">👑 Admin</span>';
+    else roleLabel='<span class="u-role user">👤 User</span>';
+    var actionBtn;
+    if(u===CODER_ID)actionBtn='<span style="font-size:11px;color:#6366f1;padding:3px 8px;background:rgba(99,102,241,.1);border-radius:6px;border:1px solid rgba(99,102,241,.2)">🔒 Protected</span>';
+    else if(u===currentUser.username)actionBtn='<span style="font-size:11px;color:#94a3b8">আপনি</span>';
+    else actionBtn='<button class="abtn d" onclick="delUser(\''+u+'\')">🗑</button><button class="abtn" style="background:#2563eb;margin-left:3px" onclick="editUser(\''+u+'\')">✎ Edit</button>';
+    html+='<div class="u-item"><div><span class="u-nm">'+u+'</span> '+roleLabel+'<div style="font-size:11px;color:#64748b;margin-top:2px">👤 '+(info.display||u)+'</div></div>'+actionBtn+'</div>';
+  });
+  document.getElementById("uList").innerHTML=html;
+}
+function createUser(){
+  var u=document.getElementById("aUsr").value.trim();
+  var dn=document.getElementById("aDispName").value.trim();
+  var uid=document.getElementById("aUID").value.trim();
+  var r=document.getElementById("aRole").value;
+  if(!u){showPop("Username দিন","warning");return;}
+  if(!dn){showPop("পূর্ণ নাম দিন","warning");return;}
+  if(!uid){showPop("User ID দিন","warning");return;}
+  if(r==="coder"){showPop("Coder role তৈরি নিষিদ্ধ।","error");return;}
+  var users=getUsers();
+  if(users[u]){showPop("এই Username ইতিমধ্যে আছে","error");return;}
+  users[u]={pass:uid,role:r,display:dn};
+  saveUsers(users,function(ok){
+    if(!ok){showPop("Firebase সেভ ব্যর্থ!","error");return;}
+    document.getElementById("aUsr").value=document.getElementById("aDispName").value=document.getElementById("aUID").value="";
+    renderUsers();showPop("✅ User '"+dn+"' তৈরি হয়েছে!\nUsername: "+u+"\nPassword: "+uid,"success");
+  });
+}
+function delUser(u){
+  if(u===CODER_ID){showPop("⚡ Coder সুরক্ষিত।","error");return;}
+  if(u===currentUser.username){showPop("নিজেকে মুছতে পারবেন না।","error");return;}
+  if(!confirm("User '"+u+"' মুছবেন?"))return;
+  var users=getUsers();delete users[u];
+  saveUsers(users,function(ok){
+    if(ok){renderUsers();showPop("🗑 User '"+u+"' মুছা হয়েছে।","info");}
+    else showPop("Firebase delete ব্যর্থ!","error");
+  });
+}
+var _editingUser=null;
+function editUser(u){
+  if(u===CODER_ID){showPop("Coder সুরক্ষিত — edit সম্ভব নয়।","error");return;}
+  var users=getUsers(),info=users[u];if(!info)return;
+  _editingUser=u;
+  document.getElementById("eUsr").value=u;
+  document.getElementById("eDispName").value=info.display||u;
+  document.getElementById("ePas").value="";
+  document.getElementById("eRole").value=(info.role==="admin")?"admin":"user";
+  document.getElementById("editUserTitle").textContent="✏️ Edit: "+u;
+  document.getElementById("editUserBg").classList.add("on");
+}
+function saveEditUser(){
+  if(!_editingUser)return;
+  var dn=document.getElementById("eDispName").value.trim();
+  var np=document.getElementById("ePas").value.trim();
+  var nr=document.getElementById("eRole").value;
+  if(!dn){showPop("পূর্ণ নাম দিন","warning");return;}
+  var users=getUsers();
+  users[_editingUser].display=dn;users[_editingUser].role=nr;
+  if(np)users[_editingUser].pass=np;
+  var done=_editingUser;
+  saveUsers(users,function(ok){cancelEditUser();renderUsers();if(ok)showPop("✅ User '"+done+"' আপডেট হয়েছে!","success");else showPop("Firebase সেভ ব্যর্থ!","error");});
+}
+function cancelEditUser(){
+  _editingUser=null;
+  document.getElementById("editUserBg").classList.remove("on");
+  document.getElementById("eUsr").value=document.getElementById("eDispName").value=document.getElementById("ePas").value="";
+}
+function changePass(){
+  var o=document.getElementById("aOld").value.trim();
+  var n=document.getElementById("aNew").value.trim();
+  var users=getUsers();
+  if(users[currentUser.username].pass!==o){showPop("পুরনো Password ভুল","error");return;}
+  if(!n){showPop("নতুন Password দিন","warning");return;}
+  users[currentUser.username].pass=n;
+  saveUsers(users,function(ok){
+    document.getElementById("aOld").value=document.getElementById("aNew").value="";
+    if(ok)showPop("✅ Password পরিবর্তন হয়েছে।","success");else showPop("Firebase সেভ ব্যর্থ!","error");
+  });
+}
+
+// ============================================================
+// POPUP
+// ============================================================
+function showPop(msg,type,title){
+  type=type||"info";
+  var titles={success:"সফল ✅",error:"ত্রুটি ❌",warning:"সতর্কতা ⚠️",info:"তথ্য ℹ️"};
+  document.getElementById("popBox").className="pop "+type;
+  document.getElementById("popTtl").textContent=title||titles[type]||"বার্তা";
+  document.getElementById("popMsg").innerHTML=msg.replace(/\n/g,"<br>");
+  document.getElementById("popBg").classList.add("on");
+}
+function closePop(){document.getElementById("popBg").classList.remove("on");}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function doTopSearch(q){
+  q=(q||"").trim().toLowerCase();if(!q)return;
+  var doSearch=function(){
+    var filtered=DB.filter(function(c){
+      return [(c.id||""),(c.name||""),(c.mobile||"")].some(function(f){return f.toLowerCase().indexOf(q)>=0;});
+    });
+    if(!filtered.length){showPop("কোনো ফলাফল পাওয়া যায়নি।","warning");document.getElementById("tbSearch").value="";return;}
+    if(filtered.length===1){
+      var idx=-1;
+      for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(filtered[0].id)){idx=i;break;}}
+      cur=idx>=0?idx:0;curId=filtered[0].id;fSet(filtered[0]);
+      var wasLight=document.body.classList.contains("lg-light");
+      document.body.className="md-view user-view";
+      if(wasLight)document.body.classList.add("lg-light");
+      var ind=document.getElementById("modeInd");
+      ind.textContent="👁 ভিউ";ind.style.background="#fef3c7";ind.style.color="#92400e";
+      ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
+      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display="none";
+      document.getElementById("navId").value=cur+1;
+      document.getElementById("tbSearch").value="";
+      window.scrollTo({top:0,behavior:"smooth"});return;
+    }
+    _lm="list";_la=filtered;
+    document.getElementById("lpTtl").textContent="🔍 ফলাফল — "+filtered.length+" টি";
+    document.getElementById("lpBody").innerHTML=buildList(filtered,"list");
+    document.getElementById("lsIn").value=q;
+    document.getElementById("lpBg").classList.add("on");
+    document.getElementById("tbSearch").value="";
+  };
+  if(DB.length>0){doSearch();}else{cloudSync(function(){doSearch();});}
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+document.addEventListener("keydown",function(e){
+  if(e.key==="Escape"){closePop();closeLP();closeVP();closeAdm();}
+});
+document.getElementById("fName").addEventListener("input",function(){document.getElementById("sigName").textContent=this.value;});
+document.getElementById("fMob").addEventListener("input",function(){document.getElementById("sigMob").textContent=this.value;});
+document.querySelectorAll(".price").forEach(function(el){el.addEventListener("input",updateTotal);});
+autoSlash("fDob");autoSlash("fConn");
+document.getElementById("lbtn").addEventListener("click",doLogin);
+document.getElementById("lpass").addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+document.getElementById("lusr").addEventListener("keydown",function(e){if(e.key==="Enter")document.getElementById("lpass").focus();});
+document.getElementById("tbSearch").addEventListener("keydown",function(e){if(e.key==="Enter")doTopSearch(this.value);});
+document.getElementById("navId").addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+  var s=parseInt(this.value);
+  if(!s||s<1||s>DB.length){showPop("সঠিক নম্বর দিন","warning");return;}
+  cur=s-1;curId=DB[cur].id;fSet(DB[cur]);setMode("view");
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function initApp(){
+  updateTotal();
+  cloudSync(function(){
+    document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");
+    setMode("disabled");
+  });
+}
+
+window.addEventListener("load",function(){
+  // Theme আগে apply করো
+  applyTheme(curTheme);
+  // saved credentials load
+  loadSaved();
+  // Firebase থেকে users লোড
+  loadUsersFromFirebase(function(users){
+    _cachedUsers=users;
+    // Session restore
+    try{
+      var sess=JSON.parse(localStorage.getItem("agni_session")||"null");
+      if(sess&&sess.u&&sess.p){
+        var u2=getUsers();
+        if(u2[sess.u]&&u2[sess.u].pass===sess.p){
+          currentUser={username:sess.u,role:u2[sess.u].role,display:u2[sess.u].display||sess.u};
+          document.getElementById("loginScreen").style.display="none";
+          document.getElementById("sidebar").style.display="flex";
+          document.getElementById("appWrap").style.display="block";
+          setupRole();initApp();
+        } else {
+          localStorage.removeItem("agni_session");
+        }
+      }
+    }catch(e){localStorage.removeItem("agni_session");}
+  });
+});
+
+// ============================================================
+// SECURITY
+// ============================================================
+(function(){
+  function blockKeys(e){
+    if(e.key==="F12"){e.preventDefault();e.stopImmediatePropagation();return false;}
+    if(e.ctrlKey&&(e.key==="s"||e.key==="S")){e.preventDefault();e.stopImmediatePropagation();return false;}
+    if(e.ctrlKey&&(e.key==="u"||e.key==="U")){e.preventDefault();e.stopImmediatePropagation();return false;}
+    if(e.ctrlKey&&e.shiftKey&&(e.key==="I"||e.key==="J")){e.preventDefault();e.stopImmediatePropagation();return false;}
+  }
+  ["keydown","keypress","keyup"].forEach(function(evt){document.addEventListener(evt,blockKeys,true);});
+  window.oncontextmenu=function(e){e.preventDefault();return false;};
+})();
+</script>
+</body>
+</html>
