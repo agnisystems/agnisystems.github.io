@@ -568,7 +568,9 @@ body.lg-light .stat-card {
 
 <div id="sidebar">
   <div class="sb-brand">
-    <div class="sb-logo" id="sbLogo">🔥</div>
+    <div class="sb-logo" id="sbLogo">
+          <img src="logo.png" alt="Logo" style="width:22px;height:22px;object-fit:contain;border-radius:4px;" onerror="this.parentElement.innerHTML='🔥'"/>
+    </div>
     <div><div class="sb-brand-txt">AGNI SYSTEMS</div><div class="sb-brand-sub">Management Portal</div></div>
   </div>
   <div class="sb-user">
@@ -580,7 +582,6 @@ body.lg-light .stat-card {
   <div class="sb-item" onclick="goDisabled()"><span class="sb-ico">🏠</span> Home</div>
   <div class="sb-item new-item" onclick="startNew()"><span class="sb-ico">✚</span> নতুন এন্ট্রি</div>
   <div class="sb-item" onclick="showList()"><span class="sb-ico">📋</span> Data List <span class="sb-badge green" id="sBadgeList">0</span></div>
-  <div class="sb-item" onclick="goDisabled()"><span class="sb-ico">👁</span> ভিউ মোড</div>
   <div class="sb-item" id="sMyReqs" style="display:none" onclick="showMyApproved()"><span class="sb-ico">✅</span> Approved <span class="sb-badge green" id="sBadgeMyApr">0</span></div>
   <div class="sb-div"></div>
   <div class="sb-sec">ডাউনলোড</div>
