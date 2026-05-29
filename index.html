@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -444,6 +445,21 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
 .vtbl .vl{background:#fff8f0;color:#7d5a00;font-weight:700;width:33%;border-right:1px solid #ffe0b2;}
 .asec{background:#eff6ff;font-weight:bold;font-size:11px;padding:6px 11px;border-bottom:1px solid #bfdbfe;color:#1e40af;}
 
+.hm-card{background:#1e293b;border:1px solid rgba(255,255,255,.07);border-radius:14px;transition:all .2s;}
+.hm-card-title{font-size:13px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:12px;letter-spacing:.3px;}
+.stat-card{background:#1e293b;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:all .2s;}
+.stat-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-2px);}
+.stat-card .sc-icon{font-size:28px;margin-bottom:8px;}
+.stat-card .sc-val{font-size:28px;font-weight:800;font-family:"JetBrains Mono",monospace;color:#fff;}
+.stat-card .sc-lbl{font-size:11px;color:rgba(255,255,255,.4);margin-top:4px;font-weight:500;}
+.stat-card .sc-glow{position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;filter:blur(40px);opacity:.3;}
+body.lg-light .hm-card{background:#fff;border-color:#e2e8f0;}
+body.lg-light .hm-card-title{color:#475569;}
+body.lg-light .stat-card{background:#fff;border-color:#e2e8f0;}
+body.lg-light .stat-card .sc-val{color:#1e293b;}
+body.lg-light .stat-card .sc-lbl{color:#64748b;}    
+    
+    
 @media print{
   body{background:#fff;}
   #sidebar,#appWrap #topbar,#mainContent .right-bar,.banner,.audit,.pop-bg{display:none!important;}
@@ -556,7 +572,37 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
     <button class="tb-btn" style="background:linear-gradient(135deg,rgba(220,38,38,.55),rgba(185,28,28,.65));color:#FFF;" onclick="doLogout()">Log out</button>
   </div>
   <div id="mainContent">
-  <div class="layout">
+  <div id="homePage" style="display:none;width:100%;max-width:1100px;margin:0 auto;padding:8px 0 40px;">
+  <!-- Stats Row -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;" id="statsGrid"></div>
+  <!-- Charts Row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+    <div class="hm-card" id="chartMonthly" style="padding:18px;">
+      <div class="hm-card-title">📅 মাসভিত্তিক গ্রাহক</div>
+      <canvas id="canvasMonthly" height="180"></canvas>
+    </div>
+    <div class="hm-card" id="chartRevenue" style="padding:18px;">
+      <div class="hm-card-title">💰 মাসভিত্তিক আয়</div>
+      <canvas id="canvasRevenue" height="180"></canvas>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;">
+    <div class="hm-card" style="padding:18px;">
+      <div class="hm-card-title">📦 প্যাকেজ বিতরণ</div>
+      <canvas id="canvasPkg" height="200"></canvas>
+    </div>
+    <div class="hm-card" style="padding:18px;">
+      <div class="hm-card-title">🏠 গ্রাহকের ধরন</div>
+      <canvas id="canvasType" height="200"></canvas>
+    </div>
+  </div>
+  <!-- Recent -->
+  <div class="hm-card" style="padding:18px;">
+    <div class="hm-card-title">🕐 সাম্প্রতিক এন্ট্রি</div>
+    <div id="recentList" style="margin-top:10px;"></div>
+  </div>
+</div>
+  <div class="layout" style="display:none">
     <div class="a4-col">
       <div class="a4-page" id="page1">
         <div class="banner b-lock show" id="bLock"><span>🔒</span><span>এন্ট্রি লক। <b>নতুন এন্ট্রি</b> বা <b>List</b> ব্যবহার করুন।</span></div>
@@ -850,8 +896,11 @@ function applyTheme(key) {
     var sbP = document.getElementById("sbHexPrev");
     if (sbP) sbP.style.background = curCustomHex;
   }
-
-  updateThemeBtns(key);
+updateThemeBtns(key);
+  var hp = document.getElementById("homePage");
+  if (hp && hp.style.display !== "none") {
+    renderHome();
+  }
 }
 
 function updateThemeBtns(key) {
@@ -1392,9 +1441,14 @@ function setMode(mode){
     } else {bReq.style.display="flex";}
   }
 }
-
-function startNew(){fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("new");document.getElementById("fId").focus();}
-function goDisabled(){fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("disabled");}
+function _switchToForm(){hideHome();}
+function startNew(){hideHome();fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("new");document.getElementById("fId").focus();}
+function goDisabled(){
+  fClear();cur=-1;curId=null;
+  document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");
+  setMode("disabled");
+  showHome();
+}
 
 // ============================================================
 // SAVE
@@ -2095,6 +2149,159 @@ document.getElementById("navId").addEventListener("keydown",function(e){
   cur=s-1;curId=DB[cur].id;fSet(DB[cur]);setMode("view");
 });
 
+    
+// ============================================================
+// HOMEPAGE DASHBOARD
+// ============================================================
+var _charts = {};
+
+function showHome() {
+  document.getElementById("homePage").style.display = "block";
+  document.querySelector(".layout").style.display   = "none";
+  if (!DB.length) {
+    cloudSync(function() { renderHome(); });
+  } else {
+    renderHome();
+  }
+}
+function hideHome() {
+  document.getElementById("homePage").style.display = "none";
+  document.querySelector(".layout").style.display   = "flex";
+}
+
+function renderHome() {
+  if (!DB.length) {
+    document.getElementById("statsGrid").innerHTML =
+      '<div style="color:rgba(255,255,255,.3);font-size:13px;padding:20px">ডাটা লোড হচ্ছে...</div>';
+    return;
+  }
+
+  // ── Stats ──
+  var totalRevenue = 0;
+  var pkgCount = {}, typeCount = {}, monthCount = {}, monthRevenue = {};
+  var now = new Date();
+
+  DB.forEach(function(c) {
+    totalRevenue += Number(c.totalPrice) || 0;
+
+    // Package
+    var p = c.package_type || "অজানা";
+    pkgCount[p] = (pkgCount[p] || 0) + 1;
+
+    // Type
+    var t = c.customer_type || "অজানা";
+    typeCount[t] = (typeCount[t] || 0) + 1;
+
+    // Month from conn date DD/MM/YYYY
+    if (c.conn && c.conn.length >= 7) {
+      var parts = c.conn.split("/");
+      if (parts.length === 3) {
+        var key = parts[2] + "-" + parts[1]; // YYYY-MM
+        monthCount[key]  = (monthCount[key]  || 0) + 1;
+        monthRevenue[key] = (monthRevenue[key] || 0) + (Number(c.totalPrice) || 0);
+      }
+    }
+  });
+
+  // This month new
+  var thisMonth = String(now.getFullYear()) + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var thisMonthNew = monthCount[thisMonth] || 0;
+
+  // Avg revenue
+  var avgRev = DB.length ? Math.round(totalRevenue / DB.length) : 0;
+
+  // Pending count
+  var pendingCount = PENDING.length;
+
+  var stats = [
+    { icon:"👥", val: DB.length,       lbl:"মোট গ্রাহক",       color:"#8b5cf6" },
+    { icon:"💰", val: "৳"+totalRevenue, lbl:"মোট আয়",           color:"#10b981" },
+    { icon:"📅", val: thisMonthNew,    lbl:"এই মাসে নতুন",      color:"#3b82f6" },
+    { icon:"📊", val: "৳"+avgRev,      lbl:"গড় মূল্য",          color:"#f59e0b" },
+    { icon:"⏳", val: pendingCount,    lbl:"Pending অনুমোদন",   color:"#ef4444" },
+    { icon:"🗑", val: TRASH.length,    lbl:"Trash",              color:"#6b7280" }
+  ];
+
+  var sg = document.getElementById("statsGrid");
+  sg.innerHTML = stats.map(function(s) {
+    return '<div class="stat-card">' +
+      '<div class="sc-glow" style="background:' + s.color + '"></div>' +
+      '<div class="sc-icon">' + s.icon + '</div>' +
+      '<div class="sc-val" style="color:' + s.color + '">' + s.val + '</div>' +
+      '<div class="sc-lbl">' + s.lbl + '</div>' +
+      '</div>';
+  }).join("");
+
+  // ── Monthly chart ──
+  var sortedMonths = Object.keys(monthCount).sort().slice(-8);
+  var labels = sortedMonths.map(function(m) {
+    var p = m.split("-");
+    return p[1] + "/" + p[0].slice(2);
+  });
+  var mVals = sortedMonths.map(function(m) { return monthCount[m]; });
+  var rVals = sortedMonths.map(function(m) { return monthRevenue[m]; });
+
+  buildChart("canvasMonthly", "bar", labels, [{ label:"গ্রাহক", data:mVals, backgroundColor:"rgba(139,92,246,.7)", borderRadius:6 }]);
+  buildChart("canvasRevenue", "line", labels, [{ label:"আয় (৳)", data:rVals, borderColor:"#10b981", backgroundColor:"rgba(16,185,129,.1)", tension:.4, fill:true, pointRadius:4 }]);
+
+  // ── Package pie ──
+  var pkgLabels = Object.keys(pkgCount);
+  var pkgVals   = pkgLabels.map(function(k) { return pkgCount[k]; });
+  var colors    = ["#8b5cf6","#3b82f6","#10b981","#f59e0b","#ef4444","#ec4899","#06b6d4","#84cc16","#f97316"];
+  buildChart("canvasPkg", "doughnut", pkgLabels, [{ data:pkgVals, backgroundColor:colors, borderWidth:0 }]);
+
+  // ── Type pie ──
+  var typeLabels = Object.keys(typeCount);
+  var typeVals   = typeLabels.map(function(k) { return typeCount[k]; });
+  buildChart("canvasType", "doughnut", typeLabels, [{ data:typeVals, backgroundColor:["#8b5cf6","#3b82f6","#10b981","#f59e0b"], borderWidth:0 }]);
+
+  // ── Recent ──
+  var recent = DB.slice().reverse().slice(0, 6);
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+    '<thead><tr style="color:rgba(255,255,255,.35);font-size:11px">' +
+    '<th style="text-align:left;padding:5px 8px">ID</th>' +
+    '<th style="text-align:left;padding:5px 8px">নাম</th>' +
+    '<th style="text-align:left;padding:5px 8px">প্যাকেজ</th>' +
+    '<th style="text-align:left;padding:5px 8px">সংযোগ</th>' +
+    '<th style="text-align:right;padding:5px 8px">মূল্য</th>' +
+    '</tr></thead><tbody>';
+  recent.forEach(function(c) {
+    html += '<tr style="border-top:1px solid rgba(255,255,255,.05)">' +
+      '<td style="padding:7px 8px;font-family:JetBrains Mono,monospace;color:#8b5cf6">' + (c.id||"") + '</td>' +
+      '<td style="padding:7px 8px;font-weight:600;color:#fff">' + (c.name||"—") + '</td>' +
+      '<td style="padding:7px 8px"><span style="background:rgba(139,92,246,.2);color:#a78bfa;padding:2px 8px;border-radius:20px;font-size:11px">' + (c.package_type||"—") + '</span></td>' +
+      '<td style="padding:7px 8px;color:rgba(255,255,255,.5)">' + (c.conn||"—") + '</td>' +
+      '<td style="padding:7px 8px;text-align:right;font-family:JetBrains Mono,monospace;color:#10b981">৳' + (c.totalPrice||0) + '</td>' +
+      '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById("recentList").innerHTML = html;
+}
+
+function buildChart(id, type, labels, datasets) {
+  if (_charts[id]) { _charts[id].destroy(); }
+  var ctx = document.getElementById(id);
+  if (!ctx) return;
+  var isDark = !document.body.classList.contains("lg-light");
+  var gridColor = isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.06)";
+  var textColor = isDark ? "rgba(255,255,255,.45)" : "#64748b";
+  _charts[id] = new Chart(ctx, {
+    type: type,
+    data: { labels: labels, datasets: datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: textColor, font: { size: 11 }, boxWidth: 12 }
+        }
+      },
+      scales: (type === "bar" || type === "line") ? {
+        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } },
+        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } }
+      } : {}
+    }
+  });
+}    
 // ============================================================
 // INIT
 // ============================================================
@@ -2103,6 +2310,7 @@ function initApp(){
   cloudSync(function(){
     document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");
     setMode("disabled");
+    showHome();
   });
 }
 
