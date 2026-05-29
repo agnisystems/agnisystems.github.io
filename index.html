@@ -661,6 +661,7 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
         <div class="rc-head">📋 একশন</div>
         <div class="rc-body">
           <button class="rc-btn save" id="btnSave" style="display:none" onclick="doSave()">💾 Save</button>
+          <button class="rc-btn" id="btnEdit" style="display:none;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="enterEditMode()">✏️ Edit</button>
           <button class="rc-btn req" id="btnReq" style="display:none" onclick="sendReq()">📨 Edit Request</button>
           <button class="rc-btn" id="btnLoadEdit" style="display:none;background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="loadEditCur()">এডিট শুরু</button>
           <button class="rc-btn cancel" onclick="goDisabled()">✕ Cancel</button>
@@ -1279,6 +1280,7 @@ function fClear(){
   document.getElementById("sbSer").textContent="-";
   var ab=document.getElementById("auditBar");ab.className="audit";ab.innerHTML="";
 }
+
 function showAudit(log){
   var bar=document.getElementById("auditBar");
   if(!log||!log.length){bar.className="audit";bar.innerHTML="";return;}
@@ -1287,17 +1289,21 @@ function showAudit(log){
   };
   bar.className="audit on";
   var html='<b style="font-size:11px">🗒 পরিবর্তনের ইতিহাস:</b>';
+  html+='<div style="margin-top:6px;border:1px solid rgba(16,163,74,.2);border-radius:8px;overflow:hidden">';
   var rev=log.slice().reverse();
   for(var i=0;i<rev.length;i++){
     var e=rev[i];
     var hasChanges=e.changes&&e.changes.length>0;
-    html+='<div style="margin-top:6px;border:1px solid rgba(16,163,74,.2);border-radius:6px;overflow:hidden">';
-    html+='<div style="background:rgba(16,163,74,.12);padding:4px 8px;display:flex;justify-content:space-between;align-items:center">';
+    var accId="acc_"+i;
+    var isFirst=(i===0);
+    html+='<div style="border-bottom:'+(i<rev.length-1?'1px solid rgba(16,163,74,.15)':'none')+'">';
+    html+='<div onclick="toggleAcc(\''+accId+'\')" style="background:rgba(16,163,74,.1);padding:6px 10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">';
     html+='<span style="font-weight:700;font-size:10px">'+al(e.action)+'</span>';
     html+='<span style="font-size:10px;opacity:.75">'+e.display+' ('+e.by+') &nbsp;·&nbsp; '+e.time+'</span>';
+    html+='<span id="arr_'+accId+'" style="font-size:10px;transition:transform .2s;display:inline-block;transform:'+(isFirst?'rotate(180deg)':'rotate(0deg)')+'">▾</span>';
     html+='</div>';
+    html+='<div id="'+accId+'" style="display:'+(isFirst?'block':'none')+';padding:6px 8px">';
     if(hasChanges){
-      html+='<div style="padding:4px 8px">';
       html+='<table style="width:100%;border-collapse:collapse;font-size:10px">';
       html+='<tr style="background:rgba(0,0,0,.04)"><th style="text-align:left;padding:2px 5px;font-weight:600;color:#065f46">ফিল্ড</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#dc2626">আগে</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#16a34a">পরে</th></tr>';
       for(var j=0;j<e.changes.length;j++){
@@ -1308,15 +1314,29 @@ function showAudit(log){
         html+='<td style="padding:2px 5px;color:#15803d;font-weight:600;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.new||'—')+'</td>';
         html+='</tr>';
       }
-      html+='</table></div>';
+      html+='</table>';
     } else if(e.action==="created"){
-      html+='<div style="padding:4px 8px;font-size:10px;color:#065f46;opacity:.7">নতুন রেকর্ড তৈরি হয়েছে।</div>';
+      html+='<span style="font-size:10px;color:#065f46;opacity:.7">নতুন রেকর্ড তৈরি হয়েছে।</span>';
     }
     html+='</div>';
+    html+='</div>';
   }
+  html+='</div>';
   bar.innerHTML=html;
 }
 
+function toggleAcc(id){
+  var body=document.getElementById(id);
+  var arr=document.getElementById("arr_"+id);
+  if(!body)return;
+  var isOpen=body.style.display!=="none";
+  body.style.display=isOpen?"none":"block";
+  if(arr)arr.style.transform=isOpen?"rotate(0deg)":"rotate(180deg)";
+}    
+    
+    
+    
+    
 // ============================================================
 // MODE
 // ============================================================
@@ -1333,6 +1353,8 @@ function setMode(mode){
   var bLoadEd=document.getElementById("btnLoadEdit");
   ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
   bSave.style.display=bReq.style.display=bLoadEd.style.display="none";
+  document.getElementById("btnEdit").style.display="none";  
+    
 
   var modeMap={
     "disabled":{txt:"🔒 লক",   bg:"#f1f5f9",col:"#64748b",ban:"bLock"},
@@ -1351,6 +1373,8 @@ function setMode(mode){
 
   if(mode==="new"||mode==="edit"){
     bSave.style.display="flex";
+    document.getElementById("btnSave").disabled=false;
+    document.getElementById("btnSave").style.opacity="1";
   } else if(mode==="view"&&isA){
     bSave.style.display="flex";
   } else if(mode==="view"&&!isA){
@@ -1395,8 +1419,8 @@ d.auditLog=prevLog.concat([mkAudit(existIdx>=0?"updated":"created", _oldRec, d)]
       if(!ok){showPop("Firebase সেভ ব্যর্থ!","error");return;}
       if(existIdx>=0)DB[existIdx]=d;
       else{DB.push(d);DB.sort(function(a,b){return (Number(a.id)||0)-(Number(b.id)||0);});}
-      curId=d.id;setMode("view");showAudit(d.auditLog);updateBadges();
-      showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!","success");
+      curId=d.id;setMode("view");lockSaveShowEdit();showAudit(d.auditLog);updateBadges();
+        showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!","success");
     });
   } else if(pageMode==="edit"){
        var _oldRecEdit = (existIdx>=0) ? DB[existIdx] : null;
@@ -1410,8 +1434,8 @@ d.auditLog=prevLog.concat([mkAudit(existIdx>=0?"updated":"created", _oldRec, d)]
           fbDel("editreqs",EREQS[i].reqId,function(){});EREQS.splice(i,1);break;
         }
       }
-      updateBadges();showAudit(d.auditLog);curId=d.id;setMode("view");
-      showPop("✅ সেভ হয়েছে!\nপুনরায় সম্পাদনা করতে Admin-এর কাছে নতুন Edit Request পাঠাতে হবে।","success");
+      updateBadges();showAudit(d.auditLog);curId=d.id;setMode("view");lockSaveShowEdit();
+            showPop("✅ সেভ হয়েছে!\nপুনরায় সম্পাদনা করতে Admin-এর কাছে নতুন Edit Request পাঠাতে হবে।","success");
     });
   } else {
     d.pendingId="p_"+Date.now();d._by=currentUser.username;d._byd=currentUser.display;d._t=nowStr();
@@ -1422,7 +1446,26 @@ d.auditLog=prevLog.concat([mkAudit(existIdx>=0?"updated":"created", _oldRec, d)]
     });
   }
 }
+function lockSaveShowEdit(){
+  var bSave=document.getElementById("btnSave");
+  var bEdit=document.getElementById("btnEdit");
+  bSave.disabled=true;
+  bSave.style.opacity="0.4";
+  bSave.style.cursor="not-allowed";
+  if(isPrivileged()) bEdit.style.display="flex";
+}
 
+function enterEditMode(){
+  if(!curId) return;
+  for(var i=0;i<DB.length;i++){
+    if(String(DB[i].id)===String(curId)){
+      cur=i; fSet(DB[i]); setMode("edit");
+      document.getElementById("navId").value=i+1;
+      showPop("✏️ Edit মোড সক্রিয়! পরিবর্তন করে Save করুন।","info");
+      return;
+    }
+  }
+}
 // ============================================================
 // EDIT REQUEST
 // ============================================================
@@ -1627,7 +1670,9 @@ function viewFromVP(id){
       var ind=document.getElementById("modeInd");
       ind.textContent="👁 ভিউ";ind.style.background="#fef3c7";ind.style.color="#92400e";
       ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
-      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display="none";
+      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display=document.getElementById("btnEdit").style.display="none";
+        
+        
       document.getElementById("navId").value=i+1;
       closeVP();closeLP();window.scrollTo({top:0,behavior:"smooth"});return;
     }
@@ -2014,7 +2059,7 @@ function doTopSearch(q){
       var ind=document.getElementById("modeInd");
       ind.textContent="👁 ভিউ";ind.style.background="#fef3c7";ind.style.color="#92400e";
       ["bLock","bPend","bReq","bOk"].forEach(function(b){document.getElementById(b).classList.remove("show");});
-      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display="none";
+      document.getElementById("btnSave").style.display=document.getElementById("btnReq").style.display=document.getElementById("btnLoadEdit").style.display=document.getElementById("btnEdit").style.display="none";
       document.getElementById("navId").value=cur+1;
       document.getElementById("tbSearch").value="";
       window.scrollTo({top:0,behavior:"smooth"});return;
