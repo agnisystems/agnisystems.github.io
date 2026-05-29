@@ -2303,7 +2303,7 @@ function renderHome() {
     '</tr></thead><tbody>';
 var isLightNow = document.body.classList.contains("lg-light");
   recent.forEach(function(c) {
-    html += '<tr style="border-top:1px solid '+(isLightNow?"rgba(0,0,0,.06)":"rgba(255,255,255,.05")+'">' +
+    html += '<tr style="border-top:1px solid '+(isLightNow?"rgba(0,0,0,.06)":"rgba(255,255,255,.05)")+'">' +
       '<td style="padding:7px 8px;font-family:JetBrains Mono,monospace;color:#8b5cf6">' + (c.id||"") + '</td>' +
       '<td style="padding:7px 8px;font-weight:600;color:'+(isLightNow?"#1e293b":"#fff")+'">' + (c.name||"—") + '</td>' +
       '<td style="padding:7px 8px"><span style="background:rgba(139,92,246,.2);color:#a78bfa;padding:2px 8px;border-radius:20px;font-size:11px">' + (c.package_type||"—") + '</span></td>' +
