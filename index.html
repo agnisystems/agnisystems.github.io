@@ -25,59 +25,108 @@ body.md-view.user-view .a4-page input{pointer-events:none;}
 ═══════════════════════════════════════════ */
 #loginScreen{
   position:fixed;inset:0;z-index:9999;
-  background:var(--nav);
+  background:#0a0a0a;
   display:flex;justify-content:center;align-items:center;
-  overflow:hidden;transition:background .4s;
+  overflow:hidden;
 }
-#loginScreen::before{
-  content:"";position:absolute;inset:0;
+#loginScreen .grid-bg{
+  position:absolute;inset:0;
   background-image:
-    linear-gradient(rgba(255,255,255,.18) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.18) 1px,transparent 1px);
-  background-size:40px 40px;
-  animation:gridMove 20s linear infinite;
-  pointer-events:none;transition:background-image .4s;
+    linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 40%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 40%,transparent 100%);
+  pointer-events:none;
 }
-#loginScreen::after{
-  content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse 70% 60% at 50% 50%,transparent 30%,rgba(0,0,0,.65) 100%);
-  pointer-events:none;transition:background .4s;
+#loginScreen .glow-top{
+  position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(139,92,246,.3) 0%,transparent 60%);
+  pointer-events:none;z-index:1;
 }
-@keyframes gridMove{0%{background-position:0 0}100%{background-position:40px 40px}}
-
-.lg-orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;opacity:.38;animation:orbFloat 8s ease-in-out infinite alternate;}
-.lg-orb1{width:420px;height:420px;top:-80px;right:-80px;background:var(--pri);}
-.lg-orb2{width:300px;height:300px;bottom:-60px;left:-60px;background:var(--blue);animation-delay:-4s;}
-@keyframes orbFloat{0%{transform:translate(0,0) scale(1)}100%{transform:translate(30px,30px) scale(1.12)}}
-
+#loginScreen .glow-bl{
+  position:absolute;bottom:-150px;left:-100px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(59,130,246,.25) 0%,transparent 60%);
+  pointer-events:none;z-index:1;
+}
+#loginScreen .glow-br{
+  position:absolute;bottom:-100px;right:-100px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(236,72,153,.2) 0%,transparent 60%);
+  pointer-events:none;z-index:1;
+}
+#loginScreen .shine-line{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:1px;height:200px;
+  background:linear-gradient(180deg,transparent,#8b5cf6,transparent);
+  opacity:.5;z-index:2;pointer-events:none;
+}
 .lg-card{
-  position:relative;z-index:2;
-  background:rgba(255,255,255,.07);backdrop-filter:blur(24px);
-  border:1px solid rgba(255,255,255,.14);border-radius:22px;
+  position:relative;z-index:10;
+  background:rgba(255,255,255,.05);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
   padding:36px 34px 30px;width:420px;max-width:95vw;
-  box-shadow:0 32px 80px rgba(0,0,0,.5);
-  transition:background .3s,border .3s,box-shadow .3s;
+  box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(139,92,246,.1);
+  animation:fadeInUp .8s ease .1s backwards;
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(30px);}
+  to{opacity:1;transform:translateY(0);}
 }
 .lg-brand{text-align:center;margin-bottom:24px;}
-.lg-logo{width:64px;height:64px;margin:0 auto 12px;background:linear-gradient(135deg,var(--pri),var(--pri2));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 8px 24px rgba(22,163,74,.4);}
-.lg-brand h1{font-size:18px;font-weight:700;color:#fff;transition:color .3s;}
-.lg-brand p{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;transition:color .3s;}
-
+.lg-logo{
+  width:64px;height:64px;margin:0 auto 12px;
+  background:linear-gradient(135deg,#8b5cf6,#6366f1);
+  border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:30px;box-shadow:0 8px 24px rgba(139,92,246,.4);
+}
+.lg-brand h1{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em;}
+.lg-brand p{font-size:12px;color:rgba(255,255,255,.4);margin-top:3px;}
 .lg-field{margin-bottom:14px;}
-.lg-field label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase;transition:color .3s;}
+.lg-field label{
+  display:block;font-size:11px;font-weight:700;
+  color:rgba(255,255,255,.4);margin-bottom:6px;
+  letter-spacing:.5px;text-transform:uppercase;
+}
 .lg-wrap{position:relative;}
-.lg-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.4;pointer-events:none;}
-.lg-input{display:block;width:100%;padding:12px 14px 12px 40px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:14px;color:#fff;outline:none;font-family:"Hind Siliguri",sans-serif;transition:border .2s,background .3s,color .3s;}
-.lg-input:focus{border-color:var(--pri);}
-.lg-input::placeholder{color:rgba(255,255,255,.3);transition:color .3s;}
+.lg-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.35;pointer-events:none;}
+.lg-input{
+  display:block;width:100%;padding:12px 14px 12px 40px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;font-size:14px;color:#fff;outline:none;
+  font-family:"Hind Siliguri",sans-serif;transition:border .2s,background .2s;
+}
+.lg-input:focus{
+  border-color:rgba(139,92,246,.6);
+  background:rgba(139,92,246,.08);
+}
+.lg-input::placeholder{color:rgba(255,255,255,.25);}
 .lg-remember{display:flex;align-items:center;gap:8px;margin:-4px 0 16px;cursor:pointer;}
-.lg-remember input{width:15px;height:15px;accent-color:var(--pri);}
-.lg-remember span{font-size:13px;color:rgba(255,255,255,.45);transition:color .3s;}
-.lg-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:"Hind Siliguri",sans-serif;transition:all .2s;}
-.lg-btn:hover{transform:translateY(-1px);}
-.lg-err{background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.3);color:#fca5a5;font-size:13px;padding:10px 14px;border-radius:8px;margin-top:14px;display:none;text-align:center;}
-.lg-foot{text-align:center;margin-top:16px;font-size:11px;color:rgba(255,255,255,.2);transition:color .3s;}
-.lg-foot a{color:rgba(255,255,255,.35);transition:color .3s;}
+.lg-remember input{width:15px;height:15px;accent-color:#8b5cf6;}
+.lg-remember span{font-size:13px;color:rgba(255,255,255,.4);}
+.lg-btn{
+  width:100%;padding:13px;
+  background:linear-gradient(135deg,#8b5cf6 0%,#6366f1 100%);
+  color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  font-family:"Hind Siliguri",sans-serif;
+  box-shadow:0 10px 30px rgba(139,92,246,.35);
+  transition:all .2s;
+}
+.lg-btn:hover{transform:translateY(-2px);box-shadow:0 15px 40px rgba(139,92,246,.5);}
+.lg-err{
+  background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);
+  color:#fca5a5;font-size:13px;padding:10px 14px;
+  border-radius:8px;margin-top:14px;display:none;text-align:center;
+}
+.lg-foot{text-align:center;margin-top:16px;font-size:11px;color:rgba(255,255,255,.18);}
+.lg-foot a{color:rgba(139,92,246,.7);}
+ 
 
 /* ── LOGIN LIGHT MODE ── */
 body.lg-light #loginScreen{
@@ -408,8 +457,11 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
 <body class="md-disabled">
 
 <div id="loginScreen">
-  <div class="lg-orb lg-orb1"></div>
-  <div class="lg-orb lg-orb2"></div>
+  <div class="grid-bg"></div>
+  <div class="glow-top"></div>
+  <div class="glow-bl"></div>
+  <div class="glow-br"></div>
+  <div class="shine-line"></div>
   <div class="lg-card">
     <div class="lg-brand">
       <div class="lg-logo" id="lgLogo"><img src="logo.png" alt="" style="width:42px" onerror="this.parentElement.innerHTML='&#128293;'"/></div>
@@ -448,7 +500,7 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
   </div>
   <div class="sb-sec">মেইন মেনু</div>
   <div class="sb-item new-item" onclick="startNew()"><span class="sb-ico">✚</span> নতুন এন্ট্রি</div>
-  <div class="sb-item" onclick="show()"><span class="sb-ico">📋</span> Data List <span class="sb-badge green" id="sBadgeList">0</span></div>
+  <div class="sb-item" onclick="showList()"><span class="sb-ico">📋</span> Data List <span class="sb-badge green" id="sBadgeList">0</span></div>
   <div class="sb-item" onclick="goDisabled()"><span class="sb-ico">👁</span> ভিউ মোড</div>
   <div class="sb-item" id="sMyReqs" style="display:none" onclick="showMyApproved()"><span class="sb-ico">✅</span> Approved <span class="sb-badge green" id="sBadgeMyApr">0</span></div>
   <div class="sb-div"></div>
@@ -495,7 +547,7 @@ body.md-view.user-view .a4-page input[type=checkbox]{pointer-events:none;}
       <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.4;pointer-events:none">🔍</span>
     </div>
     <div class="tb-sep"></div>
-    <button class="tb-btn ghost" onclick="showList()">📃 Data List</button>
+    <button class="tb-btn ghost" onclick="showList()">📃 List</button>
     <button class="tb-btn ghost" id="tbPend" style="display:none" onclick="showPending()">⌛ Pending <span id="tbPN" style="background:rgba(255,255,255,.18);padding:1px 5px;border-radius:7px;font-size:10px;margin-left:2px">0</span></button>
     <button class="tb-btn ghost" id="tbER" style="display:none" onclick="showEditReqs()">✍🏻 Edit Requests <span id="tbERN" style="background:rgba(255,255,255,.18);padding:1px 5px;border-radius:7px;font-size:10px;margin-left:2px">0</span></button>
     <div class="tb-space"></div>
@@ -790,11 +842,7 @@ function applyTheme(key) {
     }
   }
 
-  // 6. Custom theme orb colors
-  var orb1 = document.querySelector(".lg-orb1");
-  var orb2 = document.querySelector(".lg-orb2");
-  if (orb1) orb1.style.background = isCustom ? pri  : "";
-  if (orb2) orb2.style.background = isCustom ? pri2 : "";
+
 
   // 7. Hex preview circles
   if (curCustomHex) {
@@ -857,23 +905,51 @@ var _cachedUsers = null;
 function getUsers() {
   var users = _cachedUsers
     ? JSON.parse(JSON.stringify(_cachedUsers))
-    : JSON.parse(JSON.stringify(DEFAULT_USERS));
+    : {};
   users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
   return users;
 }
 
 function saveUsers(u, cb) {
   u[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+
+  // আগের cached users থেকে deleted users বের করো
+  var deletedKeys = [];
+  if (_cachedUsers) {
+    Object.keys(_cachedUsers).forEach(function(k) {
+      if (k !== CODER_ID && !u[k]) deletedKeys.push(k);
+    });
+  }
+
   _cachedUsers = JSON.parse(JSON.stringify(u));
-  var entries = Object.keys(u), saved = 0;
+
+  var entries = Object.keys(u);
+  var total = entries.length + deletedKeys.length;
+  if (total === 0) { if (cb) cb(true); return; }
+  var done = 0;
+
+  function tick() {
+    done++;
+    if (done === total && cb) cb(true);
+  }
+
+  // নতুন/updated users set করো
   for (var i = 0; i < entries.length; i++) {
     (function(key) {
       fsdb.collection("appusers").doc(key).set(u[key])
-        .then(function() { saved++; if (saved === entries.length && cb) cb(true); })
+        .then(tick)
         .catch(function(e) { console.error(e); if (cb) cb(false); });
     })(entries[i]);
   }
-  if (entries.length === 0 && cb) cb(true);
+
+  // deleted users Firebase থেকে সরাও
+  for (var j = 0; j < deletedKeys.length; j++) {
+    (function(key) {
+      fsdb.collection("appusers").doc(key).delete()
+        .then(tick)
+        .catch(function(e) { console.error(e); tick(); }); // delete fail হলেও continue
+    })(deletedKeys[j]);
+  }
 }
 
 function loadUsersFromFirebase(cb) {
@@ -900,7 +976,6 @@ function loadUsersFromFirebase(cb) {
       cb(fallback);
     });
 }
-
 // ============================================================
 // LOGIN
 // ============================================================
