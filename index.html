@@ -1587,17 +1587,17 @@ function loadEditCur(){
 // ============================================================
 function prevRec(){
   if(!DB.length){showPop("কোনো ডাটা নেই","warning");return;}
-  cur=(cur-1+DB.length)%DB.length;curId=DB[cur].id;fSet(DB[cur]);setMode("view");document.getElementById("navId").value=cur+1;
+  cur=(cur-1+DB.length)%DB.length;curId=DB[cur].id;fSet(DB[cur]);hideHome();setMode("view");document.getElementById("navId").value=cur+1;
 }
 function nextRec(){
   if(!DB.length){showPop("কোনো ডাটা নেই","warning");return;}
-  cur=(cur+1)%DB.length;curId=DB[cur].id;fSet(DB[cur]);setMode("view");document.getElementById("navId").value=cur+1;
+  cur=(cur+1)%DB.length;curId=DB[cur].id;fSet(DB[cur]);hideHome();setMode("view");document.getElementById("navId").value=cur+1;
 }
 document.getElementById("navId").addEventListener("keydown",function(e){
   if(e.key!=="Enter")return;
   var s=parseInt(this.value);
   if(!s||s<1||s>DB.length){showPop("সঠিক নম্বর দিন","warning");return;}
-  cur=s-1;curId=DB[cur].id;fSet(DB[cur]);setMode("view");
+  cur=s-1;curId=DB[cur].id;fSet(DB[cur]);hideHome();setMode("view");
 });
 
 // ============================================================
@@ -1742,7 +1742,7 @@ function closeVP(){document.getElementById("vpBg").classList.remove("on");curId=
 function openFullPage(id){
   for(var i=0;i<DB.length;i++){
     if(String(DB[i].id)===String(id)){
-      cur=i;curId=id;fSet(DB[i]);setMode("view");
+      cur=i;curId=id;fSet(DB[i]);hideHome();setMode("view");
       document.getElementById("navId").value=i+1;closeLP();
       window.scrollTo({top:0,behavior:"smooth"});return;
     }
@@ -1771,7 +1771,7 @@ function viewFromVP(id){
 }
 function loadEditAndClose(id){
   for(var i=0;i<DB.length;i++){
-    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
+    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);hideHome();setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
   }
 }
 function editFromVP(id){
@@ -1820,7 +1820,7 @@ function showMyApproved(){
 function goEditFromApproved(recordId,reqId){
   for(var i=0;i<DB.length;i++){
     if(String(DB[i].id)===String(recordId)){
-      cur=i;curId=recordId;fSet(DB[i]);setMode("edit");
+      cur=i;curId=recordId;fSet(DB[i]);hideHome();setMode("edit");
       document.getElementById("navId").value=i+1;closeLP();
       showPop("✏️ Edit মোড সক্রিয়! পরিবর্তন করে Save করুন।","info");return;
     }
@@ -2143,6 +2143,7 @@ function doTopSearch(q){
       var idx=-1;
       for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(filtered[0].id)){idx=i;break;}}
       cur=idx>=0?idx:0;curId=filtered[0].id;fSet(filtered[0]);
+      hideHome();
       var wasLight=document.body.classList.contains("lg-light");
       document.body.className="md-view user-view";
       if(wasLight)document.body.classList.add("lg-light");
