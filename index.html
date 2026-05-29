@@ -1718,6 +1718,7 @@ function viewFromVP(id){
   for(var i=0;i<DB.length;i++){
     if(String(DB[i].id)===String(id)){
       cur=i;curId=id;fSet(DB[i]);
+      hideHome();
       var wasLight=document.body.classList.contains("lg-light");
       document.body.className="md-view user-view";
       if(wasLight)document.body.classList.add("lg-light");
@@ -1740,7 +1741,7 @@ function loadEditAndClose(id){
 }
 function editFromVP(id){
   for(var i=0;i<DB.length;i++){
-    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();window.scrollTo({top:0,behavior:"smooth"});showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
+    if(String(DB[i].id)===String(id)){cur=i;curId=id;fSet(DB[i]);hideHome();setMode("edit");document.getElementById("navId").value=i+1;closeVP();closeLP();window.scrollTo({top:0,behavior:"smooth"});showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।","info");return;}
   }
 }
 function delFromVP(id){
