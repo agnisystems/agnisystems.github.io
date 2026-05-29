@@ -458,7 +458,42 @@ body.lg-light .hm-card-title{color:#475569;}
 body.lg-light .stat-card{background:#fff;border-color:#e2e8f0;}
 body.lg-light .stat-card .sc-val{color:#1e293b;}
 body.lg-light .stat-card .sc-lbl{color:#64748b;}    
+
     
+/* ── HOMEPAGE LIGHT MODE ── */
+body.lg-light #homePage {
+  background: transparent;
+}
+body.lg-light .hm-card {
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}
+body.lg-light .hm-card-title {
+  color: #334155;
+}
+body.lg-light .stat-card .sc-val {
+  color: #1e293b;
+}
+body.lg-light .stat-card .sc-lbl {
+  color: #64748b;
+}
+body.lg-light #recentList tr {
+  border-top-color: rgba(0,0,0,.06) !important;
+}
+body.lg-light #recentList td {
+  color: #334155 !important;
+}
+body.lg-light #recentList td[style*="color:#fff"] {
+  color: #1e293b !important;
+}
+body.lg-light #recentList td[style*="color:rgba(255,255,255"] {
+  color: #64748b !important;
+}
+body.lg-light #recentList thead tr {
+  color: #64748b !important;
+}
+body.lg-light .stat-card {
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}    
     
 @media print{
   body{background:#fff;}
@@ -2266,12 +2301,13 @@ function renderHome() {
     '<th style="text-align:left;padding:5px 8px">সংযোগ</th>' +
     '<th style="text-align:right;padding:5px 8px">মূল্য</th>' +
     '</tr></thead><tbody>';
+var isLightNow = document.body.classList.contains("lg-light");
   recent.forEach(function(c) {
-    html += '<tr style="border-top:1px solid rgba(255,255,255,.05)">' +
+    html += '<tr style="border-top:1px solid '+(isLightNow?"rgba(0,0,0,.06)":"rgba(255,255,255,.05")+'">' +
       '<td style="padding:7px 8px;font-family:JetBrains Mono,monospace;color:#8b5cf6">' + (c.id||"") + '</td>' +
-      '<td style="padding:7px 8px;font-weight:600;color:#fff">' + (c.name||"—") + '</td>' +
+      '<td style="padding:7px 8px;font-weight:600;color:'+(isLightNow?"#1e293b":"#fff")+'">' + (c.name||"—") + '</td>' +
       '<td style="padding:7px 8px"><span style="background:rgba(139,92,246,.2);color:#a78bfa;padding:2px 8px;border-radius:20px;font-size:11px">' + (c.package_type||"—") + '</span></td>' +
-      '<td style="padding:7px 8px;color:rgba(255,255,255,.5)">' + (c.conn||"—") + '</td>' +
+      '<td style="padding:7px 8px;color:'+(isLightNow?"#64748b":"rgba(255,255,255,.5)")+'">' + (c.conn||"—") + '</td>' +
       '<td style="padding:7px 8px;text-align:right;font-family:JetBrains Mono,monospace;color:#10b981">৳' + (c.totalPrice||0) + '</td>' +
       '</tr>';
   });
