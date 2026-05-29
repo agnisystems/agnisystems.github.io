@@ -879,16 +879,25 @@ function saveUsers(u, cb) {
 function loadUsersFromFirebase(cb) {
   fsdb.collection("appusers").get()
     .then(function(snap) {
-      var users = JSON.parse(JSON.stringify(DEFAULT_USERS));
-      snap.forEach(function(d) { users[d.id] = d.data(); });
-      users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+      var users = {};
+      if (snap.empty) {
+        // প্রথমবার — DEFAULT_USERS Firebase এ লিখে দাও
+        users = JSON.parse(JSON.stringify(DEFAULT_USERS));
+        users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+        saveUsers(users, function() {});
+      } else {
+        snap.forEach(function(d) { users[d.id] = d.data(); });
+        users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+      }
       _cachedUsers = JSON.parse(JSON.stringify(users));
       cb(users);
     })
     .catch(function(e) {
       console.error(e);
-      _cachedUsers = JSON.parse(JSON.stringify(DEFAULT_USERS));
-      cb(_cachedUsers);
+      var fallback = JSON.parse(JSON.stringify(DEFAULT_USERS));
+      fallback[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA));
+      _cachedUsers = fallback;
+      cb(fallback);
     });
 }
 
