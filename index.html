@@ -25,7 +25,7 @@ body.md-view.user-view .a4-page input{pointer-events:none;}
 /* ─── HAMBURGER ─── */
 #hamburger{
   display:none;
-  position:fixed;top:14px;left:14px;z-index:1500;
+  position:fixed;top:17px;left:14px;z-index:1500;
   width:40px;height:40px;border-radius:10px;
   background:var(--nav2);border:1px solid rgba(255,255,255,.1);
   align-items:center;justify-content:center;
@@ -121,7 +121,7 @@ body.lg-light .lg-err{background:rgba(220,38,38,.15);border-color:rgba(220,38,38
 #sidebar.sb-open{transform:translateX(0)!important;}
 .sb-logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--pri2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1.5px solid rgba(255,255,255,.15);position:relative;}
     
-.sb-brand{display:flex;flex-direction:row;align-items:center;gap:11px;padding:13px 13px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;transition:background .2s;text-decoration:none;min-height:60px;}
+.sb-brand{display:flex;flex-direction:row;align-items:center;gap:11px;padding:13px 13px;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;transition:background .2s;text-decoration:none;min-height:70px;height:70px;}
 .sb-brand:hover{background:rgba(255,255,255,.04);}
 .sb-brand-txt{color:#fff;font-weight:700;font-size:12px;letter-spacing:.3px;text-align:left;transition:color .3s;}
 .sb-brand-sub{font-size:10px;color:rgba(255,255,255,.3);margin-top:1px;text-align:left;letter-spacing:.3px;transition:color .3s;}
@@ -198,11 +198,12 @@ body.lg-light .sb-logout button:hover{background:rgba(220,38,38,.13);border-colo
   border-bottom:1px solid rgba(255,255,255,.07);
   box-shadow:0 2px 14px rgba(0,0,0,.28);
   padding:0 12px 0 12px;
-  height:60px;
+  height:70px;
   display:flex;align-items:center;gap:8px;
+  justify-content:center;
   transition:background .3s,border-color .3s;
   overflow:visible;
-}   
+}  
 /* topbar-এর logout button */
 #topbar .btn-logout {
   display:inline-flex;align-items:center;gap:6px;
@@ -513,7 +514,7 @@ body.lg-light .sys-val{color:#1e293b;}
   #sidebar{transform:translateX(-100%);display:flex!important;}
   #sidebar.sb-open{transform:translateX(0)!important;box-shadow:5px 0 30px rgba(0,0,0,.4);}
   #appWrap{margin-left:0!important;}
-  #topbar{padding-left:60px;padding-right:10px;height:60px;overflow:visible;gap:7px;}
+  #topbar{padding-left:60px;padding-right:10px;height:70px;overflow:visible;gap:7px;justify-content:flex-end;}
 
   /* ghost buttons ও separator লুকাও */
   .tb-btn.ghost{display:none!important;}
@@ -525,9 +526,8 @@ body.lg-light .sys-val{color:#1e293b;}
   #syncBadge{padding:5px 10px!important;gap:5px!important;}
 
   /* Logout: text লুকাও, emoji icon দেখাও */
-  .tb-logout-btn .tb-logout-txt{display:none!important;}
-  .tb-logout-btn::after{content:'🚪';font-size:16px;line-height:1;}
-  .tb-logout-btn{padding:7px 12px!important;height:36px!important;}
+.tb-logout-btn .tb-logout-txt{display:inline!important;}
+.tb-logout-btn{padding:7px 10px!important;height:36px!important;font-size:11px!important;}
 
   /* Layout single column */
   .layout{width:100%;max-width:100%;flex-direction:column;gap:0;}
@@ -570,7 +570,7 @@ body.lg-light .sys-val{color:#1e293b;}
 /* ── Mobile (max 540px) ── */
 @media(max-width:540px){
   #topbar{
-  height:56px;
+  height:70px;
   padding-left:58px;
   padding-right:8px;
   gap:5px;
@@ -859,29 +859,32 @@ body.lg-light .hm-req-sub{color:#64748b;}
 
 <div id="appWrap">
   <div id="topbar">
-    <div class="tb-nav">
-      <button onclick="prevRec()">◀</button>
-      <input type="text" id="navId" placeholder="#"/>
-      <button onclick="nextRec()">▶</button>
-    </div>
-    <div class="tb-space"></div>
-    <div style="position:relative;flex-shrink:1;min-width:0;">
-      <input type="text" id="tbSearch" placeholder="ID / নাম / মোবাইল..."
-        style="padding:6px 12px 6px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:13px;width:180px;max-width:100%;outline:none;font-family:'Hind Siliguri',sans-serif;flex-shrink:1;"
-        onfocus="this.style.borderColor='var(--pri)'"
-        onblur="this.style.borderColor=''"/>
-      <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none">🔍</span>
-    </div>
+            <div style="display:flex;align-items:center;gap:8px;flex:0 0 auto;">
+               <div class="tb-nav">
+                      <button onclick="prevRec()">◀</button>
+                      <input id="navId" value="1"/>
+                      <button onclick="nextRec()">▶</button>
+                </div>
+                <div style="position:relative;flex-shrink:1;min-width:0;">
+                      <input type="text" id="tbSearch" placeholder="ID / নাম / মোবাইল..."
+                        style="padding:6px 12px 6px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:13px;width:180px;max-width:100%;outline:none;font-family:'Hind Siliguri',sans-serif;flex-shrink:1;"
+                        onfocus="this.style.borderColor='var(--pri)'"
+                        onblur="this.style.borderColor=''"/>
+                      <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none">🔍</span>
+                </div>
+                
     <div class="tb-sep"></div>
     <button class="tb-btn ghost" onclick="showList()">📃 Data List</button>
-    <div class="tb-space"></div>
+            </div>
+<div class="tb-space"></div>
     <span id="syncBadge" class="syncing">
-      <span class="sb-icon">↻</span>
-      <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
-    </span>
-    <div class="tb-sep"></div>
-    <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
+          <span class="sb-icon">↻</span>
+          <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
+        </span>
+        <div class="tb-sep"></div>
+        <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
   </div>
+</div>
 
   <div id="mainContent">
 
@@ -1109,11 +1112,6 @@ body.lg-light .hm-req-sub{color:#64748b;}
           <button class="rc-btn print" onclick="window.print()">🖨 Print</button>
         </div>
       </div>
-      <div class="sb-info">
-        <div class="ir"><span style="font-size:10px;color:#64748b">রেকর্ড</span><span class="iv" id="sbSer">-</span></div>
-        <div class="ir"><span style="font-size:10px;color:#64748b">মোট গ্রাহক</span><span class="iv" id="sbTot">0</span></div>
-        <div class="ir"><span style="font-size:10px;color:#64748b">মোট মূল্য</span><span class="iv" id="sbPrc">0</span></div>
-      </div>
     </div>
   </div>
 
@@ -1122,11 +1120,11 @@ body.lg-light .hm-req-sub{color:#64748b;}
 
 <!-- Mobile Action Bar -->
 <div id="mobileActionBar">
-  <button class="mab-btn" style="background:var(--pri)" id="mabSave" onclick="doSave()" style="display:none">💾 Save</button>
-  <button class="mab-btn" style="background:#2563eb" id="mabEdit" onclick="enterEditMode()" style="display:none">✏️ Edit</button>
-  <button class="mab-btn" style="background:#ea580c" id="mabReq" onclick="sendReq()" style="display:none">📨 Request</button>
-  <button class="mab-btn" style="background:#64748b" onclick="goDisabled()">✕ Cancel</button>
-  <button class="mab-btn" style="background:#dc2626" onclick="window.print()">🖨 Print</button>
+  <button class="mab-btn" style="background:var(--pri);display:none" id="mabSave" onclick="doSave()">💾 Save</button>
+  <button class="mab-btn" style="background:#2563eb;display:none" id="mabEdit" onclick="enterEditMode()">✏️ Edit</button>
+  <button class="mab-btn" style="background:#ea580c;display:none" id="mabReq" onclick="sendReq()">📨</button>
+  <button class="mab-btn" style="background:#64748b" onclick="goDisabled()">✕</button>
+  <button class="mab-btn" style="background:#dc2626" onclick="window.print()">🖨</button>
 </div>
 
 <!-- Popups -->
@@ -1287,8 +1285,42 @@ function loadUsersFromFirebase(cb){fsdb.collection("appusers").get().then(functi
 
 // ─── LOGIN ───
 function loadSaved(){try{var s=JSON.parse(localStorage.getItem("agni_saved")||"null");if(s){document.getElementById("lusr").value=s.u||"";document.getElementById("lpass").value=s.p||"";document.getElementById("lrem").checked=true;}}catch(e){}}
-function doLogin(){var u=document.getElementById("lusr").value.trim(),p=document.getElementById("lpass").value.trim(),err=document.getElementById("lerr"),users=getUsers();if(users[u]&&users[u].pass===p){currentUser={username:u,role:users[u].role,display:users[u].display||u};localStorage.setItem("agni_session",JSON.stringify({u:u,p:p}));if(document.getElementById("lrem").checked)localStorage.setItem("agni_saved",JSON.stringify({u:u,p:p}));else localStorage.removeItem("agni_saved");err.style.display="none";document.getElementById("loginScreen").style.display="none";document.getElementById("sidebar").style.display="flex";document.getElementById("appWrap").style.display="block";setupRole();initApp();}else{err.style.display="block";document.getElementById("lpass").value="";document.getElementById("lpass").focus();}}
-function doLogout(){currentUser=null;localStorage.removeItem("agni_session");document.getElementById("loginScreen").style.display="flex";document.getElementById("sidebar").style.display="none";document.getElementById("appWrap").style.display="none";closeSidebar();document.body.className="md-disabled";if(curTheme==="light")document.body.classList.add("lg-light");pageMode="disabled";}
+    
+function doLogin(){
+  var u = document.getElementById("lusr").value.trim();
+  var p = document.getElementById("lpass").value.trim();
+  var err = document.getElementById("lerr");
+
+  function tryLogin(users){
+    if(users[u] && users[u].pass === p){
+      currentUser = {username:u, role:users[u].role, display:users[u].display||u};
+      localStorage.setItem("agni_session", JSON.stringify({u:u, p:p}));
+      if(document.getElementById("lrem").checked)
+        localStorage.setItem("agni_saved", JSON.stringify({u:u, p:p}));
+      else localStorage.removeItem("agni_saved");
+      err.style.display = "none";
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("sidebar").style.display = "flex";
+      document.getElementById("appWrap").style.display = "block";
+      setupRole(); initApp();
+    } else {
+      err.style.display = "block";
+      document.getElementById("lpass").value = "";
+      document.getElementById("lpass").focus();
+    }
+  }
+
+  // Firebase থেকে লোড হয়েছে কিনা চেক
+  if(_cachedUsers){
+    tryLogin(getUsers());
+  } else {
+    document.getElementById("lbtn").textContent = "⏳ লোড হচ্ছে...";
+    loadUsersFromFirebase(function(users){
+      document.getElementById("lbtn").textContent = "🔒 Login করুন";
+      tryLogin(users);
+    });
+  }
+}
 
     
     
@@ -1351,7 +1383,7 @@ function fbGetAll(col,cb){fsdb.collection(col).get().then(function(snap){var a=[
 function cloudSync(cb){sync2("syncing","লোড হচ্ছে...");var done=0,res={c:[],t:[],p:[],e:[]};function check(){done++;if(done===4){DB=res.c;TRASH=res.t;PENDING=res.p;EREQS=res.e;DB.sort(function(a,b){return(Number(a.id)||0)-(Number(b.id)||0);});sync2("synced","● সংযুক্ত");updateBadges();if(cb)cb();}}fbGetAll("customers",function(r){res.c=r;check();});fbGetAll("trash",function(r){res.t=r;check();});fbGetAll("pending",function(r){res.p=r;check();});fbGetAll("editreqs",function(r){res.e=r;check();});}
 function nextId(){var all=DB.concat(TRASH).concat(PENDING),max=0;for(var i=0;i<all.length;i++){var n=Number(all[i].id)||0;if(n>max)max=n;}return String(max+1).padStart(4,"0");}
 function updateBadges(){document.getElementById("sBadgeList").textContent=DB.length;
-document.getElementById("sbTot").textContent=DB.length;
+var sbTot=document.getElementById("sbTot");if(sbTot)sbTot.textContent=DB.length;
 var pc=PENDING.length;
 document.getElementById("sBadgePend").textContent=pc;
 var ec=EREQS.length;
@@ -1375,13 +1407,13 @@ if(currentUser&&isPrivileged()){
 }
                         
 if(currentUser&&!isPrivileged()){var myApr=0;for(var i=0;i<EREQS.length;i++){if(EREQS[i].requestedBy===currentUser.username&&EREQS[i].status==="approved")myApr++;}var badge=document.getElementById("sBadgeMyApr"),item=document.getElementById("sMyReqs");if(badge)badge.textContent=myApr;if(item)item.style.display=myApr>0?"flex":"none";}}
-function updateTotal(){var t=0,inputs=document.querySelectorAll(".price");for(var i=0;i<inputs.length;i++)t+=Number(inputs[i].value)||0;document.getElementById("totPrice").textContent=t;document.getElementById("sbPrc").textContent=t;}
+function updateTotal(){var t=0,inputs=document.querySelectorAll(".price");for(var i=0;i<inputs.length;i++)t+=Number(inputs[i].value)||0;document.getElementById("totPrice").textContent=t;var sp=document.getElementById("sbPrc");if(sp)sp.textContent=t;}
 function autoSlash(id){var el=document.getElementById(id);if(!el)return;el.addEventListener("input",function(){var v=this.value.replace(/\D/g,"").slice(0,8);var f=v.length>=2?v.slice(0,2)+"/":v;if(v.length>=4)f+=v.slice(2,4)+"/";else if(v.length>2)f+=v.slice(2);if(v.length>4)f+=v.slice(4);this.value=f;});}
 
 // ─── FORM ───
 function fGet(){var splVals=[],splInputs=document.querySelectorAll('[name="spl"]:checked');for(var i=0;i<splInputs.length;i++)splVals.push(splInputs[i].value);var d={id:document.getElementById("fId").value.trim(),name:document.getElementById("fName").value.trim(),login:document.getElementById("fLogin").value.trim(),pass:document.getElementById("fPass").value.trim(),mobile:document.getElementById("fMob").value.trim(),recharge:document.getElementById("fRch").value.trim(),nid:document.getElementById("fNid").value.trim(),dob:document.getElementById("fDob").value.trim(),house:document.getElementById("fHouse").value.trim(),area:document.getElementById("fArea").value.trim(),thana:document.getElementById("fThana").value.trim(),conn:document.getElementById("fConn").value.trim(),remark:document.getElementById("fRem").value.trim(),customer_type:"",package_type:"",splitter_type:splVals.join(","),totalPrice:0};var ct=document.querySelector('[name="ct"]:checked');if(ct)d.customer_type=ct.value;var pt=document.querySelector('[name="pt"]:checked');if(pt)d.package_type=pt.value;for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);d[EQ[i]]=el?el.value:"";}var prices=document.querySelectorAll(".price");for(var i=0;i<prices.length;i++)d.totalPrice+=Number(prices[i].value)||0;return d;}
-function fSet(d){var map={fId:"id",fName:"name",fLogin:"login",fPass:"pass",fMob:"mobile",fRch:"recharge",fNid:"nid",fDob:"dob",fHouse:"house",fArea:"area",fThana:"thana",fConn:"conn",fRem:"remark"};Object.keys(map).forEach(function(k){var el=document.getElementById(k);if(el)el.value=d[map[k]]||(k==="fThana"?"PANCHAGARH SADAR":"");});document.querySelectorAll('[name="ct"]').forEach(function(r){r.checked=(r.value===d.customer_type);});document.querySelectorAll('[name="pt"]').forEach(function(r){r.checked=(r.value===d.package_type);});var sv=(d.splitter_type||"").split(",");document.querySelectorAll('[name="spl"]').forEach(function(r){r.checked=(sv.indexOf(r.value)>=0);});for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value=d[EQ[i]]||"";}document.getElementById("sigName").textContent=d.name||"";document.getElementById("sigMob").textContent=d.mobile||"";updateTotal();var idx=-1;for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(d.id)){idx=i;break;}}if(idx>=0){document.getElementById("hdrNum").textContent="#"+String(idx+1).padStart(4,"0");document.getElementById("sbSer").textContent=String(idx+1).padStart(4,"0");}showAudit(d.auditLog||null);}
-function fClear(){["fId","fName","fLogin","fPass","fMob","fRch","fNid","fDob","fHouse","fArea","fConn","fRem"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});document.getElementById("fThana").value="PANCHAGARH SADAR";for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value="";}document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function(r){r.checked=false;});document.getElementById("totPrice").textContent="0";document.getElementById("sbPrc").textContent="0";document.getElementById("sigName").textContent="";document.getElementById("sigMob").textContent="";document.getElementById("sbSer").textContent="-";var ab=document.getElementById("auditBar");ab.className="audit";ab.innerHTML="";}
+function fSet(d){var map={fId:"id",fName:"name",fLogin:"login",fPass:"pass",fMob:"mobile",fRch:"recharge",fNid:"nid",fDob:"dob",fHouse:"house",fArea:"area",fThana:"thana",fConn:"conn",fRem:"remark"};Object.keys(map).forEach(function(k){var el=document.getElementById(k);if(el)el.value=d[map[k]]||(k==="fThana"?"PANCHAGARH SADAR":"");});document.querySelectorAll('[name="ct"]').forEach(function(r){r.checked=(r.value===d.customer_type);});document.querySelectorAll('[name="pt"]').forEach(function(r){r.checked=(r.value===d.package_type);});var sv=(d.splitter_type||"").split(",");document.querySelectorAll('[name="spl"]').forEach(function(r){r.checked=(sv.indexOf(r.value)>=0);});for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value=d[EQ[i]]||"";}document.getElementById("sigName").textContent=d.name||"";document.getElementById("sigMob").textContent=d.mobile||"";updateTotal();var idx=-1;for(var i=0;i<DB.length;i++){if(String(DB[i].id)===String(d.id)){idx=i;break;}}if(idx>=0){document.getElementById("hdrNum").textContent="#"+String(idx+1).padStart(4,"0");var _fsSer=document.getElementById("sbSer");if(_fsSer)_fsSer.textContent=String(idx+1).padStart(4,"0");}showAudit(d.auditLog||null);}
+function fClear(){["fId","fName","fLogin","fPass","fMob","fRch","fNid","fDob","fHouse","fArea","fConn","fRem"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});document.getElementById("fThana").value="PANCHAGARH SADAR";for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value="";}document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function(r){r.checked=false;});document.getElementById("totPrice").textContent="0";var _sbPrc=document.getElementById("sbPrc");if(_sbPrc)_sbPrc.textContent="0";document.getElementById("sigName").textContent="";document.getElementById("sigMob").textContent="";var _sbSer=document.getElementById("sbSer");if(_sbSer)_sbSer.textContent="-";var ab=document.getElementById("auditBar");ab.className="audit";ab.innerHTML="";}
 
 function showAudit(log){var bar=document.getElementById("auditBar");if(!log||!log.length){bar.className="audit";bar.innerHTML="";return;}var al=function(a){return a==="created"?"✅ তৈরি":a==="updated"?"✏️ আপডেট":a==="approved"?"✔️ অনুমোদন":"পরিবর্তন";};bar.className="audit on";var html='<b style="font-size:11px">🗒 পরিবর্তনের ইতিহাস:</b>';html+='<div style="margin-top:6px;border:1px solid rgba(16,163,74,.2);border-radius:8px;overflow:hidden">';var rev=log.slice().reverse();for(var i=0;i<rev.length;i++){var e=rev[i],hasChanges=e.changes&&e.changes.length>0,accId="acc_"+i,isFirst=(i===0);html+='<div style="border-bottom:'+(i<rev.length-1?'1px solid rgba(16,163,74,.15)':'none')+'">';html+='<div onclick="toggleAcc(\''+accId+'\')" style="background:rgba(16,163,74,.1);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">';html+='<span style="font-weight:700;font-size:10px">'+al(e.action)+'</span>';html+='<span style="font-size:10px;opacity:.75">'+e.display+' ('+e.by+') &nbsp;·&nbsp; '+e.time+'</span>';html+='<span id="arr_'+accId+'" style="font-size:10px;transition:transform .2s;display:inline-block;transform:'+(isFirst?'rotate(180deg)':'rotate(0deg)')+'">▾</span>';html+='</div>';html+='<div id="'+accId+'" style="display:'+(isFirst?'block':'none')+';padding:6px 8px">';if(hasChanges){html+='<table style="width:100%;border-collapse:collapse;font-size:10px">';html+='<tr style="background:rgba(0,0,0,.04)"><th style="text-align:left;padding:2px 5px;font-weight:600;color:#065f46">ফিল্ড</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#dc2626">আগে</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#16a34a">পরে</th></tr>';for(var j=0;j<e.changes.length;j++){var ch=e.changes[j];html+='<tr style="border-top:1px solid rgba(0,0,0,.05)"><td style="padding:2px 5px;font-weight:600;color:#065f46">'+ch.field+'</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.old||'—')+'</td><td style="padding:2px 5px;color:#15803d;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.new||'—')+'</td></tr>';}html+='</table>';}else if(e.action==="created"){html+='<span style="font-size:10px;color:#065f46;opacity:.7">নতুন রেকর্ড তৈরি হয়েছে।</span>';}html+='</div></div>';}html+='</div>';bar.innerHTML=html;}
 function toggleAcc(id){var body=document.getElementById(id),arr=document.getElementById("arr_"+id);if(!body)return;var isOpen=body.style.display!=="none";body.style.display=isOpen?"none":"block";if(arr)arr.style.transform=isOpen?"rotate(0deg)":"rotate(180deg)";}
@@ -1572,6 +1604,23 @@ function renderHome(){
 function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function buildChart(id,type,labels,datasets,isLight,gridClr,textDim){if(_charts[id]){try{_charts[id].destroy();}catch(e){}}var ctx=document.getElementById(id);if(!ctx)return;_charts[id]=new Chart(ctx,{type:type,data:{labels:labels,datasets:datasets},options:{responsive:true,plugins:{legend:{labels:{color:textDim,font:{size:11},boxWidth:12,padding:10}},tooltip:{backgroundColor:isLight?"rgba(255,255,255,.95)":"rgba(15,23,42,.95)",titleColor:isLight?"#1e293b":"#fff",bodyColor:isLight?"#475569":"rgba(255,255,255,.7)",borderColor:isLight?"#e2e8f0":"rgba(255,255,255,.1)",borderWidth:1,padding:10,cornerRadius:8}},scales:(type==="bar"||type==="line")?{x:{grid:{color:gridClr},ticks:{color:textDim,font:{size:10}}},y:{grid:{color:gridClr},ticks:{color:textDim,font:{size:10}},beginAtZero:true}}:{}}});}
 
+    
+function doLogout(){
+  currentUser=null;
+  localStorage.removeItem("agni_session");
+  document.getElementById("loginScreen").style.display="flex";
+  document.getElementById("sidebar").style.display="none";
+  document.getElementById("appWrap").style.display="none";
+  document.getElementById("homePage").style.display="none";
+  document.querySelector(".layout").style.display="none";
+  document.getElementById("mobileActionBar").style.display="none";
+  closeSidebar();
+  DB=[];TRASH=[];PENDING=[];EREQS=[];cur=-1;curId=null;
+  document.body.className="md-disabled";
+  if(curTheme==="light")document.body.classList.add("lg-light");
+  pageMode="disabled";
+}
+    
 // ─── INIT ───
 function initApp(){
   updateTotal();
