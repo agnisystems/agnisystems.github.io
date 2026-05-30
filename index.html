@@ -202,7 +202,7 @@ body.lg-light .sb-logout button:hover{background:rgba(220,38,38,.13);border-colo
   display:flex;
   align-items:center;
   gap:12px;
-  justify-content:center;
+  
   transition:background .3s,border-color .3s;
   overflow:visible;
 }
@@ -861,6 +861,11 @@ body.lg-light .hm-req-sub{color:#64748b;}
 
 <div id="appWrap">
   <div id="topbar">
+
+  <!-- বাম স্পেস (ফাঁকা, flex:1) -->
+  <div style="flex:1"></div>
+
+  <!-- মাঝখানের items -->
   <div class="tb-nav">
     <button onclick="prevRec()">◀</button>
     <input id="navId" value="1"/>
@@ -876,12 +881,17 @@ body.lg-light .hm-req-sub{color:#64748b;}
   </div>
   <div class="tb-sep"></div>
   <button class="tb-btn ghost" onclick="showList()">📃 Data List</button>
-  <span id="syncBadge" class="syncing">
-    <span class="sb-icon">↻</span>
-    <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
-  </span>
-  <div class="tb-sep"></div>
-  <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
+
+  <!-- ডান স্পেস (flex:1) — ডান গ্রুপকে ডানে ঠেলবে -->
+  <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:8px;">
+    <span id="syncBadge" class="syncing">
+      <span class="sb-icon">↻</span>
+      <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
+    </span>
+    <div class="tb-sep"></div>
+    <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
+  </div>
+
 </div>
 </div>
 
