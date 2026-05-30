@@ -197,13 +197,15 @@ body.lg-light .sb-logout button:hover{background:rgba(220,38,38,.13);border-colo
   background:var(--nav2);
   border-bottom:1px solid rgba(255,255,255,.07);
   box-shadow:0 2px 14px rgba(0,0,0,.28);
-  padding:0 12px 0 12px;
+  padding:0 24px;
   height:70px;
-  display:flex;align-items:center;gap:8px;
+  display:flex;
+  align-items:center;
+  gap:12px;
   justify-content:center;
   transition:background .3s,border-color .3s;
   overflow:visible;
-}  
+}
 /* topbar-এর logout button */
 #topbar .btn-logout {
   display:inline-flex;align-items:center;gap:6px;
@@ -859,31 +861,28 @@ body.lg-light .hm-req-sub{color:#64748b;}
 
 <div id="appWrap">
   <div id="topbar">
-            <div style="display:flex;align-items:center;gap:8px;flex:0 0 auto;">
-               <div class="tb-nav">
-                      <button onclick="prevRec()">◀</button>
-                      <input id="navId" value="1"/>
-                      <button onclick="nextRec()">▶</button>
-                </div>
-                <div style="position:relative;flex-shrink:1;min-width:0;">
-                      <input type="text" id="tbSearch" placeholder="ID / নাম / মোবাইল..."
-                        style="padding:6px 12px 6px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:13px;width:180px;max-width:100%;outline:none;font-family:'Hind Siliguri',sans-serif;flex-shrink:1;"
-                        onfocus="this.style.borderColor='var(--pri)'"
-                        onblur="this.style.borderColor=''"/>
-                      <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none">🔍</span>
-                </div>
-                
-    <div class="tb-sep"></div>
-    <button class="tb-btn ghost" onclick="showList()">📃 Data List</button>
-            </div>
-<div class="tb-space"></div>
-    <span id="syncBadge" class="syncing">
-          <span class="sb-icon">↻</span>
-          <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
-        </span>
-        <div class="tb-sep"></div>
-        <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
+  <div class="tb-nav">
+    <button onclick="prevRec()">◀</button>
+    <input id="navId" value="1"/>
+    <button onclick="nextRec()">▶</button>
   </div>
+  <div style="position:relative;flex-shrink:1;min-width:0;">
+    <input type="text" id="tbSearch" placeholder="ID / নাম / মোবাইল..."
+      style="padding:6px 12px 6px 30px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:13px;width:180px;max-width:100%;outline:none;font-family:'Hind Siliguri',sans-serif;flex-shrink:1;"
+      onfocus="this.style.borderColor='var(--pri)'"
+      onblur="this.style.borderColor=''"
+      onkeydown="if(event.key==='Enter')doTopSearch(this.value)"/>
+    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.4;pointer-events:none">🔍</span>
+  </div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn ghost" onclick="showList()">📃 Data List</button>
+  <span id="syncBadge" class="syncing">
+    <span class="sb-icon">↻</span>
+    <span><span style="display:block;font-size:12px;font-weight:600">Connecting</span><span class="sb-sub">Please wait</span></span>
+  </span>
+  <div class="tb-sep"></div>
+  <button class="tb-logout-btn" onclick="doLogout()"><span class="tb-logout-txt">🚪 Log out</span></button>
+</div>
 </div>
 
   <div id="mainContent">
@@ -1674,5 +1673,7 @@ window.addEventListener("resize",function(){
   window.oncontextmenu=function(e){e.preventDefault();return false;};
 })();
 </script>
+
+
 </body>
 </html>
