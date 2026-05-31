@@ -671,11 +671,12 @@ body.lg-light .tb-logout-btn:hover{background:rgba(220,38,38,.15);}
 
 /* ── Print ── */
     
-    @media print{
+@media print{
   body{background:#fff;}
   #sidebar,#hamburger,#sbOverlay,#appWrap #topbar,
   #mainContent .right-bar,.banner,.audit,.pop-bg,
   #mobileActionBar,#paymentPanel{display:none!important;}
+  #loginScreen{display:none!important;}
   #appWrap{margin-left:0!important;}
   .layout{width:auto!important;display:block!important;}
   .a4-col{padding:0!important;}
@@ -684,18 +685,12 @@ body.lg-light .tb-logout-btn:hover{background:rgba(220,38,38,.15);}
     pointer-events:all!important;opacity:1!important;
     width:210mm!important;
   }
-  /* ← এটা যোগ করুন */
   .a4-page + .a4-page{
-    page-break-before:always !important;
-    break-before:page !important;
-    margin-top:0 !important;
+    page-break-before:always!important;
+    break-before:page!important;
+    margin-top:0!important;
   }
-}
-  #loginScreen{display:none!important;}
-  
-  /* ← এই line টা যোগ করুন */
-  .payment-summary-panel{display:none!important;}
-}   
+}  
     
     
     
