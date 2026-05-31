@@ -670,11 +670,12 @@ body.lg-light .tb-logout-btn{color:#dc2626;background:rgba(220,38,38,.08);border
 body.lg-light .tb-logout-btn:hover{background:rgba(220,38,38,.15);}
 
 /* ── Print ── */
-@media print{
+    
+    @media print{
   body{background:#fff;}
   #sidebar,#hamburger,#sbOverlay,#appWrap #topbar,
   #mainContent .right-bar,.banner,.audit,.pop-bg,
-  #mobileActionBar{display:none!important;}
+  #mobileActionBar,#paymentPanel{display:none!important;}
   #appWrap{margin-left:0!important;}
   .layout{width:auto!important;display:block!important;}
   .a4-col{padding:0!important;}
@@ -683,8 +684,18 @@ body.lg-light .tb-logout-btn:hover{background:rgba(220,38,38,.15);}
     pointer-events:all!important;opacity:1!important;
     width:210mm!important;
   }
+  /* ← এটা যোগ করুন */
+  .a4-page + .a4-page{
+    page-break-before:always !important;
+    break-before:page !important;
+    margin-top:0 !important;
+  }
+}
   #loginScreen{display:none!important;}
-}    
+  
+  /* ← এই line টা যোগ করুন */
+  .payment-summary-panel{display:none!important;}
+}   
     
     
     
@@ -1108,38 +1119,37 @@ body.lg-light .hm-req-sub{color:#64748b;}
   <tr>
     <td style="border:1px solid #000;padding:2px;font-size:10px">৩.</td>
     <td style="border:1px solid #000;padding:2px;font-size:10px">ONU</td>
-    <td style="border:1px solid #000;padding:2px;font-weight:bold;font-size:14px">2</td>
+    <td style="border:1px solid #000;padding:1px"><input type="text" id="eTm" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
     <td style="border:1px solid #000;padding:1px"><input type="text" id="eOq" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
     <td style="border:1px solid #000;padding:1px"><input type="text" id="eOs" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
     <td style="border:1px solid #000;padding:1px"><input type="text" id="eOp" class="price" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
   </tr>
 
-  <!-- ৪. TJ Box -->
-    <tr>
-      <td rowspan="2" style="border:1px solid #000;padding:2px;font-size:10px;vertical-align:middle">৪.</td>
-      <td rowspan="2" style="border:1px solid #000;padding:2px;font-size:10px;vertical-align:middle">TJ Box</td>
-      <td style="border:1px solid #000;padding:0;vertical-align:middle">
-        <div style="display:flex;width:100%;height:100%">
-          <div style="flex:1;border-right:1px solid #000;font-weight:bold;font-size:13px;text-align:center;padding:4px 2px">4</div>
-          <div style="flex:1;font-weight:bold;font-size:13px;text-align:center;padding:4px 2px">8</div>
-        </div>
-      </td>
-      <td style="border:1px solid #000;padding:0;vertical-align:middle">
-        <div style="display:flex;width:100%;height:100%">
-          <div style="flex:1;border-right:1px solid #000;padding:1px"><input type="text" id="eT4" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;text-align:center;font-family:'Hind Siliguri',sans-serif;padding:2px"/></div>
-          <div style="flex:1;padding:1px"><input type="text" id="eT8" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;text-align:center;font-family:'Hind Siliguri',sans-serif;padding:2px"/></div>
-        </div>
-      </td>
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTs" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTp" class="price" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-    </tr>
-    <tr>
-      <!-- SL ও TJ Box নাম rowspan="2" এ উপরে আছে -->
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTq" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTqB" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTsB" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-      <td style="border:1px solid #000;padding:1px"><input type="text" id="eTpB" class="price" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
-    </tr>
+<!-- ৪. TJ Box -->
+<tr>
+  <td rowspan="2" style="border:1px solid #000;padding:2px;font-size:10px;vertical-align:middle">৪.</td>
+  <td rowspan="2" style="border:1px solid #000;padding:2px;font-size:10px;vertical-align:middle">TJ Box</td>
+  <td style="border:1px solid #000;padding:4px 2px;font-weight:bold;font-size:13px;text-align:center;vertical-align:middle">2</td>
+  <td style="border:1px solid #000;padding:1px"><input type="text" id="eTs" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
+  <td style="border:1px solid #000;padding:1px"><input type="text" id="eTsSerial" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
+  <td style="border:1px solid #000;padding:1px"><input type="text" id="eTp" class="price" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
+</tr>
+<tr>
+  <td style="border:1px solid #000;padding:0;vertical-align:middle">
+    <div style="display:flex;width:100%;height:100%">
+      <div style="flex:1;border-right:1px solid #000;font-weight:bold;font-size:11px;text-align:center;padding:3px 2px">4</div>
+      <div style="flex:1;font-weight:bold;font-size:11px;text-align:center;padding:3px 2px">8</div>
+    </div>
+  </td>
+  <td style="border:1px solid #000;padding:0;vertical-align:middle">
+    <div style="display:flex;width:100%;height:100%">
+      <div style="flex:1;border-right:1px solid #000;padding:1px"><input type="text" id="eT4" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;text-align:center;font-family:'Hind Siliguri',sans-serif;padding:2px"/></div>
+      <div style="flex:1;padding:1px"><input type="text" id="eT8" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;text-align:center;font-family:'Hind Siliguri',sans-serif;padding:2px"/></div>
+    </div>
+  </td>
+  <td style="border:1px solid #000;padding:1px"><input type="text" id="eTsB" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
+  <td style="border:1px solid #000;padding:1px"><input type="text" id="eTpB" class="price" style="width:100%;border:none;outline:none;background:transparent;font-size:10px;padding:2px 4px;font-family:'Hind Siliguri',sans-serif;text-align:center"/></td>
+</tr>
 
 
   <!-- ৫. Replace ONU -->
@@ -1182,7 +1192,7 @@ body.lg-light .hm-req-sub{color:#64748b;}
 </table>
        
         <!-- Payment Summary Panel -->
-        <div style="margin-top:10px;border:1.5px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#f8fafc;">
+        <div id="paymentPanel" style="margin-top:10px;border:1.5px solid #d1d5db;border-radius:10px;padding:12px 14px;background:#f8fafc;">
   <div style="display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;">
 
     <div style="flex:1;min-width:100px;display:flex;flex-direction:column;align-items:center;gap:5px;">
@@ -1226,7 +1236,7 @@ body.lg-light .hm-req-sub{color:#64748b;}
         
         <div class="audit" id="auditBar"></div>
       </div>
-      <div class="a4-page" style="margin-top:13px">
+      <div class="a4-page" style="margin-top:13px;page-break-before:always;break-before:page;">
         <div class="sec-hdr" style="font-weight:bold;font-size:19px">সরঞ্জাম ব্যবহার ও রক্ষণাবেক্ষণ:</div>
         <div class="terms">১. আমি সরবরাহকৃত সরঞ্জামগুলি যথাযথভাবে ব্যবহার করব এবং সেগুলোর কোন ক্ষতি হতে দেব না।<br/><br/>২. সরঞ্জামগুলো ইন্টারনেট সেবা গ্রহনের জন্য ব্যবহার ছাড়া অন্য কোন উদ্দেশ্যে ব্যবহার করব না।</div>
         <br/><br/>
@@ -1522,7 +1532,7 @@ var FC={apiKey:"AIzaSyBpob-vMoKJZ66CSPJCVrnBp8CFuDztw7w",authDomain:"agni-system
 if(!firebase.apps.length)firebase.initializeApp(FC);
 var fsdb=firebase.firestore();
 var DB=[],TRASH=[],PENDING=[],EREQS=[],cur=-1,curId=null,pageMode="disabled";
-var EQ=["eRm","eRq","eRs","eRp","eC1m","eC1q","eC1s","eC1p","eC2m","eC2q","eC2s","eC2p","eOm","eOq","eOs","eOp","eTq","eTs","eTp","eT4","eT8","ePm","ePq","ePs","ePp","eSs","eSp"];
+var EQ=["eRm","eRq","eRs","eRp","eC1m","eC1q","eC1s","eC1p","eC2m","eC2q","eC2s","eC2p","eTm","eOq","eOs","eOp","eTs","eTp","eT4","eT8","eTsB","eTpB","eROm","eROq","eROs","eROp","eSq","eSs","eSp"];
 
 function sync2(s,m){var el=document.getElementById("syncBadge");el.className=s;var icons={synced:'<span class="sb-dot"></span>',syncing:"↻",error:"✕"};var subs={synced:"Live sync",syncing:"Please wait",error:"Check connection"};var mains={synced:"Connected",syncing:"Syncing",error:"Disconnected"};el.innerHTML='<span class="sb-icon">'+icons[s]+'</span><span><span style="display:block;font-size:12px;font-weight:600">'+mains[s]+'</span><span class="sb-sub">'+subs[s]+'</span></span>';}
 function flat(o){var f={};Object.keys(o).forEach(function(k){f[k]=(o[k]==null)?"":o[k];});return f;}
@@ -1594,16 +1604,15 @@ function autoSlash(id){var el=document.getElementById(id);if(!el)return;el.addEv
 
 function initEqTabOrder(){
   var ids=[
-    "eRm","eRq","eRs","eRp",
-    "eC1m","eC1q","eC1s","eC1p",
-    "eC2m","eC2q","eC2s","eC2p",
-    "eOq","eOs","eOp",
-    "eT4","eT8","eTs","eTp",
-    "eTq","eTqB","eTsB","eTpB",
-    "eROm","eROq","eROs","eROp",
-    "eSq","eSs","eSp",
-    "totPrice"
-  ];
+      "eRm","eRq","eRs","eRp",
+      "eC1m","eC1q","eC1s","eC1p",
+      "eC2m","eC2q","eC2s","eC2p",
+      "eTm","eOq","eOs","eOp",
+      "eTs","eTsSerial","eTp",
+      "eT4","eT8","eTsB","eTpB",
+      "eROm","eROq","eROs","eROp",
+      "eSq","eSs","eSp"
+    ];
   for(var i=0;i<ids.length;i++){
     (function(idx){
       var el=document.getElementById(ids[idx]);
