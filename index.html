@@ -193,7 +193,7 @@ body.lg-light .sb-logout button:hover{background:rgba(220,38,38,.13);border-colo
 
     
 #topbar{
-  position:sticky;top:0;z-index:100;
+  position:fixed;top:0;left:var(--sb-width);right:0;z-index:100;
   background:var(--nav2);
   border-bottom:1px solid rgba(255,255,255,.07);
   box-shadow:0 2px 14px rgba(0,0,0,.28);
@@ -258,7 +258,7 @@ body.lg-light #tbSearch{background:rgba(0,0,0,.06)!important;border-color:rgba(0
 body.lg-light #tbSearch::placeholder{color:#94a3b8!important;}
 
 /* ─── MAIN / A4 ─── */
-#mainContent{padding:12px 12px 60px;}
+#mainContent{padding:12px 12px 60px;margin-top:70px;}
 .layout{display:flex;gap:12px;width:calc(210mm + 190px);max-width:calc(100vw - 20px);margin:0 auto;align-items:flex-start;}
 .a4-col{flex:1;min-width:0;order:1;}
 .right-bar{width:170px;flex-shrink:0;position:sticky;top:65px;display:flex;flex-direction:column;gap:9px;order:2;}
@@ -1680,7 +1680,10 @@ document.getElementById("navId").addEventListener("keydown",function(e){if(e.key
 var _la=[],_lm="list";
 function showList(){cloudSync(function(){_lm="list";_la=DB.slice();document.getElementById("lpTtl").textContent="📋 গ্রাহক তালিকা — মোট: "+DB.length+" জন";document.getElementById("lpBody").innerHTML=buildList(DB,"list");document.getElementById("lsIn").value="";document.getElementById("lpBg").classList.add("on");});}
 function filterL(){var q=document.getElementById("lsIn").value.toLowerCase();var filtered=_la.filter(function(c){return[c.id,c.name,c.mobile,c.login].some(function(f){return f&&f.toLowerCase().indexOf(q)>=0;});});document.getElementById("lpBody").innerHTML=buildList(filtered,_lm);}
-function closeLP(){document.getElementById("lpBg").classList.remove("on");}
+function closeLP(){
+  document.getElementById("lpBg").classList.remove("on");
+  document.querySelector(".ls-wrap").style.display="block";
+}
 function buildList(arr,mode){if(!arr.length)return'<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>';var isA=isPrivileged();var h='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="ltbl"><thead><tr><th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th><th>সংযোগ</th><th>একশন</th></tr></thead><tbody>';for(var i=0;i<arr.length;i++){var c=arr[i],vid=c.id||c.pendingId;var viewBtn;if(!isA&&mode==="list")viewBtn='<button class="abtn v" onclick="openFullPage(\''+vid+'\')">👁 View</button>';else viewBtn='<button class="abtn v" onclick="openVP(\''+vid+'\',\''+mode+'\')">👁 View</button>';var btns=viewBtn;if(!isA&&mode==="list"){var hasPend=false,hasApr=false;for(var j=0;j<EREQS.length;j++){if(String(EREQS[j].recordId)===String(vid)&&EREQS[j].requestedBy===currentUser.username){if(EREQS[j].status==="approved")hasApr=true;else hasPend=true;}}if(hasApr)btns+='<button class="abtn ok" onclick="goEditFromApproved(\''+vid+'\',\'\')">✏ Edit</button>';else if(hasPend)btns+='<button class="abtn" style="background:#94a3b8;cursor:not-allowed" disabled>⏳</button>';else btns+='<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\''+vid+'\')">📨</button>';}if(isA&&mode==="list")btns+='<button class="abtn d" onclick="delFromList(\''+c.id+'\')">🗑</button>';if(isA&&mode==="pending"){btns='<button class="abtn ok" onclick="approveP(\''+c.pendingId+'\')">✔</button>'+viewBtn+'<button class="abtn no" onclick="rejectP(\''+c.pendingId+'\')">✕</button>';}h+='<tr><td style="color:#94a3b8;text-align:center">'+(i+1)+'</td><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#2563eb">'+(c.id||c.pendingId||"")+'</td><td style="font-weight:500">'+(c.name||"")+'</td><td>'+(c.mobile||"")+'</td><td><span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600">'+(c.package_type||"—")+'</span></td><td style="font-size:11px;white-space:nowrap">'+(c.conn||"—")+'</td><td style="white-space:nowrap">'+btns+'</td></tr>';}h+='</tbody></table></div>';return h;}
 
 // ─── VIEW POPUP ───
@@ -1864,9 +1867,10 @@ function showDateFilteredList(){
     document.getElementById("dfResult").innerHTML=buildList(filtered,"list");
   };
 
-  cloudSync(function(){
+    cloudSync(function(){
     document.getElementById("lsIn").value="";
     document.getElementById("lpBg").classList.add("on");
+    document.querySelector(".ls-wrap").style.display="none";
 
     // Default empty — শুধু filter bar দেখাও
     document.getElementById("lpTtl").textContent="📅 তারিখ ফিল্টার";
