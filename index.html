@@ -1779,7 +1779,7 @@ function renderHome(){
   DB.forEach(function(c){totalRevenue+=Number(c.totalPrice)||0;var p=c.package_type||"অজানা";pkgCount[p]=(pkgCount[p]||0)+1;if(pkgCount[p]>topPkgN){topPkgN=pkgCount[p];topPkg=p;}var t=c.customer_type||"অজানা";typeCount[t]=(typeCount[t]||0)+1;if(c.conn&&c.conn.length>=7){var parts=c.conn.split("/");if(parts.length===3){var key=parts[2]+"-"+parts[1];monthCount[key]=(monthCount[key]||0)+1;monthRevenue[key]=(monthRevenue[key]||0)+(Number(c.totalPrice)||0);}}});
   var thisMonthNew=monthCount[thisMonth]||0,lastMonthNew=monthCount[lastMonth]||0,avgRev=DB.length?Math.round(totalRevenue/DB.length):0;
   var trendIcon=thisMonthNew>=lastMonthNew?"↑":"↓",trendClr=thisMonthNew>=lastMonthNew?"#4ade80":"#f87171";
-  var stats=[{icon:"👥",val:DB.length,lbl:"মোট গ্রাহক",color:"#8b5cf6",trend:trendIcon+" এই মাস "+thisMonthNew+" জন",trendC:trendClr},{icon:"💰",val:"৳"+totalRevenue,lbl:"মোট বিনিয়োগ",color:"#10b981",trend:"গড় ৳"+avgRev+"/গ্রাহক",trendC:"#34d399"},{icon:"📅",val:thisMonthNew,lbl:"এই মাসে নতুন",color:"#3b82f6",trend:"গত মাস: "+lastMonthNew+" জন",trendC:"#60a5fa"},{icon:"📦",val:topPkg||"—",lbl:"জনপ্রিয় প্যাকেজ",color:"#f59e0b",trend:topPkgN+" জন ব্যবহারকারী",trendC:"#fbbf24"},{icon:"💸",val:(function(){return DB.filter(function(c){return Number(c.totPrice)||0;}).length;})(),lbl:"বাকি আছে",color:"#ef4444",trend:(function(){var t=DB.filter(function(c){return Number(c.totPrice)||0;});return t.length?"মোট ৳"+t.reduce(function(s,c){return s+(Number(c.totPrice)||0);},0)+" বাকি":"সব পরিশোধিত ✓";})(),trendC:DB.filter(function(c){return Number(c.totPrice)||0;}).length?"#f87171":"#4ade80",onclick:"showBakiList()"},{icon:"🗑",val:TRASH.length,lbl:"Trash রেকর্ড",color:"#6b7280",trend:"পুনরুদ্ধারযোগ্য",trendC:"#9ca3af",onclick:isPrivileged()?"showTrash()":null}];
+  var stats=[{icon:"👥",val:DB.length,lbl:"মোট গ্রাহক",color:"#8b5cf6",trend:trendIcon+" এই মাস "+thisMonthNew+" জন",trendC:trendClr,onclick:"showList()"},{icon:"💰",val:"৳"+totalRevenue,lbl:"মোট বিনিয়োগ",color:"#10b981",trend:"গড় ৳"+avgRev+"/গ্রাহক",trendC:"#34d399"},{icon:"📅",val:thisMonthNew,lbl:"এই মাসে নতুন",color:"#3b82f6",trend:"গত মাস: "+lastMonthNew+" জন",trendC:"#60a5fa",onclick:"showDateFilteredList()"},{icon:"📦",val:topPkg||"—",lbl:"জনপ্রিয় প্যাকেজ",color:"#f59e0b",trend:topPkgN+" জন ব্যবহারকারী",trendC:"#fbbf24"},{icon:"💸",val:(function(){return DB.filter(function(c){return Number(c.totPrice)||0;}).length;})(),lbl:"বাকি আছে",color:"#ef4444",trend:(function(){var t=DB.filter(function(c){return Number(c.totPrice)||0;});return t.length?"মোট ৳"+t.reduce(function(s,c){return s+(Number(c.totPrice)||0);},0)+" বাকি":"সব পরিশোধিত ✓";})(),trendC:DB.filter(function(c){return Number(c.totPrice)||0;}).length?"#f87171":"#4ade80",onclick:"showBakiList()"},{icon:"🗑",val:TRASH.length,lbl:"Trash রেকর্ড",color:"#6b7280",trend:"পুনরুদ্ধারযোগ্য",trendC:"#9ca3af",onclick:isPrivileged()?"showTrash()":null}];
   var sg=document.getElementById("statsGrid");sg.innerHTML=stats.map(function(s){return'<div class="hm-stat" style="cursor:'+(s.onclick?"pointer":"default")+'" '+(s.onclick?'onclick="'+s.onclick+'"':'')+'>'+
     '<div class="st-glow" style="background:'+s.color+'"></div>'+
     '<div class="st-icon">'+s.icon+'</div>'+
@@ -1825,6 +1825,63 @@ function escHtml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").
 function buildChart(id,type,labels,datasets,isLight,gridClr,textDim){if(_charts[id]){try{_charts[id].destroy();}catch(e){}}var ctx=document.getElementById(id);if(!ctx)return;_charts[id]=new Chart(ctx,{type:type,data:{labels:labels,datasets:datasets},options:{responsive:true,plugins:{legend:{labels:{color:textDim,font:{size:11},boxWidth:12,padding:10}},tooltip:{backgroundColor:isLight?"rgba(255,255,255,.95)":"rgba(15,23,42,.95)",titleColor:isLight?"#1e293b":"#fff",bodyColor:isLight?"#475569":"rgba(255,255,255,.7)",borderColor:isLight?"#e2e8f0":"rgba(255,255,255,.1)",borderWidth:1,padding:10,cornerRadius:8}},scales:(type==="bar"||type==="line")?{x:{grid:{color:gridClr},ticks:{color:textDim,font:{size:10}}},y:{grid:{color:gridClr},ticks:{color:textDim,font:{size:10}},beginAtZero:true}}:{}}});}
 
  
+    
+function showDateFilteredList(){
+  // Default: this month
+  var now=new Date();
+  var y=now.getFullYear(),m=String(now.getMonth()+1).padStart(2,"0");
+  function doFilter(from,to){
+    var fromD=new Date(from),toD=new Date(to);toD.setHours(23,59,59);
+    var filtered=DB.filter(function(c){
+      if(!c.conn)return false;
+      var parts=c.conn.split("/");
+      if(parts.length!==3)return false;
+      var d=new Date(parts[2]+"-"+parts[1]+"-"+parts[0]);
+      return d>=fromD&&d<=toD;
+    });
+    document.getElementById("lpTtl").textContent="📅 তারিখ ফিল্টার — "+filtered.length+" জন";
+    var filterBar='<div style="padding:12px 15px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;font-weight:700;color:#475569">Date:</label>'
+      +'<input type="date" id="dfFrom" value="'+from+'" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:\'Hind Siliguri\',sans-serif"/></div>'
+      +'<div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;font-weight:700;color:#475569">to:</label>'
+      +'<input type="date" id="dfTo" value="'+to+'" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:\'Hind Siliguri\',sans-serif"/></div>'
+      +'<button onclick="var f=document.getElementById(\'dfFrom\').value,t=document.getElementById(\'dfTo\').value;if(f&&t)reFilterDate(f,t);" '
+      +'style="padding:7px 16px;background:#2563eb;border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Hind Siliguri\',sans-serif">Search</button>'
+      +'</div>';
+    document.getElementById("lpBody").innerHTML=filterBar+'<div id="dfResult">'+buildList(filtered,"list")+'</div>';
+  }
+
+  window.reFilterDate=function(from,to){
+    var fromD=new Date(from),toD=new Date(to);toD.setHours(23,59,59);
+    var filtered=DB.filter(function(c){
+      if(!c.conn)return false;
+      var parts=c.conn.split("/");
+      if(parts.length!==3)return false;
+      var d=new Date(parts[2]+"-"+parts[1]+"-"+parts[0]);
+      return d>=fromD&&d<=toD;
+    });
+    document.getElementById("lpTtl").textContent="📅 তারিখ ফিল্টার — "+filtered.length+" জন";
+    document.getElementById("dfResult").innerHTML=buildList(filtered,"list");
+  };
+
+  cloudSync(function(){
+    document.getElementById("lsIn").value="";
+    document.getElementById("lpBg").classList.add("on");
+
+    // Default empty — শুধু filter bar দেখাও
+    document.getElementById("lpTtl").textContent="📅 তারিখ ফিল্টার";
+    var filterBar='<div style="padding:12px 15px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;font-weight:700;color:#475569">Date:</label>'
+      +'<input type="date" id="dfFrom" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:\'Hind Siliguri\',sans-serif"/></div>'
+      +'<div style="display:flex;align-items:center;gap:6px"><label style="font-size:12px;font-weight:700;color:#475569">to:</label>'
+      +'<input type="date" id="dfTo" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;outline:none;font-family:\'Hind Siliguri\',sans-serif"/></div>'
+      +'<button onclick="var f=document.getElementById(\'dfFrom\').value,t=document.getElementById(\'dfTo\').value;if(f&&t)reFilterDate(f,t);else alert(\'দুটি তারিখ দিন\');" '
+      +'style="padding:7px 16px;background:#2563eb;border:none;border-radius:7px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:\'Hind Siliguri\',sans-serif">Search</button>'
+      +'</div>';
+    document.getElementById("lpBody").innerHTML=filterBar+'<div id="dfResult"><div class="empty"><div class="ei">📅</div><p>তারিখ দিয়ে Search করুন।</p></div></div>';
+  });
+}    
+    
     
 function showBakiList(){
   cloudSync(function(){
