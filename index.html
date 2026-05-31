@@ -1673,6 +1673,7 @@ function initEqTabOrder(){
 // ─── FORM ───
 function fGet(){var splVals=[],splInputs=document.querySelectorAll('[name="spl"]:checked');for(var i=0;i<splInputs.length;i++)splVals.push(splInputs[i].value);var d={id:document.getElementById("fId").value.trim(),name:document.getElementById("fName").value.trim(),login:document.getElementById("fLogin").value.trim(),pass:document.getElementById("fPass").value.trim(),mobile:document.getElementById("fMob").value.trim(),recharge:document.getElementById("fRch").value.trim(),nid:document.getElementById("fNid").value.trim(),dob:document.getElementById("fDob").value.trim(),house:document.getElementById("fHouse").value.trim(),area:document.getElementById("fArea").value.trim(),thana:document.getElementById("fThana").value.trim(),conn:document.getElementById("fConn").value.trim(),remark:document.getElementById("fRem").value.trim(),customer_type:"",package_type:"",splitter_type:splVals.join(","),totPrice:(function(){var el=document.getElementById("totPrice");return el?(el.textContent||"").replace("৳","").trim():"";})(),porishod:document.getElementById("fPorishod").value.trim(),totalPrice:0};var ct=document.querySelector('[name="ct"]:checked');if(ct)d.customer_type=ct.value;var pt=document.querySelector('[name="pt"]:checked');if(pt)d.package_type=pt.value;for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);d[EQ[i]]=el?el.value:"";}var prices=document.querySelectorAll(".price");for(var i=0;i<prices.length;i++)d.totalPrice+=Number(prices[i].value)||0;return d;}
 function fSet(d){
+    if(d&&d.id){curId=d.id;localStorage.setItem("agni_page","view");localStorage.setItem("agni_cur_id",d.id);}
     var _fp=document.getElementById("fPorishod");
     if(_fp) _fp.value=d.porishod||"";
     var map={fId:"id",fName:"name",fLogin:"login",fPass:"pass",fMob:"mobile",fRch:"recharge",fNid:"nid",fDob:"dob",fHouse:"house",fArea:"area",fThana:"thana",fConn:"conn",fRem:"remark"};Object.keys(map).forEach(function(k){var el=document.getElementById(k);if(el)el.value=d[map[k]]||(k==="fThana"?"PANCHAGARH SADAR":"");});document.querySelectorAll('[name="ct"]').forEach(function(r){r.checked=(r.value===d.customer_type);});document.querySelectorAll('[name="pt"]').forEach(function(r){r.checked=(r.value===d.package_type);});var sv=(d.splitter_type||"").split(",");document.querySelectorAll('[name="spl"]').forEach(function(r){r.checked=(sv.indexOf(r.value)>=0);});for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value=d[EQ[i]]||"";}
@@ -1682,9 +1683,65 @@ document.getElementById("sigName").textContent=d.name||"";document.getElementByI
         if(_fpc) _fpc.value="";
         ["fId","fName","fLogin","fPass","fMob","fRch","fNid","fDob","fHouse","fArea","fConn","fRem"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});document.getElementById("fThana").value="PANCHAGARH SADAR";for(var i=0;i<EQ.length;i++){var el=document.getElementById(EQ[i]);if(el)el.value="";}document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function(r){r.checked=false;});var _tbl=document.getElementById("totPriceTable");if(_tbl)_tbl.textContent="0";var _sbPrc=document.getElementById("sbPrc");if(_sbPrc)_sbPrc.textContent="0";document.getElementById("sigName").textContent="";document.getElementById("sigMob").textContent="";var _sbSer=document.getElementById("sbSer");if(_sbSer)_sbSer.textContent="-";var ab=document.getElementById("auditBar");ab.className="audit";ab.innerHTML="";}
 
-function showAudit(log){var bar=document.getElementById("auditBar");if(!log||!log.length){bar.className="audit";bar.innerHTML="";return;}var al=function(a){return a==="created"?"✅ তৈরি":a==="updated"?"✏️ আপডেট":a==="approved"?"✔️ অনুমোদন":"পরিবর্তন";};bar.className="audit on";var html='<b style="font-size:11px">🗒 পরিবর্তনের ইতিহাস:</b>';html+='<div style="margin-top:6px;border:1px solid rgba(16,163,74,.2);border-radius:8px;overflow:hidden">';var rev=log.slice().reverse();for(var i=0;i<rev.length;i++){var e=rev[i],hasChanges=e.changes&&e.changes.length>0,accId="acc_"+i,isFirst=(i===0);html+='<div style="border-bottom:'+(i<rev.length-1?'1px solid rgba(16,163,74,.15)':'none')+'">';html+='<div onclick="toggleAcc(\''+accId+'\')" style="background:rgba(16,163,74,.1);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none">';html+='<span style="font-weight:700;font-size:10px">'+al(e.action)+'</span>';html+='<span style="font-size:10px;opacity:.75">'+e.display+' ('+e.by+') &nbsp;·&nbsp; '+e.time+'</span>';html+='<span id="arr_'+accId+'" style="font-size:10px;transition:transform .2s;display:inline-block;transform:'+(isFirst?'rotate(180deg)':'rotate(0deg)')+'">▾</span>';html+='</div>';html+='<div id="'+accId+'" style="display:'+(isFirst?'block':'none')+';padding:6px 8px">';if(hasChanges){html+='<table style="width:100%;border-collapse:collapse;font-size:10px">';html+='<tr style="background:rgba(0,0,0,.04)"><th style="text-align:left;padding:2px 5px;font-weight:600;color:#065f46">ফিল্ড</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#dc2626">আগে</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#16a34a">পরে</th></tr>';for(var j=0;j<e.changes.length;j++){var ch=e.changes[j];html+='<tr style="border-top:1px solid rgba(0,0,0,.05)"><td style="padding:2px 5px;font-weight:600;color:#065f46">'+ch.field+'</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.old||'—')+'</td><td style="padding:2px 5px;color:#15803d;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.new||'—')+'</td></tr>';}html+='</table>';}else if(e.action==="created"){html+='<span style="font-size:10px;color:#065f46;opacity:.7">নতুন রেকর্ড তৈরি হয়েছে।</span>';}html+='</div></div>';}html+='</div>';bar.innerHTML=html;}
+function showAudit(log){var bar=document.getElementById("auditBar");if(!log||!log.length){bar.className="audit";bar.innerHTML="";return;}var al=function(a){return a==="created"?"✅ তৈরি":a==="updated"?"✏️ আপডেট":a==="approved"?"✔️ অনুমোদন":"পরিবর্তন";};bar.className="audit on";var html='<b style="font-size:11px">🗒 পরিবর্তনের ইতিহাস:</b>';html+='<div style="margin-top:6px;border:1px solid rgba(16,163,74,.2);border-radius:8px;overflow:hidden">';var rev=log.slice().reverse();for(var i=0;i<rev.length;i++){var e=rev[i],hasChanges=e.changes&&e.changes.length>0,accId="acc_"+i,isFirst=(i===0);html+='<div style="border-bottom:'+(i<rev.length-1?'1px solid rgba(16,163,74,.15)':'none')+'">';
+
+html+='<div style="background:rgba(16,163,74,.1);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;user-select:none">';
+html+='<div onclick="toggleAcc(\''+accId+'\')" style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;min-width:0;">';
+html+='<span style="font-weight:700;font-size:10px;flex-shrink:0">'+al(e.action)+'</span>';
+html+='<span style="font-size:10px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e.display+' ('+e.by+') &nbsp;·&nbsp; '+e.time+'</span>';
+html+='<span id="arr_'+accId+'" style="font-size:10px;transition:transform .2s;display:inline-block;flex-shrink:0;transform:'+(isFirst?'rotate(180deg)':'rotate(0deg)')+'">▾</span>';
+html+='</div>';
+var isCoder=window.currentUser&&window.currentUser.role==="coder";
+if(isCoder){
+  html+='<button onclick="deleteAuditEntry(event,'+i+')" style="background:rgba(0,0,0,.35);border:1px solid rgba(0,0,0,.5);color:#fff;border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;font-family:\'Hind Siliguri\',sans-serif;transition:all .18s" onmouseover="this.style.background=\'rgba(220,38,38,.5)\'" onmouseout="this.style.background=\'rgba(220,38,38,.25)\'">🗑</button>';
+}
+html+='</div>';
+
+
+html+='<div id="'+accId+'" style="display:'+(isFirst?'block':'none')+';padding:6px 8px">';if(hasChanges){html+='<table style="width:100%;border-collapse:collapse;font-size:10px">';html+='<tr style="background:rgba(0,0,0,.04)"><th style="text-align:left;padding:2px 5px;font-weight:600;color:#065f46">ফিল্ড</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#dc2626">আগে</th><th style="text-align:left;padding:2px 5px;font-weight:600;color:#16a34a">পরে</th></tr>';for(var j=0;j<e.changes.length;j++){var ch=e.changes[j];html+='<tr style="border-top:1px solid rgba(0,0,0,.05)"><td style="padding:2px 5px;font-weight:600;color:#065f46">'+ch.field+'</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.old||'—')+'</td><td style="padding:2px 5px;color:#15803d;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(ch.new||'—')+'</td></tr>';}html+='</table>';}else if(e.action==="created"){html+='<span style="font-size:10px;color:#065f46;opacity:.7">নতুন রেকর্ড তৈরি হয়েছে।</span>';}html+='</div></div>';}html+='</div>';bar.innerHTML=html;}
 function toggleAcc(id){var body=document.getElementById(id),arr=document.getElementById("arr_"+id);if(!body)return;var isOpen=body.style.display!=="none";body.style.display=isOpen?"none":"block";if(arr)arr.style.transform=isOpen?"rotate(0deg)":"rotate(180deg)";}
 
+function deleteAuditEntry(event, reversedIndex) {
+  event.stopPropagation();
+  if (!currentUser || currentUser.role !== "coder") return;
+
+  // curId থেকে না পেলে fId field থেকে নাও
+  var activeId = curId || document.getElementById("fId").value.trim();
+  if (!activeId) { showPop("কোনো রেকর্ড লোড নেই।", "error"); return; }
+
+  var rec = null, dbIdx = -1;
+  for (var i = 0; i < DB.length; i++) {
+    if (String(DB[i].id) === String(activeId)) { rec = DB[i]; dbIdx = i; break; }
+  }
+  if (!rec || !rec.auditLog || !rec.auditLog.length) {
+    showPop("রেকর্ড বা history পাওয়া যায়নি।", "error"); return;
+  }
+
+  var origIndex = rec.auditLog.length - 1 - reversedIndex;
+  if (origIndex < 0 || origIndex >= rec.auditLog.length) {
+    showPop("Index ত্রুটি।", "error"); return;
+  }
+  var entry = rec.auditLog[origIndex];
+
+  if (!confirm("এই history এন্ট্রি মুছবেন?\n" + entry.display + " · " + entry.time)) return;
+
+  rec.auditLog.splice(origIndex, 1);
+  DB[dbIdx] = rec;
+  curId = activeId;
+
+  fbSet("customers", rec.id, rec, function(ok) {
+    if (ok) {
+      showAudit(rec.auditLog);
+      showPop("🗑 History এন্ট্রি মুছা হয়েছে।", "success");
+    } else {
+      // rollback
+      rec.auditLog.splice(origIndex, 0, entry);
+      DB[dbIdx] = rec;
+      showPop("Firebase সেভ ব্যর্থ!", "error");
+    }
+  });
+}  
+    
 // ─── MODE ───
 function setMode(mode){
   pageMode=mode;
@@ -1706,7 +1763,7 @@ function setMode(mode){
   else if(mode==="view"&&!isA){var pendReq=null,aprReq=null;for(var i=0;i<EREQS.length;i++){if(String(EREQS[i].recordId)===String(curId)&&EREQS[i].requestedBy===currentUser.username){if(EREQS[i].status==="approved")aprReq=EREQS[i];else if(EREQS[i].status==="pending")pendReq=EREQS[i];}}if(aprReq){document.getElementById("bOk").classList.add("show");bLoadEd.style.display="flex";}else if(pendReq){document.getElementById("bReq").classList.add("show");document.getElementById("bReqTxt").textContent="Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।";}else{bReq.style.display="flex";}}
   syncMobileBar();
 }
-function startNew(){hideHome();fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("new");document.getElementById("fId").focus();}
+function startNew(){localStorage.setItem("agni_page","new");hideHome();fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("new");document.getElementById("fId").focus();}
 function goDisabled(){fClear();cur=-1;curId=null;document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");setMode("disabled");showHome();}
 
 // ─── SAVE ───
@@ -1892,6 +1949,7 @@ document.getElementById("tbSearch").addEventListener("keydown",function(e){if(e.
 // ─── HOMEPAGE ───
 var _charts={};
 function showHome(){
+  localStorage.setItem("agni_page","home");
   document.getElementById("homePage").style.display="block";
   document.querySelector(".layout").style.display="none";
   document.getElementById("mobileActionBar").style.display="none";
@@ -2238,6 +2296,8 @@ function showBakiList(){
 function doLogout(){
   currentUser=null;
   localStorage.removeItem("agni_session");
+  localStorage.removeItem("agni_page");
+  localStorage.removeItem("agni_cur_id");
   document.getElementById("loginScreen").style.display="flex";
   document.getElementById("sidebar").style.display="none";
   document.getElementById("appWrap").style.display="none";
@@ -2257,8 +2317,27 @@ function initApp(){
   initEqTabOrder();
   cloudSync(function(){
     document.getElementById("hdrNum").textContent="#"+String(DB.length+1).padStart(4,"0");
-    setMode("disabled");
-    showHome();
+    var savedPage=localStorage.getItem("agni_page")||"home";
+    var savedId=localStorage.getItem("agni_cur_id")||"";
+    if(savedPage==="view"&&savedId){
+      var found=false;
+      for(var i=0;i<DB.length;i++){
+        if(String(DB[i].id)===String(savedId)){
+          cur=i;curId=DB[i].id;
+          fSet(DB[i]);
+          hideHome();
+          setMode("view");
+          document.getElementById("navId").value=i+1;
+          found=true;break;
+        }
+      }
+      if(!found)showHome();
+    }else if(savedPage==="new"){
+      startNew();
+    }else{
+      setMode("disabled");
+      showHome();
+    }
   });
 }
 
