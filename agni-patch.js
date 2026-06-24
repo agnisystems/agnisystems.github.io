@@ -1,51 +1,64 @@
 // ══════════════════════════════════════════════════════════
-//  AGNI SYSTEMS — Firebase-based Autocomplete + Uppercase
-//  </body> ট্যাগের আগে যোগ করুন:
-//  <script src="agni-patch-v2.js"></script>
+//  AGNI SYSTEMS — Firebase Autocomplete v3
+//  • Desktop only (mobile-এ কাজ করবে না)
+//  • Dropdown: cursor-এর ডান পাশে, viewport-এর মধ্যে
 // ══════════════════════════════════════════════════════════
 
 (function () {
   "use strict";
 
+  // ── Mobile হলে সম্পূর্ণ বন্ধ ──
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    || ('ontouchstart' in window && navigator.maxTouchPoints > 1);
+  if (isMobile) return;
+
   // ──────────────────────────────────────────────
-  //  1. Firebase থেকে যে field গুলোর unique value নেব
-  //     fieldKey → Firestore document-এর field name
+  //  1. Config
   // ──────────────────────────────────────────────
   var AC_FIELDS = [
-    { id: "fArea",  dbKey: "area",          label: "এলাকা"         },
-    { id: "fThana", dbKey: "thana",         label: "থানা"           },
-    { id: "fHouse", dbKey: "house",         label: "বাসা"           },
-    { id: "fRem",   dbKey: "remark",        label: "মন্তব্য"        },
-    { id: "eRm",    dbKey: "eRm",           label: "রাউটার মডেল"   },
-    { id: "eTm",    dbKey: "eTm",           label: "ONU মডেল"       },
-    { id: "eROm",   dbKey: "eROm",          label: "Replace ONU"   },
+    { id: "fArea",  dbKey: "area",   label: "এলাকা"       },
+    { id: "fThana", dbKey: "thana",  label: "থানা"         },
+    { id: "fHouse", dbKey: "house",  label: "বাসা"         },
+    { id: "fRem",   dbKey: "remark", label: "মন্তব্য"      },
+    { id: "eRm",    dbKey: "eRm",    label: "রাউটার মডেল" },
+    { id: "eTm",    dbKey: "eTm",    label: "ONU মডেল"    },
+    { id: "eROm",   dbKey: "eROm",   label: "Replace ONU" },
   ];
 
-  // Uppercase হবে এই field গুলো
   var UPPER_IDS = [
     "eRm","eRs","eC1s","eC2s",
     "eTm","eOs","eTs","eTsSerial",
     "eTsB","eROm","eROs","eSs",
   ];
 
-  // ──────────────────────────────────────────────
-  //  2. In-memory cache: { dbKey: [val1, val2, ...] }
-  // ──────────────────────────────────────────────
-  var _cache = {};
-  var _cacheReady = false;
+  var DD_WIDTH   = 240;   // dropdown প্রস্থ (px)
+  var DD_OFFSET  = 10;    // cursor থেকে ডানে ফাঁক (px)
+  var DD_MAX_H   = 220;   // max height (px)
+  var ITEM_H     = 38;    // প্রতিটি item আনুমানিক উচ্চতা
 
-  // Firebase DB — মূল কোডের fsdb ব্যবহার করব
-  function getDb() { return window.fsdb || null; }
+  // ──────────────────────────────────────────────
+  //  2. Cache
+  // ──────────────────────────────────────────────
+  var _cache     = {};
+  var _cacheOk   = false;
+  var _mouseX    = 0;
+  var _mouseY    = 0;
 
-  // DB array (মূল কোডের) থেকে সরাসরি unique values তুলি
-  function buildCacheFromDB() {
+  // মাউস position সবসময় track করো
+  document.addEventListener("mousemove", function (e) {
+    _mouseX = e.clientX;
+    _mouseY = e.clientY;
+  });
+
+  function getDb()  { return window.fsdb || null; }
+
+  function buildFromDB() {
     var db = window.DB;
     if (!db || !db.length) return;
     _cache = {};
     AC_FIELDS.forEach(function (f) {
-      var seen = {};
-      var vals = [];
-      for (var i = db.length - 1; i >= 0; i--) { // নতুন → পুরনো
+      var seen = {}, vals = [];
+      for (var i = db.length - 1; i >= 0; i--) {
         var v = (db[i][f.dbKey] || "").trim();
         if (v.length >= 2 && !seen[v.toLowerCase()]) {
           seen[v.toLowerCase()] = 1;
@@ -54,24 +67,19 @@
       }
       _cache[f.dbKey] = vals;
     });
-    _cacheReady = true;
+    _cacheOk = true;
   }
 
-  // Firestore থেকে live fetch (DB array খালি থাকলে fallback)
-  function buildCacheFromFirestore(cb) {
+  function buildFromFirestore(cb) {
     var db = getDb();
     if (!db) { if (cb) cb(); return; }
     db.collection("customers").get().then(function (snap) {
       _cache = {};
+      var docs = [];
+      snap.forEach(function (d) { docs.push(d.data()); });
+      docs.sort(function (a, b) { return (Number(b.id)||0) - (Number(a.id)||0); });
       AC_FIELDS.forEach(function (f) {
-        var seen = {};
-        var vals = [];
-        var docs = [];
-        snap.forEach(function (d) { docs.push(d.data()); });
-        // নতুন রেকর্ড আগে (id desc)
-        docs.sort(function (a, b) {
-          return (Number(b.id) || 0) - (Number(a.id) || 0);
-        });
+        var seen = {}, vals = [];
         docs.forEach(function (rec) {
           var v = (rec[f.dbKey] || "").trim();
           if (v.length >= 2 && !seen[v.toLowerCase()]) {
@@ -81,237 +89,242 @@
         });
         _cache[f.dbKey] = vals;
       });
-      _cacheReady = true;
+      _cacheOk = true;
       if (cb) cb();
     }).catch(function () { if (cb) cb(); });
   }
 
-  // Query match
-  function getMatches(dbKey, query) {
-    var list = _cache[dbKey] || [];
-    if (!query || query.trim().length === 0) return list.slice(0, 8);
-    var q = query.trim().toLowerCase();
-    return list
-      .filter(function (v) { return v.toLowerCase().indexOf(q) >= 0; })
-      .slice(0, 8);
+  function getMatches(key, q) {
+    var list = _cache[key] || [];
+    if (!q || !q.trim()) return list.slice(0, 8);
+    var lq = q.trim().toLowerCase();
+    return list.filter(function (v) {
+      return v.toLowerCase().indexOf(lq) >= 0;
+    }).slice(0, 8);
   }
 
-  // নতুন save হলে cache-এ add করো
-  function addToCache(dbKey, value) {
-    if (!value || value.trim().length < 2) return;
-    var val = value.trim();
-    if (!_cache[dbKey]) _cache[dbKey] = [];
-    _cache[dbKey] = _cache[dbKey].filter(function (v) {
-      return v.toLowerCase() !== val.toLowerCase();
+  function addToCache(key, val) {
+    if (!val || val.trim().length < 2) return;
+    var v = val.trim();
+    if (!_cache[key]) _cache[key] = [];
+    _cache[key] = _cache[key].filter(function (x) {
+      return x.toLowerCase() !== v.toLowerCase();
     });
-    _cache[dbKey].unshift(val);
+    _cache[key].unshift(v);
+  }
+
+  function removeFromCache(key, val) {
+    if (!_cache[key]) return;
+    _cache[key] = _cache[key].filter(function (x) {
+      return x.toLowerCase() !== val.toLowerCase();
+    });
   }
 
   // ──────────────────────────────────────────────
-  //  3. Dropdown UI
+  //  3. Dropdown
   // ──────────────────────────────────────────────
-  var _dropdown = null;
-  var _activeInput = null;
-  var _activeKey = null;
-  var _focusedIdx = -1;
+  var _dd    = null;
+  var _aInp  = null;
+  var _aKey  = null;
+  var _fidx  = -1;
 
-  function injectStyles() {
-    if (document.getElementById("agni_ac_style")) return;
+  function injectCSS() {
+    if (document.getElementById("agni_ac_css")) return;
     var s = document.createElement("style");
-    s.id = "agni_ac_style";
+    s.id = "agni_ac_css";
     s.textContent = [
-      "#agni_ac_dd {",
-      "  position:fixed; z-index:99999;",
+      "#agni_ac_dd{",
+      "  position:fixed;z-index:999999;",
+      "  width:" + DD_WIDTH + "px;",
+      "  max-height:" + DD_MAX_H + "px;",
+      "  overflow-y:auto;overflow-x:hidden;",
       "  background:#1e293b;",
-      "  border:1px solid rgba(255,255,255,.13);",
+      "  border:1px solid rgba(255,255,255,.14);",
       "  border-radius:10px;",
-      "  box-shadow:0 10px 36px rgba(0,0,0,.5);",
-      "  max-height:230px; overflow-y:auto;",
-      "  display:none; min-width:180px; padding:4px 0;",
+      "  box-shadow:0 12px 40px rgba(0,0,0,.55);",
+      "  display:none;padding:4px 0;",
       "  font-family:'Hind Siliguri',sans-serif;",
+      "  pointer-events:auto;",
       "}",
       "#agni_ac_dd::-webkit-scrollbar{width:4px;}",
       "#agni_ac_dd::-webkit-scrollbar-track{background:transparent;}",
-      "#agni_ac_dd::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;}",
-      ".ac-item {",
-      "  padding:9px 13px; font-size:13px;",
-      "  color:rgba(255,255,255,.8); cursor:pointer;",
-      "  display:flex; align-items:center; gap:9px;",
+      "#agni_ac_dd::-webkit-scrollbar-thumb{",
+      "  background:rgba(255,255,255,.15);border-radius:4px;}",
+      ".ac-it{",
+      "  padding:9px 12px;font-size:13px;",
+      "  color:rgba(255,255,255,.8);cursor:pointer;",
+      "  display:flex;align-items:center;gap:8px;",
       "  border-bottom:1px solid rgba(255,255,255,.05);",
-      "  transition:background .1s;",
+      "  transition:background .1s;white-space:nowrap;",
       "}",
-      ".ac-item:last-child{border-bottom:none;}",
-      ".ac-item:hover,.ac-item.ac-hi{background:rgba(22,163,74,.18);color:#fff;}",
-      ".ac-ico{font-size:11px;opacity:.35;flex-shrink:0;}",
-      ".ac-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}",
-      ".ac-x{font-size:11px;opacity:0;padding:1px 6px;border-radius:4px;",
-      "       flex-shrink:0;transition:opacity .12s,background .12s;color:#f87171;}",
-      ".ac-item:hover .ac-x{opacity:.6;}",
-      ".ac-x:hover{opacity:1!important;background:rgba(220,38,38,.25);}",
-      // light mode
+      ".ac-it:last-child{border-bottom:none;}",
+      ".ac-it:hover,.ac-it.hi{background:rgba(22,163,74,.2);color:#fff;}",
+      ".ac-ico{font-size:11px;opacity:.3;flex-shrink:0;}",
+      ".ac-txt{flex:1;overflow:hidden;text-overflow:ellipsis;}",
+      ".ac-del{font-size:11px;opacity:0;padding:1px 6px;border-radius:4px;",
+      "  flex-shrink:0;color:#f87171;transition:opacity .12s,background .12s;}",
+      ".ac-it:hover .ac-del{opacity:.55;}",
+      ".ac-del:hover{opacity:1!important;background:rgba(220,38,38,.25);}",
+      // light
       "body.lg-light #agni_ac_dd{",
       "  background:#fff;border-color:#e2e8f0;",
-      "  box-shadow:0 10px 36px rgba(0,0,0,.13);",
-      "}",
-      "body.lg-light .ac-item{color:#334155;border-bottom-color:#f1f5f9;}",
-      "body.lg-light .ac-item:hover,body.lg-light .ac-item.ac-hi{",
-      "  background:rgba(22,163,74,.09);color:#1e293b;",
-      "}",
-      "body.lg-light .ac-x{color:#dc2626;}",
+      "  box-shadow:0 12px 40px rgba(0,0,0,.12);}",
+      "body.lg-light .ac-it{color:#334155;border-bottom-color:#f1f5f9;}",
+      "body.lg-light .ac-it:hover,body.lg-light .ac-it.hi{",
+      "  background:rgba(22,163,74,.09);color:#1e293b;}",
+      "body.lg-light .ac-del{color:#dc2626;}",
     ].join("\n");
     document.head.appendChild(s);
   }
 
-  function createDropdown() {
-    if (_dropdown) return;
-    injectStyles();
-    _dropdown = document.createElement("div");
-    _dropdown.id = "agni_ac_dd";
-    document.body.appendChild(_dropdown);
+  function createDD() {
+    if (_dd) return;
+    injectCSS();
+    _dd = document.createElement("div");
+    _dd.id = "agni_ac_dd";
+    document.body.appendChild(_dd);
   }
 
-  function positionDD(input) {
-    var r = input.getBoundingClientRect();
-    _dropdown.style.top  = (r.bottom + window.scrollY + 3) + "px";
-    _dropdown.style.left = r.left + "px";
-    _dropdown.style.width = Math.max(r.width, 210) + "px";
-    // viewport থেকে বেরিয়ে গেলে উপরে দেখাও
-    var ddH = Math.min(230, 40 * 8);
-    if (r.bottom + ddH > window.innerHeight) {
-      _dropdown.style.top = (r.top + window.scrollY - ddH - 4) + "px";
+  // ── এটাই মূল পরিবর্তন: cursor position থেকে ডানে ──
+  function positionDD() {
+    if (!_dd) return;
+
+    var vw = window.innerWidth;
+    var vh = window.innerHeight;
+    var itemCount = _dd.querySelectorAll(".ac-it").length;
+    var ddH = Math.min(itemCount * ITEM_H + 8, DD_MAX_H);
+
+    // X: cursor-এর ডানে
+    var x = _mouseX + DD_OFFSET;
+    // viewport-এর বাইরে গেলে বাঁয়ে সরাও
+    if (x + DD_WIDTH > vw - 8) {
+      x = _mouseX - DD_WIDTH - DD_OFFSET;
     }
+    // তারপরও বাইরে হলে clamp
+    x = Math.max(6, Math.min(x, vw - DD_WIDTH - 6));
+
+    // Y: cursor-এর কাছাকাছি (একটু নিচে)
+    var y = _mouseY - 10;
+    // নিচে জায়গা আছে কিনা
+    if (y + ddH > vh - 6) {
+      y = _mouseY - ddH + 10;
+    }
+    y = Math.max(6, Math.min(y, vh - ddH - 6));
+
+    _dd.style.left = x + "px";
+    _dd.style.top  = y + "px";
   }
 
-  function renderDD(input, dbKey, query) {
-    var matches = getMatches(dbKey, query);
+  function showDD(inp, key, query) {
+    var matches = getMatches(key, query);
     if (!matches.length) { hideDD(); return; }
 
-    _activeInput = input;
-    _activeKey   = dbKey;
-    _focusedIdx  = -1;
+    _aInp = inp;
+    _aKey = key;
+    _fidx = -1;
 
-    _dropdown.innerHTML = matches.map(function (val, i) {
+    _dd.innerHTML = matches.map(function (val, i) {
       var esc = val.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-      return '<div class="ac-item" data-val="' + esc + '" data-i="' + i + '">'
+      return '<div class="ac-it" data-v="' + esc + '" data-i="' + i + '">'
         + '<span class="ac-ico">↩</span>'
         + '<span class="ac-txt">' + esc + '</span>'
-        + '<span class="ac-x" data-del="' + esc + '" title="Cache থেকে মুছুন">✕</span>'
+        + '<span class="ac-del" data-d="' + esc + '" title="মুছুন">✕</span>'
         + '</div>';
     }).join("");
 
-    _dropdown.style.display = "block";
-    positionDD(input);
+    _dd.style.display = "block";
+    positionDD();
 
-    _dropdown.querySelectorAll(".ac-item").forEach(function (item) {
-      item.addEventListener("mousedown", function (e) {
-        var del = e.target.closest(".ac-x");
+    _dd.querySelectorAll(".ac-it").forEach(function (it) {
+      it.addEventListener("mousedown", function (e) {
+        var del = e.target.closest(".ac-del");
         if (del) {
           e.preventDefault(); e.stopPropagation();
-          removeFromCache(dbKey, del.getAttribute("data-del"));
-          renderDD(input, dbKey, input.value);
+          removeFromCache(key, del.getAttribute("data-d"));
+          showDD(inp, key, inp.value);
           return;
         }
         e.preventDefault();
-        input.value = item.getAttribute("data-val");
-        input.dispatchEvent(new Event("input", { bubbles: true }));
+        inp.value = it.getAttribute("data-v");
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
         hideDD();
       });
     });
   }
 
   function hideDD() {
-    if (_dropdown) _dropdown.style.display = "none";
-    _activeInput = null; _activeKey = null; _focusedIdx = -1;
-  }
-
-  function removeFromCache(dbKey, val) {
-    if (!_cache[dbKey]) return;
-    _cache[dbKey] = _cache[dbKey].filter(function (v) {
-      return v.toLowerCase() !== val.toLowerCase();
-    });
+    if (_dd) _dd.style.display = "none";
+    _aInp = null; _aKey = null; _fidx = -1;
   }
 
   // Keyboard nav
   document.addEventListener("keydown", function (e) {
-    if (!_dropdown || _dropdown.style.display === "none") return;
-    var items = _dropdown.querySelectorAll(".ac-item");
-    if (!items.length) return;
+    if (!_dd || _dd.style.display === "none") return;
+    var its = _dd.querySelectorAll(".ac-it");
+    if (!its.length) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      _focusedIdx = (_focusedIdx + 1) % items.length;
+      _fidx = (_fidx + 1) % its.length;
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      _focusedIdx = (_focusedIdx - 1 + items.length) % items.length;
-    } else if (e.key === "Enter" && _focusedIdx >= 0) {
+      _fidx = (_fidx - 1 + its.length) % its.length;
+    } else if (e.key === "Enter" && _fidx >= 0) {
       e.preventDefault();
-      var val = items[_focusedIdx].getAttribute("data-val");
-      if (_activeInput) {
-        _activeInput.value = val;
-        _activeInput.dispatchEvent(new Event("input", { bubbles: true }));
+      var v = its[_fidx].getAttribute("data-v");
+      if (_aInp) {
+        _aInp.value = v;
+        _aInp.dispatchEvent(new Event("input", { bubbles: true }));
       }
       hideDD(); return;
     } else if (e.key === "Escape") { hideDD(); return; }
-    items.forEach(function (it, i) {
-      it.classList.toggle("ac-hi", i === _focusedIdx);
-    });
-    if (items[_focusedIdx]) items[_focusedIdx].scrollIntoView({ block: "nearest" });
+    its.forEach(function (it, i) { it.classList.toggle("hi", i === _fidx); });
+    if (its[_fidx]) its[_fidx].scrollIntoView({ block: "nearest" });
   }, true);
 
   document.addEventListener("mousedown", function (e) {
-    if (_dropdown && !_dropdown.contains(e.target)) hideDD();
-  });
-  window.addEventListener("scroll", function () {
-    if (_activeInput && _dropdown && _dropdown.style.display !== "none")
-      positionDD(_activeInput);
-  }, true);
-  window.addEventListener("resize", function () {
-    if (_activeInput && _dropdown && _dropdown.style.display !== "none")
-      positionDD(_activeInput);
+    if (_dd && !_dd.contains(e.target)) hideDD();
   });
 
   // ──────────────────────────────────────────────
-  //  4. Attach autocomplete to a field
+  //  4. Attach
   // ──────────────────────────────────────────────
-  function attach(fieldDef) {
-    var el = document.getElementById(fieldDef.id);
-    if (!el || el.dataset.acOk) return;
-    el.dataset.acOk = "1";
+  function attach(f) {
+    var el = document.getElementById(f.id);
+    if (!el || el.dataset.acv3) return;
+    el.dataset.acv3 = "1";
     el.setAttribute("autocomplete", "off");
 
     el.addEventListener("focus", function () {
-      if (!_cacheReady) buildCacheFromDB();
-      _focusedIdx = -1;
-      renderDD(el, fieldDef.dbKey, el.value);
+      if (!_cacheOk) buildFromDB();
+      _fidx = -1;
+      showDD(el, f.dbKey, el.value);
     });
     el.addEventListener("input", function () {
-      _focusedIdx = -1;
-      renderDD(el, fieldDef.dbKey, el.value);
+      _fidx = -1;
+      showDD(el, f.dbKey, el.value);
     });
     el.addEventListener("blur", function () {
-      setTimeout(hideDD, 180);
+      setTimeout(hideDD, 160);
     });
   }
 
-  // ──────────────────────────────────────────────
-  //  5. Uppercase attach
-  // ──────────────────────────────────────────────
   function attachUpper(id) {
     var el = document.getElementById(id);
-    if (!el || el.dataset.upOk) return;
-    el.dataset.upOk = "1";
+    if (!el || el.dataset.upv3) return;
+    el.dataset.upv3 = "1";
     el.addEventListener("input", function () {
-      var pos = this.selectionStart;
+      var p = this.selectionStart;
       this.value = this.value.toUpperCase();
-      try { this.setSelectionRange(pos, pos); } catch (e) {}
+      try { this.setSelectionRange(p, p); } catch(e) {}
     });
   }
 
   // ──────────────────────────────────────────────
-  //  6. Hook doSave → cache update
+  //  5. Hooks
   // ──────────────────────────────────────────────
   function hookSave() {
     var orig = window.doSave;
-    if (!orig || orig._v2) return;
+    if (!orig || orig._v3) return;
     window.doSave = function () {
       AC_FIELDS.forEach(function (f) {
         var el = document.getElementById(f.id);
@@ -319,43 +332,41 @@
       });
       orig.apply(this, arguments);
     };
-    window.doSave._v2 = true;
+    window.doSave._v3 = true;
+  }
+
+  function hookCloudSync() {
+    var orig = window.cloudSync;
+    if (!orig || orig._v3) return;
+    window.cloudSync = function (cb) {
+      orig(function () {
+        buildFromDB();
+        if (cb) cb();
+      });
+    };
+    window.cloudSync._v3 = true;
   }
 
   // ──────────────────────────────────────────────
-  //  7. Bootstrap
+  //  6. Boot
   // ──────────────────────────────────────────────
   function boot() {
-    createDropdown();
+    createDD();
     AC_FIELDS.forEach(attach);
     UPPER_IDS.forEach(attachUpper);
     hookSave();
+    hookCloudSync();
 
-    // DB array থেকে cache তৈরি
     if (window.DB && window.DB.length) {
-      buildCacheFromDB();
+      buildFromDB();
     } else {
-      // DB এখনো লোড হয়নি → Firestore থেকে নাও
-      buildCacheFromFirestore(function () {
-        // Firestore শেষ হলে আবার attach (fields হয়তো তখন ready)
+      buildFromFirestore(function () {
         AC_FIELDS.forEach(attach);
         UPPER_IDS.forEach(attachUpper);
       });
     }
   }
 
-  // cloudSync শেষে cache refresh
-  var origCloudSync = window.cloudSync;
-  if (origCloudSync) {
-    window.cloudSync = function (cb) {
-      origCloudSync(function () {
-        buildCacheFromDB();
-        if (cb) cb();
-      });
-    };
-  }
-
-  // initApp hook
   var origInit = window.initApp;
   if (origInit) {
     window.initApp = function () {
@@ -368,18 +379,16 @@
     };
   }
 
-  // DOM ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 900); });
   } else {
     setTimeout(boot, 900);
   }
 
-  // Public debug helper
+  // Debug
   window.agniAC = {
     cache: function () { return _cache; },
-    reload: function () { buildCacheFromFirestore(function () { console.log("AC cache reloaded", _cache); }); },
-    reloadFromDB: function () { buildCacheFromDB(); console.log("AC cache from DB", _cache); },
+    reload: function () { buildFromFirestore(function () { console.log("reloaded", _cache); }); },
   };
 
 })();
