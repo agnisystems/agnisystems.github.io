@@ -20,6 +20,7 @@
     { id: "fThana", dbKey: "thana",  label: "থানা"         },
     { id: "fHouse", dbKey: "house",  label: "বাসা"         },
     { id: "fRem",   dbKey: "remark", label: "মন্তব্য"      },
+    { id: "fPass",  dbKey: "pass",   label: "পাসওয়ার্ড"   },
     { id: "eRm",    dbKey: "eRm",    label: "রাউটার মডেল" },
     { id: "eTm",    dbKey: "eTm",    label: "ONU মডেল"    },
     { id: "eROm",   dbKey: "eROm",   label: "Replace ONU" },
