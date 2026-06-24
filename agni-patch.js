@@ -26,6 +26,8 @@
   ];
 
   var UPPER_IDS = [
+    // মূল্য columns (price inputs)
+    "eRp","eC1p","eC2p","eOp","eTp","eTpB","eROp","eSp",
     "eRm","eRs","eC1s","eC2s",
     "eTm","eOs","eTs","eTsSerial",
     "eTsB","eROm","eROs","eSs",
