@@ -4089,6 +4089,7 @@
                         <button class="rc-btn" id="btnLoadEdit"
                             style="display:none;background:linear-gradient(135deg,#2563eb,#1d4ed8)"
                             onclick="loadEditCur()">এডিট শুরু</button>
+                        <button class="rc-btn" id="btnBackFP" style="display:none;background:linear-gradient(135deg,#6366f1,#4f46e5)" onclick="backFromFullPage()">← Back</button>
                         <button class="rc-btn cancel" onclick="goDisabled()">✕ Cancel</button>
                         <button class="rc-btn print" onclick="window.print()">🖨 Print</button>
                     </div>
@@ -4101,6 +4102,7 @@
 
     <!-- Mobile Action Bar -->
     <div id="mobileActionBar">
+        <button class="mab-btn" style="background:#6366f1;display:none" id="mabBackFP" onclick="backFromFullPage()">←</button>
         <button class="mab-btn" style="background:var(--pri);display:none" id="mabSave" onclick="doSave()">💾
             Save</button>
         <button class="mab-btn" style="background:#2563eb;display:none" id="mabEdit" onclick="enterEditMode()">✏️
@@ -4122,10 +4124,14 @@
     </div>
 
     <div class="pop-bg" id="vpBg">
-        <div class="pop wide" id="vpBox">
-            <div class="pop-hdr">
-                <h3 id="vpTtl">রেকর্ড</h3><button class="pop-x" onclick="closeVP()">✕</button>
+    <div class="pop wide" id="vpBox">
+        <div class="pop-hdr">
+            <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                <button class="pop-x" id="vpBackBtn" style="display:none" onclick="backToList()" title="তালিকায় ফিরুন">←</button>
+                <h3 id="vpTtl" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">রেকর্ড</h3>
             </div>
+            <button class="pop-x" onclick="closeVP()">✕</button>
+        </div>
             <div class="pop-body" id="vpBody"
                 style="max-height:60vh;overflow-y:auto;padding:0;-webkit-overflow-scrolling:touch;"></div>
             <div class="pop-foot" id="vpFoot"></div>
@@ -4253,6 +4259,10 @@
             if (mabSave) mabSave.style.display = bSave && bSave.style.display !== "none" ? "block" : "none";
             if (mabEdit) mabEdit.style.display = bEdit && bEdit.style.display !== "none" ? "block" : "none";
             if (mabReq) mabReq.style.display = (bReq && bReq.style.display !== "none") || (bLoadEd && bLoadEd.style.display !== "none") ? "block" : "none";
+            var bBack = document.getElementById("btnBackFP");
+            var mabBack = document.getElementById("mabBackFP");
+            if (bBack) bBack.style.display = _fullPageBack ? "flex" : "none";
+            if (mabBack) mabBack.style.display = _fullPageBack ? "block" : "none";
         }
 
         // ─── THEMES ───
@@ -4383,6 +4393,8 @@
         if (!firebase.apps.length) firebase.initializeApp(FC);
         var fsdb = firebase.firestore();
         var DB = [], TRASH = [], PENDING = [], EREQS = [], cur = -1, curId = null, pageMode = "disabled";
+var _vpBackState = null;
+var _fullPageBack = null;
         var EQ = ["eRm", "eRq", "eRs", "eRp", "eC1m", "eC1q", "eC1s", "eC1p", "eC2m", "eC2q", "eC2s", "eC2p", "eTm", "eOq", "eOs", "eOp", "eTs", "eTp", "eT4", "eT8", "eTsB", "eTpB", "eROm", "eROq", "eROs", "eROp", "eSq", "eSs", "eSp"];
 
         function sync2(s, m) { var el = document.getElementById("syncBadge"); el.className = s; var icons = { synced: '<span class="sb-dot"></span>', syncing: "↻", error: "✕" }; var subs = { synced: "Live sync", syncing: "Please wait", error: "Check connection" }; var mains = { synced: "Connected", syncing: "Syncing", error: "Disconnected" }; el.innerHTML = '<span class="sb-icon">' + icons[s] + '</span><span><span style="display:block;font-size:12px;font-weight:600">' + mains[s] + '</span><span class="sb-sub">' + subs[s] + '</span></span>'; }
@@ -4561,6 +4573,7 @@
         // ─── MODE ───
         function setMode(mode) {
             pageMode = mode;
+            _fullPageBack = null;
             var wasLight = document.body.classList.contains("lg-light");
             document.body.className = "md-" + mode; if (wasLight) document.body.classList.add("lg-light");
             var ind = document.getElementById("modeInd");
@@ -4581,6 +4594,21 @@
         }
         function startNew() { localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
         function goDisabled() { fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("disabled"); showHome(); }
+        function backFromFullPage() {
+            if (!_fullPageBack) return;
+            var fb = _fullPageBack; _fullPageBack = null;
+            var savedBack = _vpBackState;
+            fClear(); cur = -1; curId = null;
+            setMode("disabled");
+            document.getElementById("homePage").style.display = "block";
+            document.querySelector(".layout").style.display = "none";
+            document.getElementById("mobileActionBar").style.display = "none";
+            localStorage.setItem("agni_page", "home");
+            if (DB.length) renderHome();
+            openVP(fb.id, fb.mode);
+            _vpBackState = savedBack;
+            document.getElementById("vpBackBtn").style.display = _vpBackState ? "flex" : "none";
+        }
 
         // ─── SAVE ───
         function doSave() { if (!currentUser) return; var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
@@ -4631,10 +4659,34 @@
         }
 
         // ─── VIEW POPUP ───
-        function openVP(id, mode) { var rec = null; if (mode === "pending") { for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(id) || String(PENDING[i].id) === String(id)) { rec = PENDING[i]; break; } } } else { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { rec = DB[i]; break; } } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } curId = id; var isA = isPrivileged(); var rows = [["গ্রাহক ID", rec.id], ["নাম", rec.name], ["লগিন ID", rec.login], ["পাসওয়ার্ড", rec.pass], ["মোবাইল", rec.mobile], ["ধরন", rec.customer_type], ["প্যাকেজ", rec.package_type], ["রিচার্জ", rec.recharge], ["NID", rec.nid], ["জন্ম তারিখ", rec.dob], ["বাসা", rec.house], ["এলাকা", rec.area], ["থানা", rec.thana], ["সংযোগ তারিখ", rec.conn], ["মন্তব্য", rec.remark], ["Splitter", rec.splitter_type], ["রাউটার মডেল", rec.eRm], ["রাউটার Serial", rec.eRs], ["রাউটার মূল্য", rec.eRp], ["ONU মডেল", rec.eOm], ["ONU Serial", rec.eOs], ["ONU মূল্য", rec.eOp], ["মোট মূল্য", rec.totalPrice]]; var al = function (a) { return a === "created" ? "✅ তৈরি" : a === "updated" ? "✏️ আপডেট" : a === "approved" ? "✔️ অনুমোদন" : "পরিবর্তন"; }; var log = rec.auditLog || []; var auditH = ""; if (log.length) { auditH = '<div class="asec">🗒 ইতিহাস</div><table class="vtbl">'; var rev = log.slice().reverse(); for (var i = 0; i < rev.length; i++) { var e = rev[i], chTxt = ""; if (e.changes && e.changes.length) { chTxt = '<details style="margin-top:4px"><summary style="font-size:10px;color:#2563eb;cursor:pointer">' + e.changes.length + ' টি পরিবর্তন দেখুন</summary>'; chTxt += '<table style="font-size:10px;margin-top:3px;border-collapse:collapse;width:100%"><tr style="background:#f0f9ff"><th style="padding:2px 5px;text-align:left">ফিল্ড</th><th style="padding:2px 5px;text-align:left;color:#dc2626">আগে</th><th style="padding:2px 5px;text-align:left;color:#16a34a">পরে</th></tr>'; for (var ci = 0; ci < e.changes.length; ci++) { var cc = e.changes[ci]; chTxt += '<tr style="border-top:1px solid #e0f2fe"><td style="padding:2px 5px;font-weight:600">' + cc.field + '</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through">' + (cc.old || '—') + '</td><td style="padding:2px 5px;color:#16a34a;font-weight:600">' + (cc.new || '—') + '</td></tr>'; } chTxt += '</table></details>'; } auditH += '<tr><td class="vl" style="background:#eff6ff;color:#1e40af;white-space:nowrap">🕐 ' + e.time + '</td><td><b>' + e.display + '</b> (' + e.by + ') — ' + al(e.action) + chTxt + '</td></tr>'; } auditH += '</table>'; } var tbody = '<table class="vtbl">'; for (var ri = 0; ri < rows.length; ri++)tbody += '<tr><td class="vl">' + rows[ri][0] + '</td><td>' + (rows[ri][1] || "—") + '</td></tr>'; tbody += '</table>'; document.getElementById("vpBody").innerHTML = tbody + auditH; var foot = document.getElementById("vpFoot"); foot.innerHTML = ""; if (mode === "pending" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="approveP(\'' + (rec.pendingId || id) + '\')">✔ Approve</button><button class="pbtn red" onclick="rejectP(\'' + (rec.pendingId || id) + '\')">✕ Reject</button>'; } else if (mode === "list" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="viewFromVP(\'' + id + '\')">👁 View</button><button class="pbtn blue" onclick="editFromVP(\'' + id + '\')">✏ Edit</button><button class="pbtn red" onclick="delFromVP(\'' + id + '\')">🗑 Delete</button>'; } else if (mode === "list" && !isA) { var pendReq = null, aprReq = null; for (var ei = 0; ei < EREQS.length; ei++) { if (String(EREQS[ei].recordId) === String(id) && EREQS[ei].requestedBy === currentUser.username) { if (EREQS[ei].status === "approved") aprReq = EREQS[ei]; else pendReq = EREQS[ei]; } } if (aprReq) foot.innerHTML += '<button class="pbtn green" onclick="loadEditAndClose(\'' + id + '\')">✏ Edit Mode</button>'; else if (pendReq) foot.innerHTML += '<button class="pbtn grey" style="opacity:.6;cursor:not-allowed">⏳ অনুমোদনের অপেক্ষায়</button>'; else foot.innerHTML += '<button class="pbtn orange" onclick="sendReqFor(\'' + id + '\')">📨 Edit Request</button>'; } foot.innerHTML += '<button class="pbtn grey" onclick="closeVP()">বন্ধ করুন</button>'; document.getElementById("lpBg").classList.remove("on"); document.getElementById("vpBg").classList.add("on"); }
+       function openVP(id, mode) {
+    if (document.getElementById("lpBg").classList.contains("on")) {
+        _vpBackState = {
+            title: document.getElementById("lpTtl").textContent,
+            body: document.getElementById("lpBody").innerHTML,
+            lsDisplay: document.querySelector(".ls-wrap").style.display,
+            lsVal: document.getElementById("lsIn").value
+        };
+    } else { _vpBackState = null; }
+    var rec = null; if (mode === "pending") { for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(id) || String(PENDING[i].id) === String(id)) { rec = PENDING[i]; break; } } } else { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { rec = DB[i]; break; } } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } curId = id; var isA = isPrivileged(); var rows = [["গ্রাহক ID", rec.id], ["নাম", rec.name], ["লগিন ID", rec.login], ["পাসওয়ার্ড", rec.pass], ["মোবাইল", rec.mobile], ["ধরন", rec.customer_type], ["প্যাকেজ", rec.package_type], ["রিচার্জ", rec.recharge], ["NID", rec.nid], ["জন্ম তারিখ", rec.dob], ["বাসা", rec.house], ["এলাকা", rec.area], ["থানা", rec.thana], ["সংযোগ তারিখ", rec.conn], ["মন্তব্য", rec.remark], ["Splitter", rec.splitter_type], ["রাউটার মডেল", rec.eRm], ["রাউটার Serial", rec.eRs], ["রাউটার মূল্য", rec.eRp], ["ONU মডেল", rec.eOm], ["ONU Serial", rec.eOs], ["ONU মূল্য", rec.eOp], ["মোট মূল্য", rec.totalPrice]]; var al = function (a) { return a === "created" ? "✅ তৈরি" : a === "updated" ? "✏️ আপডেট" : a === "approved" ? "✔️ অনুমোদন" : "পরিবর্তন"; }; var log = rec.auditLog || []; var auditH = ""; if (log.length) { auditH = '<div class="asec">🗒 ইতিহাস</div><table class="vtbl">'; var rev = log.slice().reverse(); for (var i = 0; i < rev.length; i++) { var e = rev[i], chTxt = ""; if (e.changes && e.changes.length) { chTxt = '<details style="margin-top:4px"><summary style="font-size:10px;color:#2563eb;cursor:pointer">' + e.changes.length + ' টি পরিবর্তন দেখুন</summary>'; chTxt += '<table style="font-size:10px;margin-top:3px;border-collapse:collapse;width:100%"><tr style="background:#f0f9ff"><th style="padding:2px 5px;text-align:left">ফিল্ড</th><th style="padding:2px 5px;text-align:left;color:#dc2626">আগে</th><th style="padding:2px 5px;text-align:left;color:#16a34a">পরে</th></tr>'; for (var ci = 0; ci < e.changes.length; ci++) { var cc = e.changes[ci]; chTxt += '<tr style="border-top:1px solid #e0f2fe"><td style="padding:2px 5px;font-weight:600">' + cc.field + '</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through">' + (cc.old || '—') + '</td><td style="padding:2px 5px;color:#16a34a;font-weight:600">' + (cc.new || '—') + '</td></tr>'; } chTxt += '</table></details>'; } auditH += '<tr><td class="vl" style="background:#eff6ff;color:#1e40af;white-space:nowrap">🕐 ' + e.time + '</td><td><b>' + e.display + '</b> (' + e.by + ') — ' + al(e.action) + chTxt + '</td></tr>'; } auditH += '</table>'; } var tbody = '<table class="vtbl">'; for (var ri = 0; ri < rows.length; ri++)tbody += '<tr><td class="vl">' + rows[ri][0] + '</td><td>' + (rows[ri][1] || "—") + '</td></tr>'; tbody += '</table>'; document.getElementById("vpBody").innerHTML = tbody + auditH; var foot = document.getElementById("vpFoot"); foot.innerHTML = ""; if (mode === "pending" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="approveP(\'' + (rec.pendingId || id) + '\')">✔ Approve</button><button class="pbtn red" onclick="rejectP(\'' + (rec.pendingId || id) + '\')">✕ Reject</button>'; } else if (mode === "list" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="viewFromVP(\'' + id + '\')">👁 View</button><button class="pbtn blue" onclick="editFromVP(\'' + id + '\')">✏ Edit</button><button class="pbtn red" onclick="delFromVP(\'' + id + '\')">🗑 Delete</button>'; } else if (mode === "list" && !isA) { var pendReq = null, aprReq = null; for (var ei = 0; ei < EREQS.length; ei++) { if (String(EREQS[ei].recordId) === String(id) && EREQS[ei].requestedBy === currentUser.username) { if (EREQS[ei].status === "approved") aprReq = EREQS[ei]; else pendReq = EREQS[ei]; } } if (aprReq) foot.innerHTML += '<button class="pbtn green" onclick="loadEditAndClose(\'' + id + '\')">✏ Edit Mode</button>'; else if (pendReq) foot.innerHTML += '<button class="pbtn grey" style="opacity:.6;cursor:not-allowed">⏳ অনুমোদনের অপেক্ষায়</button>'; else foot.innerHTML += '<button class="pbtn orange" onclick="sendReqFor(\'' + id + '\')">📨 Edit Request</button>'; } foot.innerHTML += '<button class="pbtn grey" onclick="closeVP()">বন্ধ করুন</button>';
+    document.getElementById("lpBg").classList.remove("on");
+    document.getElementById("vpBackBtn").style.display = _vpBackState ? "flex" : "none";
+    document.getElementById("vpBg").classList.add("on");
+}
         function closeVP() { document.getElementById("vpBg").classList.remove("on"); curId = null; }
+        function backToList() {
+            if (!_vpBackState) { closeVP(); return; }
+            document.getElementById("vpBg").classList.remove("on");
+            document.getElementById("lpTtl").textContent = _vpBackState.title;
+            document.getElementById("lpBody").innerHTML = _vpBackState.body;
+            var lw = document.querySelector(".ls-wrap");
+            if (lw) lw.style.display = _vpBackState.lsDisplay || "block";
+            document.getElementById("lsIn").value = _vpBackState.lsVal || "";
+            document.getElementById("lpBg").classList.add("on");
+            curId = null;
+        }
         function openFullPage(id) { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { cur = i; curId = id; fSet(DB[i]); hideHome(); setMode("view"); document.getElementById("navId").value = i + 1; closeLP(); window.scrollTo({ top: 0, behavior: "smooth" }); return; } } showPop("রেকর্ড পাওয়া যায়নি।", "error"); }
-        function viewFromVP(id) { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { cur = i; curId = id; fSet(DB[i]); hideHome(); var wasLight = document.body.classList.contains("lg-light"); document.body.className = "md-view user-view"; if (wasLight) document.body.classList.add("lg-light"); var ind = document.getElementById("modeInd"); ind.textContent = "👁 ভিউ"; ind.style.background = "#fef3c7"; ind.style.color = "#92400e";["bLock", "bPend", "bReq", "bOk"].forEach(function (b) { document.getElementById(b).classList.remove("show"); }); document.getElementById("btnSave").style.display = document.getElementById("btnReq").style.display = document.getElementById("btnLoadEdit").style.display = document.getElementById("btnEdit").style.display = "none"; document.getElementById("navId").value = i + 1; closeVP(); closeLP(); window.scrollTo({ top: 0, behavior: "smooth" }); syncMobileBar(); return; } } showPop("রেকর্ড পাওয়া যায়নি।", "error"); }
+        function viewFromVP(id) { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { cur = i; curId = id; _fullPageBack = { id: id, mode: "list" }; fSet(DB[i]); hideHome(); var wasLight = document.body.classList.contains("lg-light"); document.body.className = "md-view user-view"; if (wasLight) document.body.classList.add("lg-light"); var ind = document.getElementById("modeInd"); ind.textContent = "👁 ভিউ"; ind.style.background = "#fef3c7"; ind.style.color = "#92400e";["bLock", "bPend", "bReq", "bOk"].forEach(function (b) { document.getElementById(b).classList.remove("show"); }); document.getElementById("btnSave").style.display = document.getElementById("btnReq").style.display = document.getElementById("btnLoadEdit").style.display = document.getElementById("btnEdit").style.display = "none"; document.getElementById("navId").value = i + 1; closeVP(); closeLP(); window.scrollTo({ top: 0, behavior: "smooth" }); syncMobileBar(); return; } } showPop("রেকর্ড পাওয়া যায়নি।", "error"); }
         function loadEditAndClose(id) { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { cur = i; curId = id; fSet(DB[i]); hideHome(); setMode("edit"); document.getElementById("navId").value = i + 1; closeVP(); closeLP(); showPop("✏️ Edit মোড! পরিবর্তন করে Save করুন।", "info"); return; } } }
         function editFromVP(id) { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { cur = i; curId = id; fSet(DB[i]); hideHome(); setMode("edit"); document.getElementById("navId").value = i + 1; closeVP(); closeLP(); window.scrollTo({ top: 0, behavior: "smooth" }); showPop("✏️ Edit মোড!", "info"); return; } } }
         function delFromVP(id) { if (!confirm("ID: " + id + " — ট্র্যাশে পাঠাবেন?")) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { var rec = DB[i]; DB.splice(i, 1); TRASH.push(rec); fbDel("customers", id, function () { }); fbSet("trash", id, rec, function () { }); updateBadges(); showPop("🗑 ট্র্যাশে পাঠানো হয়েছে।", "success"); closeVP(); goDisabled(); return; } } }
@@ -4756,7 +4808,7 @@
         function closePop() { document.getElementById("popBg").classList.remove("on"); }
 
         // ─── SEARCH ───
-        function doTopSearch(q) { q = (q || "").trim().toLowerCase(); if (!q) return; var doSearch = function () { var filtered = DB.filter(function (c) { return [(c.id || ""), (c.name || ""), (c.mobile || "")].some(function (f) { return f.toLowerCase().indexOf(q) >= 0; }); }); if (!filtered.length) { showPop("কোনো ফলাফল পাওয়া যায়নি।", "warning"); document.getElementById("tbSearch").value = ""; return; } if (filtered.length === 1) { var idx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(filtered[0].id)) { idx = i; break; } } cur = idx >= 0 ? idx : 0; curId = filtered[0].id; fSet(filtered[0]); hideHome(); var wasLight = document.body.classList.contains("lg-light"); document.body.className = "md-view user-view"; if (wasLight) document.body.classList.add("lg-light"); var ind = document.getElementById("modeInd"); ind.textContent = "👁 ভিউ"; ind.style.background = "#fef3c7"; ind.style.color = "#92400e";["bLock", "bPend", "bReq", "bOk"].forEach(function (b) { document.getElementById(b).classList.remove("show"); }); document.getElementById("btnSave").style.display = document.getElementById("btnReq").style.display = document.getElementById("btnLoadEdit").style.display = document.getElementById("btnEdit").style.display = "none"; document.getElementById("navId").value = cur + 1; document.getElementById("tbSearch").value = ""; window.scrollTo({ top: 0, behavior: "smooth" }); syncMobileBar(); return; } _lm = "list"; _la = filtered; document.getElementById("lpTtl").textContent = "🔍 ফলাফল — " + filtered.length + " টি"; document.getElementById("lpBody").innerHTML = buildList(filtered, "list"); document.getElementById("lsIn").value = q; document.getElementById("lpBg").classList.add("on"); document.getElementById("tbSearch").value = ""; }; if (DB.length > 0) { doSearch(); } else { cloudSync(function () { doSearch(); }); } }
+        function doTopSearch(q) { q = (q || "").trim().toLowerCase(); if (!q) return; var doSearch = function () { var filtered = DB.filter(function (c) { return [(c.id || ""), (c.name || ""), (c.mobile || "")].some(function (f) { return f.toLowerCase().indexOf(q) >= 0; }); }); if (!filtered.length) { showPop("কোনো ফলাফল পাওয়া যায়নি।", "warning"); document.getElementById("tbSearch").value = ""; return; } if (filtered.length === 1) { var idx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(filtered[0].id)) { idx = i; break; } } cur = idx >= 0 ? idx : 0; curId = filtered[0].id; _fullPageBack = null; fSet(filtered[0]); hideHome(); var wasLight = document.body.classList.contains("lg-light"); document.body.className = "md-view user-view"; if (wasLight) document.body.classList.add("lg-light"); var ind = document.getElementById("modeInd"); ind.textContent = "👁 ভিউ"; ind.style.background = "#fef3c7"; ind.style.color = "#92400e";["bLock", "bPend", "bReq", "bOk"].forEach(function (b) { document.getElementById(b).classList.remove("show"); }); document.getElementById("btnSave").style.display = document.getElementById("btnReq").style.display = document.getElementById("btnLoadEdit").style.display = document.getElementById("btnEdit").style.display = "none"; document.getElementById("navId").value = cur + 1; document.getElementById("tbSearch").value = ""; window.scrollTo({ top: 0, behavior: "smooth" }); syncMobileBar(); return; } _lm = "list"; _la = filtered; document.getElementById("lpTtl").textContent = "🔍 ফলাফল — " + filtered.length + " টি"; document.getElementById("lpBody").innerHTML = buildList(filtered, "list"); document.getElementById("lsIn").value = q; document.getElementById("lpBg").classList.add("on"); document.getElementById("tbSearch").value = ""; }; if (DB.length > 0) { doSearch(); } else { cloudSync(function () { doSearch(); }); } }
 
         // ─── EVENTS ───
         document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closePop(); closeLP(); closeVP(); closeAdm(); closeSidebar(); } });
@@ -5101,7 +5153,7 @@
                     + '<span style="font-size:13px;font-weight:700;color:#166534">নির্বাচিত সময়ে মোট আয়:</span>'
                     + '<span style="font-size:18px;font-weight:800;color:#16a34a;font-family:\'JetBrains Mono\',monospace">৳' + totalEarn + '</span>'
                     + '</div>';
-                document.getElementById("dfResult").innerHTML = summaryBar + buildList(filtered, "list");
+                document.getElementById("dfResult").innerHTML = summaryBar + buildRevenueList(filtered);
             }
             window.reFilterRevenue = computeAndRender;
 
@@ -5167,6 +5219,32 @@
             });
         }
 
+function buildRevenueList(arr) {
+    if (!arr.length) return '<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>';
+    var isA = isPrivileged();
+    var h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="ltbl"><thead><tr>'
+        + '<th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th><th>সংযোগ</th>'
+        + '<th style="text-align:right;color:#10b981">আয় (৳)</th><th>একশন</th></tr></thead><tbody>';
+    for (var i = 0; i < arr.length; i++) {
+        var c = arr[i];
+        var viewBtn = isA
+            ? '<button class="abtn v" onclick="openVP(\'' + c.id + '\',\'list\')">👁 View</button>'
+            : '<button class="abtn v" onclick="openFullPage(\'' + c.id + '\')">👁 View</button>';
+        var btns = viewBtn;
+        if (isA) btns += '<button class="abtn d" onclick="delFromList(\'' + c.id + '\')">🗑</button>';
+        h += '<tr>'
+            + '<td style="color:#94a3b8;text-align:center">' + (i + 1) + '</td>'
+            + '<td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#2563eb">' + (c.id || "") + '</td>'
+            + '<td style="font-weight:500">' + (c.name || "") + '</td>'
+            + '<td>' + (c.mobile || "") + '</td>'
+            + '<td><span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600">' + (c.package_type || "—") + '</span></td>'
+            + '<td style="font-size:11px;white-space:nowrap">' + (c.conn || "—") + '</td>'
+            + '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;color:#10b981">৳' + (Number(c.totalPrice) || 0) + '</td>'
+            + '<td style="white-space:nowrap">' + btns + '</td></tr>';
+    }
+    h += '</tbody></table></div>';
+    return h;
+}
 
         function doLogout() {
             currentUser = null;
