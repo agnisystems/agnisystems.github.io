@@ -4336,6 +4336,7 @@
         function applyHexTheme(inputId) { var val = document.getElementById(inputId).value.trim(); if (!val.startsWith("#")) val = "#" + val; if (!/^#[0-9a-fA-F]{6}$/.test(val)) { showPop("সঠিক ৬ সংখ্যার Hex কোড দিন।\nযেমন: #a3c45f", "warning"); return; } curCustomHex = val; localStorage.setItem("agni_custom_hex", val); var el = document.getElementById("sbHexIn"); if (el) el.value = val; applyTheme("custom"); }
 
         // ─── SESSION / AUTH HELPERS ───
+        var SUPER_ADMIN_EMAIL = "arafatahmed.cit.bd@gmail.com";   // এই Gmail সবসময় Super Admin (Firestore Rules-এও একই ঠিকানা আছে)
         var SESSION_TTL_MS = 12 * 60 * 60 * 1000;   // ১২ ঘণ্টা নিষ্ক্রিয় থাকলে সেশন শেষ
         var HEARTBEAT_MS = 2 * 60 * 1000;           // প্রতি ২ মিনিটে "আমি সক্রিয়" জানানো
         var MAX_SESSIONS = 2;
@@ -4477,9 +4478,19 @@
             _authBusy = true;
             var email = (user.email || "").toLowerCase();
             if (!email || !user.emailVerified) { denyAccess("যাচাইকৃত Gmail প্রয়োজন।"); return; }
+            var isSuper = (email === SUPER_ADMIN_EMAIL);
             fsdb.collection("authorizedUsers").doc(email).get().then(function (snap) {
-                if (!snap.exists) { denyAccess("এই Gmail (" + email + ") অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
-                var d = snap.data();
+                if (snap.exists) return snap.data();
+                if (isSuper) {
+                    // Super Admin-এর ডকুমেন্ট না থাকলে প্রথম লগইনে নিজে তৈরি হয়
+                    var nd = { email: email, displayName: user.displayName || "Super Admin", role: "coder", status: "active", uid: user.uid, createdAt: TS(), createdBy: email, lastLogin: null };
+                    return fsdb.collection("authorizedUsers").doc(email).set(nd).then(function () { return nd; });
+                }
+                denyAccess("এই Gmail (" + email + ") অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।");
+                return null;
+            }).then(function (d) {
+                if (!d) return;
+                if (isSuper) { d.role = "coder"; d.status = "active"; }
                 if (d.status !== "active") { denyAccess("এই অ্যাকাউন্ট নিষ্ক্রিয় করা আছে।"); return; }
                 return resumeOrRegister(user, email).then(function (r) {
                     startSessionWatch(r.id);
