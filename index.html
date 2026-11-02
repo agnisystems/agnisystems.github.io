@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover" />
-    <meta name="theme-color" content="#0f1030" />
+    <meta name="theme-color" content="#e63b2e" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Agni" />
@@ -3499,19 +3499,6 @@
         <div class="sb-item" id="sAdmin" style="display:none" onclick="openAdmin();closeSidebar();"><span
                 class="sb-ico">⚙</span> Gmail Access</div>
         <div class="sb-div"></div>
-        <div class="sb-themes">
-            <p>🎨 থিম</p>
-            <div class="sb-tm-row">
-                <button class="sb-tm-btn" id="sbTmLight" onclick="applyTheme('light')">☀️ Light</button>
-                <button class="sb-tm-btn" id="sbTmDark" onclick="applyTheme('dark')">🌙 Dark</button>
-            </div>
-            <div class="sb-hex-row">
-                <div class="sb-hex-prev" id="sbHexPrev" style="background:#16a34a"></div>
-                <input class="sb-hex-in" type="text" id="sbHexIn" maxlength="7" placeholder="#hex"
-                    oninput="sbHexPreview()" />
-                <button class="sb-hex-go" onclick="applyHexTheme('sbHexIn')">✓</button>
-            </div>
-        </div>
         <div class="sb-logout"><button onclick="doLogout()">🚪 Log out</button></div>
         <input type="file" id="impFile" accept=".json" style="display:none" />
     </div>
@@ -4316,8 +4303,8 @@
             light: { pri: "#16a34a", pri2: "#15803d", nav: "#f8fafc", nav2: "#e2e8f0", bodyBg: "#e8eef6" },
             dark: { pri: "#16a34a", pri2: "#15803d", nav: "#0f172a", nav2: "#1e293b", bodyBg: "#0f172a" }
         };
-        var curTheme = localStorage.getItem("agni_theme") || "dark";
-        var curCustomHex = localStorage.getItem("agni_custom_hex") || "";
+        var curTheme = "dark";   // থিম অপশন সরানো হয়েছে, সবসময় Dark
+        var curCustomHex = "";
 
         function hexToRgb(hex) { hex = hex.replace(/^#/, ""); if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]; var n = parseInt(hex, 16); return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }; }
         function darkenHex(hex, pct) { var c = hexToRgb(hex), f = 1 - pct; return "#" + [Math.round(c.r * f), Math.round(c.g * f), Math.round(c.b * f)].map(function (v) { return v.toString(16).padStart(2, "0"); }).join(""); }
