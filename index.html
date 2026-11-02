@@ -3,7 +3,14 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover" />
+    <meta name="theme-color" content="#0f1030" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Agni" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
     <title>Agni Systems Limited</title>
     <link rel="shortcut icon" type="image/x-icon" href="encrypted.png">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -4260,6 +4267,9 @@
         </div>
     </div>
 
+    <button id="pwaBtn" onclick="installApp()" style="display:none;position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;background:#6366f1;color:#fff;border:0;border-radius:24px;padding:11px 18px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer">📲 App Install</button>
+    <div id="offBadge" style="display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top));z-index:9500;background:#b45309;color:#fff;border-radius:16px;padding:5px 14px;font:600 12px 'Hind Siliguri',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.4)">📴 অফলাইন মোড — ইন্টারনেট এলে ডাটা সিঙ্ক হবে</div>
+
     <script>
         "use strict";
 
@@ -4556,6 +4566,8 @@
         var FC = { apiKey: "AIzaSyBKsRNJ49Jnlwo_ggh7RJF7WgYNxPod_vM", authDomain: "agni-systems-2.firebaseapp.com", projectId: "agni-systems-2", storageBucket: "agni-systems-2.firebasestorage.app", messagingSenderId: "315958824746", appId: "1:315958824746:web:5f7fdf9d5b173083b05853" };
         if (!firebase.apps.length) firebase.initializeApp(FC);
         var fsdb = firebase.firestore();
+        // অফলাইনে আগে দেখা ডাটা ফোনেই সংরক্ষিত থাকে
+        fsdb.enablePersistence({ synchronizeTabs: true }).catch(function (e) { console.warn("Offline persistence:", e && e.code); });
         var fbAuth = firebase.auth();
         var DB = [], TRASH = [], PENDING = [], EREQS = [], cur = -1, curId = null, pageMode = "disabled";
 var _vpBackState = null;
@@ -5728,6 +5740,24 @@ function buildRevenueList(arr) {
 
 
     <!--clean autocomplete সিস্টেম-->
+    <script>
+        // ─── PWA: Install + Offline ───
+        var _installEv = null;
+        var _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        var _isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+        function showInstallBtn() { var b = document.getElementById("pwaBtn"); if (b && !_isStandalone) b.style.display = "block"; }
+        window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); _installEv = e; showInstallBtn(); });
+        window.addEventListener("appinstalled", function () { _installEv = null; var b = document.getElementById("pwaBtn"); if (b) b.style.display = "none"; });
+        if (_isIOS && !_isStandalone) showInstallBtn();
+        function installApp() {
+            if (_installEv) { _installEv.prompt(); _installEv.userChoice.then(function () { _installEv = null; document.getElementById("pwaBtn").style.display = "none"; }); }
+            else if (_isIOS) alert("iPhone/iPad-এ: Safari-র নিচের Share (⬆) বাটন চাপুন → 'Add to Home Screen' বেছে নিন।");
+            else alert("ব্রাউজারের মেনু (⋮) থেকে 'Install app' বা 'Add to Home screen' চাপুন।");
+        }
+        function updNet() { var o = document.getElementById("offBadge"); if (o) o.style.display = navigator.onLine ? "none" : "block"; }
+        window.addEventListener("online", updNet); window.addEventListener("offline", updNet); updNet();
+        if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("SW:", e); }); });
+    </script>
     <script src="agni-patch.js"></script>
 
 </body>
