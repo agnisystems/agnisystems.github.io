@@ -9,6 +9,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
@@ -3408,22 +3409,11 @@
                 <h1>AGNI SYSTEMS LIMITED</h1>
                 <p>Customer Management Portal</p>
             </div>
-            <div class="lg-field">
-                <label>USER ID</label>
-                <div class="lg-wrap"><span class="lg-icon">👤</span>
-                    <input class="lg-input" type="text" id="lusr" placeholder="User ID লিখুন" autocomplete="username" />
-                </div>
-            </div>
-            <div class="lg-field">
-                <label>PASSWORD</label>
-                <div class="lg-wrap"><span class="lg-icon">🔑</span>
-                    <input class="lg-input" type="password" id="lpass" placeholder="Password লিখুন"
-                        autocomplete="current-password" />
-                </div>
-            </div>
-            <label class="lg-remember"><input type="checkbox" id="lrem" /><span>লগইন মনে রাখুন</span></label>
-            <button class="lg-btn" id="lbtn">🔒 Login করুন</button>
-            <div class="lg-err" id="lerr">❌ User ID বা Password ভুল!</div>
+            <button class="lg-btn" id="lbtn" style="background:#fff;color:#1f2937;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+                <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                <span>Continue with Google</span></button>
+            <div style="text-align:center;margin-top:12px;font-size:12px;color:rgba(255,255,255,.4)">শুধু অনুমোদিত Gmail দিয়ে প্রবেশ করা যাবে</div>
+            <div class="lg-err" id="lerr">❌ লগইন ব্যর্থ</div>
             <div class="lg-foot">© 2025 Agni Systems Limited · Panchagarh</div>
             <div class="lg-foot">Developed by <a href="https://wa.me/8801786945337">Arafat Ahmed</a> · 2026</div>
         </div>
@@ -3500,7 +3490,7 @@
         <div class="sb-item" id="sEditReq" style="display:none" onclick="showEditReqs();closeSidebar();"><span
                 class="sb-ico">✍🏻</span> Edit Requests <span class="sb-badge gold" id="sBadgeER">0</span></div>
         <div class="sb-item" id="sAdmin" style="display:none" onclick="openAdmin();closeSidebar();"><span
-                class="sb-ico">⚙</span> Admin Panel</div>
+                class="sb-ico">⚙</span> Gmail Access</div>
         <div class="sb-div"></div>
         <div class="sb-themes">
             <p>🎨 থিম</p>
@@ -4229,75 +4219,44 @@
     </div>
 
     <div class="pop-bg" id="admBg">
-        <div class="pop" style="width:620px;max-width:100%">
+        <div class="pop wide">
             <div class="pop-hdr">
-                <h3>⚙ Admin Panel</h3><button class="pop-x" onclick="closeAdm()">✕</button>
+                <h3>📧 Gmail Access Management</h3><button class="pop-x" onclick="closeAdm()">✕</button>
             </div>
-            <div class="pop-body" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+            <div class="pop-body" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
                 <div class="adm-sec">
-                    <h4>👤 নতুন User তৈরি করুন</h4>
-                    <input class="adm-in" type="text" id="aUsr" placeholder="Username" />
-                    <input class="adm-in" type="text" id="aDispName" placeholder="পূর্ণ নাম" />
-                    <input class="adm-in" type="text" id="aUID" placeholder="User ID (password হিসেবে ব্যবহার হবে)" />
-                    <select class="adm-in" id="aRole">
-                        <option value="user">👤 User</option>
-                        <option value="admin">👑 Admin</option>
-                    </select>
-                    <button class="pbtn green" onclick="createUser()">তৈরি করুন</button>
+                    <h4>➕ Gmail যোগ করুন</h4>
+                    <textarea class="adm-in" id="gmEmails" rows="3" placeholder="এক বা একাধিক Gmail (কমা বা নতুন লাইন দিয়ে আলাদা করুন)"></textarea>
+                    <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                        <select class="adm-in" id="gmRole" style="width:auto;flex:1;min-width:130px;margin-bottom:0">
+                            <option value="user">👤 User</option>
+                        </select>
+                        <button class="pbtn green" onclick="addGmails()">যোগ করুন</button>
+                        <button class="pbtn blue" onclick="document.getElementById('gmCsv').click()">📄 CSV Import</button>
+                        <input type="file" id="gmCsv" accept=".csv,.txt" style="display:none" onchange="importGmailCsv(this)" />
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:6px">CSV ফরম্যাট: email,name,role (প্রথম লাইনে হেডার থাকলেও চলবে)</div>
                 </div>
                 <div class="adm-sec">
-                    <h4>📋 User তালিকা</h4>
-                    <div id="uList"></div>
-                </div>
-                <div class="adm-sec">
-                    <h4>🔑 নিজের Password পরিবর্তন</h4>
-                    <input class="adm-in" type="password" id="aOld" placeholder="পুরনো Password" />
-                    <input class="adm-in" type="password" id="aNew" placeholder="নতুন Password" />
-                    <button class="pbtn blue" onclick="changePass()">পরিবর্তন করুন</button>
+                    <h4>📋 অনুমোদিত Gmail <span id="gmCount" style="color:#64748b;font-weight:400"></span></h4>
+                    <div style="display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap">
+                        <input class="adm-in" id="gmSearch" oninput="renderGmail()" placeholder="🔍 Gmail / নাম খুঁজুন" style="margin-bottom:0;flex:1;min-width:160px" />
+                        <button class="pbtn orange" onclick="showAllSessions()">🖥 Active Sessions</button>
+                    </div>
+                    <div id="gmList" style="overflow-x:auto"></div>
                 </div>
             </div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closeAdm()">বন্ধ করুন</button></div>
         </div>
     </div>
 
-    <div class="pop-bg" id="editUserBg">
-        <div class="pop" style="width:440px;max-width:100%">
+    <div class="pop-bg" id="sessBg" style="z-index:3000">
+        <div class="pop wide">
             <div class="pop-hdr">
-                <h3 id="editUserTitle">✏️ User Edit</h3>
-                <button class="pop-x" onclick="cancelEditUser()">✕</button>
+                <h3 id="sessTtl">Sessions</h3><button class="pop-x" onclick="closeSess()">✕</button>
             </div>
-            <div class="pop-body">
-                <div style="margin-bottom:10px">
-                    <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">USER
-                        ID</label>
-                    <input class="adm-in" type="text" id="eUsr" disabled
-                        style="background:#f1f5f9;color:#475569;cursor:not-allowed;margin-bottom:0" />
-                </div>
-                <div style="margin-bottom:10px">
-                    <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">পূর্ণ
-                        নাম</label>
-                    <input class="adm-in" type="text" id="eDispName" placeholder="পূর্ণ নাম লিখুন"
-                        style="margin-bottom:0" />
-                </div>
-                <div style="margin-bottom:10px">
-                    <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">নতুন
-                        Password <span style="font-weight:400;color:#94a3b8">(না দিলে আগেরটি থাকবে)</span></label>
-                    <input class="adm-in" type="password" id="ePas" placeholder="নতুন Password"
-                        style="margin-bottom:0" />
-                </div>
-                <div style="margin-bottom:4px">
-                    <label
-                        style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:5px">ROLE</label>
-                    <select class="adm-in" id="eRole" style="margin-bottom:0">
-                        <option value="user">👤 User</option>
-                        <option value="admin">👑 Admin</option>
-                    </select>
-                </div>
-            </div>
-            <div class="pop-foot">
-                <button class="pbtn grey" onclick="cancelEditUser()">✕ Cancel</button>
-                <button class="pbtn green" onclick="saveEditUser()">✓ Save Changes</button>
-            </div>
+            <div class="pop-body" id="sessBody" style="max-height:60vh;overflow-y:auto;padding:0;-webkit-overflow-scrolling:touch;"></div>
+            <div class="pop-foot"><button class="pbtn grey" onclick="closeSess()">বন্ধ করুন</button></div>
         </div>
     </div>
 
@@ -4376,54 +4335,171 @@
         function sbHexPreview() { var val = document.getElementById("sbHexIn").value.trim(); if (!val.startsWith("#")) val = "#" + val; var prev = document.getElementById("sbHexPrev"); if (/^#[0-9a-fA-F]{6}$/.test(val) && prev) prev.style.background = val; }
         function applyHexTheme(inputId) { var val = document.getElementById(inputId).value.trim(); if (!val.startsWith("#")) val = "#" + val; if (!/^#[0-9a-fA-F]{6}$/.test(val)) { showPop("সঠিক ৬ সংখ্যার Hex কোড দিন।\nযেমন: #a3c45f", "warning"); return; } curCustomHex = val; localStorage.setItem("agni_custom_hex", val); var el = document.getElementById("sbHexIn"); if (el) el.value = val; applyTheme("custom"); }
 
-        // ─── USERS ───
-        var CODER_ID = "coder", CODER_PASS = "coder@2026", CODER_DATA = { pass: CODER_PASS, role: "coder", display: "Arafat" };
-        var DEFAULT_USERS = { "coder": { pass: "coder@2026", role: "coder", display: "Coder" } };
-        var _cachedUsers = null;
-        function getUsers() { var users = _cachedUsers ? JSON.parse(JSON.stringify(_cachedUsers)) : {}; users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA)); return users; }
-        function saveUsers(u, cb) { u[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA)); var deletedKeys = []; if (_cachedUsers) { Object.keys(_cachedUsers).forEach(function (k) { if (k !== CODER_ID && !u[k]) deletedKeys.push(k); }); } _cachedUsers = JSON.parse(JSON.stringify(u)); var entries = Object.keys(u); var total = entries.length + deletedKeys.length; if (total === 0) { if (cb) cb(true); return; } var done = 0; function tick() { done++; if (done === total && cb) cb(true); } for (var i = 0; i < entries.length; i++) { (function (key) { fsdb.collection("appusers").doc(key).set(u[key]).then(tick).catch(function (e) { console.error(e); if (cb) cb(false); }); })(entries[i]); } for (var j = 0; j < deletedKeys.length; j++) { (function (key) { fsdb.collection("appusers").doc(key).delete().then(tick).catch(function (e) { console.error(e); tick(); }); })(deletedKeys[j]); } }
-        function loadUsersFromFirebase(cb) { fsdb.collection("appusers").get().then(function (snap) { var users = {}; if (snap.empty) { users = JSON.parse(JSON.stringify(DEFAULT_USERS)); users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA)); saveUsers(users, function () { }); } else { snap.forEach(function (d) { users[d.id] = d.data(); }); users[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA)); } _cachedUsers = JSON.parse(JSON.stringify(users)); cb(users); }).catch(function (e) { console.error(e); var fallback = JSON.parse(JSON.stringify(DEFAULT_USERS)); fallback[CODER_ID] = JSON.parse(JSON.stringify(CODER_DATA)); _cachedUsers = fallback; cb(fallback); }); }
+        // ─── SESSION / AUTH HELPERS ───
+        var SESSION_TTL_MS = 12 * 60 * 60 * 1000;   // ১২ ঘণ্টা নিষ্ক্রিয় থাকলে সেশন শেষ
+        var HEARTBEAT_MS = 2 * 60 * 1000;           // প্রতি ২ মিনিটে "আমি সক্রিয়" জানানো
+        var MAX_SESSIONS = 2;
+        var _sid = null, _sessUnsub = null, _hbTimer = null, _lastBeat = 0;
+        function TS() { return firebase.firestore.FieldValue.serverTimestamp(); }
+        function tsMs(t) { return (t && t.toMillis) ? t.toMillis() : 0; }
+        function fmtTs(t) { return (t && t.toDate) ? t.toDate().toLocaleString("en-GB") : "—"; }
+        function rand32() { var a = new Uint8Array(16); crypto.getRandomValues(a); return Array.prototype.map.call(a, function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); }
+        function getDeviceId() { var id = null; try { id = localStorage.getItem("agni_device"); } catch (e) { } if (!id) { id = rand32(); try { localStorage.setItem("agni_device", id); } catch (e) { } } return id; }
+        function getBrowser() { var u = navigator.userAgent; if (/Edg\//.test(u)) return "Edge"; if (/OPR\/|Opera/.test(u)) return "Opera"; if (/Firefox\//.test(u)) return "Firefox"; if (/Chrome\//.test(u)) return "Chrome"; if (/Safari\//.test(u)) return "Safari"; return "Unknown"; }
+        function getDeviceName() { var u = navigator.userAgent; if (/Android/.test(u)) return "Android"; if (/iPhone|iPad|iPod/.test(u)) return "iOS"; if (/Windows/.test(u)) return "Windows"; if (/Mac OS X/.test(u)) return "Mac"; if (/Linux/.test(u)) return "Linux"; return "Unknown device"; }
+        function isExpiredSess(d) { var t = tsMs(d.lastActiveAt); return t > 0 && (Date.now() - t) > SESSION_TTL_MS; }
+
+        // নতুন সেশন তৈরি। ইতিমধ্যে ২টি সক্রিয় থাকলে তৃতীয় লগইনে সব পুরোনো সেশন revoke হয়।
+        // Firestore transaction ব্যবহার হয়, তাই একসাথে দুই ডিভাইস লগইন করলেও সীমা ভাঙে না।
+        function registerSession(user, email) {
+            var stateRef = fsdb.collection("sessionState").doc(user.uid);
+            var newId = rand32();
+            var newRef = fsdb.collection("userSessions").doc(newId);
+            return fsdb.runTransaction(function (tx) {
+                return tx.get(stateRef).then(function (st) {
+                    var ids = (st.exists && st.data().ids) || [];
+                    return Promise.all(ids.map(function (id) { return tx.get(fsdb.collection("userSessions").doc(id)); })).then(function (snaps) {
+                        var live = [];
+                        snaps.forEach(function (sn) {
+                            var d = sn.exists ? sn.data() : null;
+                            if (d && d.status === "active") {
+                                if (isExpiredSess(d)) tx.update(sn.ref, { status: "revoked", revokedAt: TS() });
+                                else live.push(sn.ref);
+                            }
+                        });
+                        var keep;
+                        if (live.length >= MAX_SESSIONS) {
+                            live.forEach(function (r) { tx.update(r, { status: "revoked", revokedAt: TS() }); });
+                            keep = [newId];
+                        } else {
+                            keep = live.map(function (r) { return r.id; }).concat([newId]);
+                        }
+                        tx.set(stateRef, { uid: user.uid, ids: keep, updatedAt: TS() });
+                        tx.set(newRef, { uid: user.uid, email: email, deviceId: getDeviceId(), deviceName: getDeviceName(), browser: getBrowser(), createdAt: TS(), lastActiveAt: TS(), status: "active", revokedAt: null });
+                    });
+                });
+            }).then(function () { return newId; });
+        }
+
+        // আগের সেশন (পেজ রিফ্রেশ) বৈধ থাকলে সেটাই ব্যবহার, নাহলে নতুন সেশন
+        function resumeOrRegister(user, email) {
+            var sid = null; try { sid = localStorage.getItem("agni_sid"); } catch (e) { }
+            if (!sid) return registerSession(user, email).then(function (id) { return { id: id, fresh: true }; });
+            return fsdb.collection("userSessions").doc(sid).get().then(function (sn) { return sn; }, function () { return null; }).then(function (sn) {
+                if (sn && sn.exists && sn.data().uid === user.uid && sn.data().status === "active" && !isExpiredSess(sn.data())) return { id: sid, fresh: false };
+                return registerSession(user, email).then(function (id) { return { id: id, fresh: true }; });
+            });
+        }
+
+        function startSessionWatch(sid) {
+            stopSessionWatch();
+            _sid = sid; _lastBeat = Date.now();
+            try { localStorage.setItem("agni_sid", sid); } catch (e) { }
+            _sessUnsub = fsdb.collection("userSessions").doc(sid).onSnapshot(function (sn) {
+                if (!sn.exists) return;
+                if (sn.data().status !== "active") forceLogin("এই সেশন অন্য ডিভাইস বা Admin বন্ধ করেছে। আবার লগইন করুন।");
+            }, function (e) {
+                if (e && e.code === "permission-denied") forceLogin("আপনার অ্যাক্সেস বন্ধ করা হয়েছে।");
+            });
+            _hbTimer = setInterval(beat, HEARTBEAT_MS);
+        }
+        function stopSessionWatch() {
+            if (_sessUnsub) { try { _sessUnsub(); } catch (e) { } _sessUnsub = null; }
+            if (_hbTimer) { clearInterval(_hbTimer); _hbTimer = null; }
+        }
+        function beat() {
+            if (!_sid || !currentUser) return;
+            if (Date.now() - _lastBeat > SESSION_TTL_MS) { forceLogin("সেশনের মেয়াদ শেষ। আবার লগইন করুন।"); return; }
+            fsdb.collection("userSessions").doc(_sid).update({ lastActiveAt: TS() }).then(function () { _lastBeat = Date.now(); }).catch(function (e) {
+                if (e && e.code === "permission-denied") forceLogin("আপনার অ্যাক্সেস বন্ধ করা হয়েছে বা সেশন শেষ।");
+            });
+        }
+        // নিজের ডিভাইস থেকে logout
+        function endSessionAndSignOut() {
+            var sid = _sid; stopSessionWatch(); _sid = null;
+            try { localStorage.removeItem("agni_sid"); } catch (e) { }
+            var done = function () { try { fbAuth.signOut(); } catch (e) { } };
+            if (sid) fsdb.collection("userSessions").doc(sid).update({ status: "revoked", revokedAt: TS() }).then(done, done); else done();
+        }
+        // অন্য ডিভাইস/Admin সেশন বন্ধ করলে
+        function forceLogin(msg) {
+            if (!currentUser && !_sid) return;
+            stopSessionWatch(); _sid = null;
+            try { localStorage.removeItem("agni_sid"); } catch (e) { }
+            try { fbAuth.signOut(); } catch (e) { }
+            doLogout(true);
+            loginFail(msg);
+        }
+        function forceLogoutUid(uid) {
+            if (!uid) return Promise.resolve(0);
+            return fsdb.collection("userSessions").where("uid", "==", uid).get().then(function (snap) {
+                var b = fsdb.batch(), n = 0;
+                snap.forEach(function (d) { if (d.data().status === "active") { b.update(d.ref, { status: "revoked", revokedAt: TS() }); n++; } });
+                return n ? b.commit().then(function () { return n; }) : 0;
+            });
+        }
 
         // ─── LOGIN ───
-        function loadSaved() { try { var s = JSON.parse(localStorage.getItem("agni_saved") || "null"); if (s) { document.getElementById("lusr").value = s.u || ""; document.getElementById("lpass").value = s.p || ""; document.getElementById("lrem").checked = true; } } catch (e) { } }
-
-        function doLogin() {
-            var u = document.getElementById("lusr").value.trim();
-            var p = document.getElementById("lpass").value.trim();
+        function loginFail(msg) {
             var err = document.getElementById("lerr");
+            if (msg) { err.textContent = "❌ " + msg; err.style.display = "block"; }
+            var btn = document.getElementById("lbtn");
+            if (btn) { btn.disabled = false; btn.style.opacity = "1"; }
+        }
+        function authErrMsg(e) {
+            var c = (e && e.code) || "";
+            if (c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request") return "";
+            if (c === "auth/network-request-failed") return "ইন্টারনেট সংযোগ নেই।";
+            if (c === "auth/unauthorized-domain") return "এই সাইটের ডোমেইন Firebase → Authentication → Authorized domains-এ যোগ করা হয়নি।";
+            if (c === "auth/operation-not-allowed") return "Firebase-এ Google Sign-in চালু করা হয়নি।";
+            if (c === "auth/too-many-requests") return "অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+            return "লগইন ব্যর্থ: " + (c || (e && e.message) || "অজানা ত্রুটি");
+        }
 
-            function tryLogin(users) {
-                if (users[u] && users[u].pass === p) {
-                    currentUser = { username: u, role: users[u].role, display: users[u].display || u };
-                    localStorage.setItem("agni_session", JSON.stringify({ u: u, p: p }));
-                    if (document.getElementById("lrem").checked)
-                        localStorage.setItem("agni_saved", JSON.stringify({ u: u, p: p }));
-                    else localStorage.removeItem("agni_saved");
-                    err.style.display = "none";
+        function doGoogleLogin() {
+            document.getElementById("lerr").style.display = "none";
+            var btn = document.getElementById("lbtn");
+            btn.disabled = true; btn.style.opacity = ".6";
+            var provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: "select_account" });
+            fbAuth.signInWithPopup(provider).then(function () {
+                // সফল হলে onAuthStateChanged → handleAuthUser() বাকি কাজ করবে
+            }).catch(function (e) {
+                if (e && e.code === "auth/popup-blocked") { fbAuth.signInWithRedirect(provider); return; }
+                loginFail(authErrMsg(e));
+            });
+        }
+
+        var _authBusy = false;
+        function denyAccess(msg) { _authBusy = false; try { fbAuth.signOut(); } catch (e) { } loginFail(msg); }
+        function handleAuthUser(user) {
+            if (currentUser || _authBusy || !user) return;
+            _authBusy = true;
+            var email = (user.email || "").toLowerCase();
+            if (!email || !user.emailVerified) { denyAccess("যাচাইকৃত Gmail প্রয়োজন।"); return; }
+            fsdb.collection("authorizedUsers").doc(email).get().then(function (snap) {
+                if (!snap.exists) { denyAccess("এই Gmail (" + email + ") অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
+                var d = snap.data();
+                if (d.status !== "active") { denyAccess("এই অ্যাকাউন্ট নিষ্ক্রিয় করা আছে।"); return; }
+                return resumeOrRegister(user, email).then(function (r) {
+                    startSessionWatch(r.id);
+                    if (r.fresh || d.uid !== user.uid) {
+                        fsdb.collection("authorizedUsers").doc(email).update({ uid: user.uid, displayName: user.displayName || "", lastLogin: TS() }).catch(function (e) { console.error(e); });
+                    }
+                    currentUser = { username: email, role: d.role, display: d.displayName || user.displayName || email, uid: user.uid };
+                    _authBusy = false;
+                    document.getElementById("lerr").style.display = "none";
                     document.getElementById("loginScreen").style.display = "none";
                     document.getElementById("sidebar").style.display = "flex";
                     document.getElementById("appWrap").style.display = "block";
                     setupRole(); initApp();
-                } else {
-                    err.style.display = "block";
-                    document.getElementById("lpass").value = "";
-                    document.getElementById("lpass").focus();
-                }
-            }
-
-            // Firebase থেকে লোড হয়েছে কিনা চেক
-            if (_cachedUsers) {
-                tryLogin(getUsers());
-            } else {
-                document.getElementById("lbtn").textContent = "⏳ লোড হচ্ছে...";
-                loadUsersFromFirebase(function (users) {
-                    document.getElementById("lbtn").textContent = "🔒 Login করুন";
-                    tryLogin(users);
                 });
-            }
+            }).catch(function (e) {
+                console.error(e);
+                if (e && e.code === "permission-denied") denyAccess("এই Gmail অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।");
+                else denyAccess("সংযোগ ব্যর্থ: " + ((e && (e.code || e.message)) || ""));
+            });
         }
-
-
 
         function setupRole() {
             var role = currentUser.role, priv = isPrivileged();
@@ -4469,6 +4545,7 @@
         var FC = { apiKey: "AIzaSyBKsRNJ49Jnlwo_ggh7RJF7WgYNxPod_vM", authDomain: "agni-systems-2.firebaseapp.com", projectId: "agni-systems-2", storageBucket: "agni-systems-2.firebasestorage.app", messagingSenderId: "315958824746", appId: "1:315958824746:web:5f7fdf9d5b173083b05853" };
         if (!firebase.apps.length) firebase.initializeApp(FC);
         var fsdb = firebase.firestore();
+        var fbAuth = firebase.auth();
         var DB = [], TRASH = [], PENDING = [], EREQS = [], cur = -1, curId = null, pageMode = "disabled";
 var _vpBackState = null;
 var _fullPageBack = null;
@@ -4923,16 +5000,176 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         document.getElementById("impFile").addEventListener("change", function (e) { var file = e.target.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var imp = JSON.parse(ev.target.result); if (!Array.isArray(imp)) imp = [imp]; var n = 0; for (var i = 0; i < imp.length; i++) { var rec = imp[i]; if (!rec.id) continue; var exists = false; for (var j = 0; j < DB.length; j++) { if (String(DB[j].id) === String(rec.id)) { exists = true; break; } } if (!exists) { if (!rec.auditLog) rec.auditLog = [mkAudit("created")]; DB.push(rec); n++; fbSet("customers", rec.id, rec, function () { }); } } DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); updateBadges(); showPop(imp.length + " রেকর্ড ইম্পোর্ট, " + n + " নতুন।", "success"); } catch (err) { showPop("JSON Error: " + err.message, "error"); } }; reader.readAsText(file); e.target.value = ""; });
 
         // ─── ADMIN ───
-        function openAdmin() { if (!currentUser || !isPrivileged()) return; renderUsers(); document.getElementById("admBg").classList.add("on"); }
+        // ─── GMAIL ACCESS MANAGEMENT ───
+        var AUTH_EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
+        var _gmCache = {};
+        function isCoderUser() { return currentUser && currentUser.role === "coder"; }
+        function canManage(t) {
+            if (!currentUser || !isPrivileged()) return false;
+            if (t.role === "coder" || t.email === currentUser.username) return false;
+            return isCoderUser() || t.role === "user";
+        }
+        function escAttr(x) { return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
+        function gmErr(e) { console.error(e); showPop("ব্যর্থ: " + ((e && (e.code || e.message)) || "অজানা ত্রুটি"), "error"); }
+        function loadGmailUsers(cb) {
+            fsdb.collection("authorizedUsers").get().then(function (snap) {
+                var m = {}; snap.forEach(function (d) { m[d.id] = d.data(); }); _gmCache = m; cb();
+            }).catch(function (e) { gmErr(e); cb(); });
+        }
+        function openAdmin() {
+            if (!currentUser || !isPrivileged()) return;
+            var sel = document.getElementById("gmRole");
+            sel.innerHTML = '<option value="user">👤 User</option>' + (isCoderUser() ? '<option value="admin">👑 Admin</option>' : "");
+            loadGmailUsers(function () { renderGmail(); document.getElementById("admBg").classList.add("on"); });
+        }
         function closeAdm() { document.getElementById("admBg").classList.remove("on"); }
-        function renderUsers() { var users = getUsers(); var html = ""; Object.keys(users).forEach(function (u) { var info = users[u], roleLabel, actionBtn; if (info.role === "coder") roleLabel = '<span style="background:rgba(99,102,241,.15);color:#6366f1;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;border:1px solid rgba(99,102,241,.3)">⚡ Coder</span>'; else if (info.role === "admin") roleLabel = '<span class="u-role admin">👑 Admin</span>'; else roleLabel = '<span class="u-role user">👤 User</span>'; if (u === CODER_ID) actionBtn = '<span style="font-size:11px;color:#6366f1;padding:3px 8px;background:rgba(99,102,241,.1);border-radius:6px;border:1px solid rgba(99,102,241,.2)">🔒 Protected</span>'; else if (u === currentUser.username) actionBtn = '<span style="font-size:11px;color:#94a3b8">আপনি</span>'; else actionBtn = '<button class="abtn d" onclick="delUser(\'' + u + '\')">🗑️</button><button class="abtn" style="background:#2563eb;margin-left:3px" onclick="editUser(\'' + u + '\')">✎ Edit</button>'; html += '<div class="u-item"><div><span class="u-nm">' + u + '</span> ' + roleLabel + '<div style="font-size:11px;color:#64748b;margin-top:2px">👤 ' + (info.display || u) + '</div></div>' + actionBtn + '</div>'; }); document.getElementById("uList").innerHTML = html; }
-        function createUser() { var u = document.getElementById("aUsr").value.trim(), dn = document.getElementById("aDispName").value.trim(), uid = document.getElementById("aUID").value.trim(), r = document.getElementById("aRole").value; if (!u) { showPop("Username দিন", "warning"); return; } if (!dn) { showPop("পূর্ণ নাম দিন", "warning"); return; } if (!uid) { showPop("User ID দিন", "warning"); return; } if (r === "coder") { showPop("Coder role তৈরি নিষিদ্ধ।", "error"); return; } var users = getUsers(); if (users[u]) { showPop("এই Username ইতিমধ্যে আছে", "error"); return; } users[u] = { pass: uid, role: r, display: dn }; saveUsers(users, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } document.getElementById("aUsr").value = document.getElementById("aDispName").value = document.getElementById("aUID").value = ""; renderUsers(); showPop("✅ User '" + dn + "' তৈরি হয়েছে!\nUsername: " + u + "\nPassword: " + uid, "success"); }); }
-        function delUser(u) { if (u === CODER_ID) { showPop("⚡ Coder সুরক্ষিত।", "error"); return; } if (u === currentUser.username) { showPop("নিজেকে মুছতে পারবেন না।", "error"); return; } if (!confirm("User '" + u + "' মুছবেন?")) return; var users = getUsers(); delete users[u]; saveUsers(users, function (ok) { if (ok) { renderUsers(); showPop("🗑️ User '" + u + "' মুছা হয়েছে।", "info"); } else showPop("Firebase delete ব্যর্থ!", "error"); }); }
-        var _editingUser = null;
-        function editUser(u) { if (u === CODER_ID) { showPop("Coder সুরক্ষিত।", "error"); return; } var users = getUsers(), info = users[u]; if (!info) return; _editingUser = u; document.getElementById("eUsr").value = u; document.getElementById("eDispName").value = info.display || u; document.getElementById("ePas").value = ""; document.getElementById("eRole").value = (info.role === "admin") ? "admin" : "user"; document.getElementById("editUserTitle").textContent = "✏️ Edit: " + u; document.getElementById("editUserBg").classList.add("on"); }
-        function saveEditUser() { if (!_editingUser) return; var dn = document.getElementById("eDispName").value.trim(), np = document.getElementById("ePas").value.trim(), nr = document.getElementById("eRole").value; if (!dn) { showPop("পূর্ণ নাম দিন", "warning"); return; } var users = getUsers(); users[_editingUser].display = dn; users[_editingUser].role = nr; if (np) users[_editingUser].pass = np; var done = _editingUser; saveUsers(users, function (ok) { cancelEditUser(); renderUsers(); if (ok) showPop("✅ User '" + done + "' আপডেট হয়েছে!", "success"); else showPop("Firebase সেভ ব্যর্থ!", "error"); }); }
-        function cancelEditUser() { _editingUser = null; document.getElementById("editUserBg").classList.remove("on"); document.getElementById("eUsr").value = document.getElementById("eDispName").value = document.getElementById("ePas").value = ""; }
-        function changePass() { var o = document.getElementById("aOld").value.trim(), n = document.getElementById("aNew").value.trim(), users = getUsers(); if (users[currentUser.username].pass !== o) { showPop("পুরনো Password ভুল", "error"); return; } if (!n) { showPop("নতুন Password দিন", "warning"); return; } users[currentUser.username].pass = n; saveUsers(users, function (ok) { document.getElementById("aOld").value = document.getElementById("aNew").value = ""; if (ok) showPop("✅ Password পরিবর্তন হয়েছে।", "success"); else showPop("Firebase সেভ ব্যর্থ!", "error"); }); }
+        function closeSess() { document.getElementById("sessBg").classList.remove("on"); }
+        function renderGmail() {
+            var q = (document.getElementById("gmSearch").value || "").trim().toLowerCase();
+            var keys = Object.keys(_gmCache).filter(function (e) { var d = _gmCache[e]; return !q || e.indexOf(q) >= 0 || String(d.displayName || "").toLowerCase().indexOf(q) >= 0; }).sort();
+            document.getElementById("gmCount").textContent = "(" + keys.length + "/" + Object.keys(_gmCache).length + ")";
+            if (!keys.length) { document.getElementById("gmList").innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:10px">কোনো Gmail নেই</div>'; return; }
+            var h = '<table class="ltbl"><thead><tr><th>Gmail</th><th>নাম</th><th>Role</th><th>Status</th><th>শেষ লগইন</th><th>একশন</th></tr></thead><tbody>';
+            keys.forEach(function (e) {
+                var d = _gmCache[e], em = escAttr(e);
+                var role = d.role === "coder" ? '<span style="background:rgba(99,102,241,.15);color:#6366f1;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700">⚡ Super Admin</span>' : d.role === "admin" ? '<span class="u-role admin">👑 Admin</span>' : '<span class="u-role user">👤 User</span>';
+                var st = d.status === "active" ? '<span style="color:#16a34a;font-weight:700">🟢 Active</span>' : '<span style="color:#dc2626;font-weight:700">⛔ Inactive</span>';
+                var btns = '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
+                if (canManage(d)) {
+                    btns += '<button class="abtn ' + (d.status === "active" ? "no" : "ok") + '" data-act="toggle" data-e="' + em + '">' + (d.status === "active" ? "⏸" : "▶") + '</button>';
+                    if (isCoderUser()) btns += '<button class="abtn" style="background:#2563eb" data-act="role" data-e="' + em + '" title="Role বদলান">👑↔👤</button>';
+                    btns += '<button class="abtn" style="background:#ea580c" data-act="logout" data-e="' + em + '" title="সব ডিভাইস থেকে Logout">🚪</button>';
+                    btns += '<button class="abtn d" data-act="remove" data-e="' + em + '">🗑️</button>';
+                } else btns += '<span style="font-size:11px;color:#94a3b8;margin-left:4px">🔒</span>';
+                h += '<tr><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px">' + escHtml(e) + '</td><td>' + escHtml(d.displayName || "—") + '</td><td>' + role + '</td><td>' + st + '</td><td style="font-size:11px;white-space:nowrap">' + fmtTs(d.lastLogin) + '</td><td style="white-space:nowrap">' + btns + '</td></tr>';
+            });
+            document.getElementById("gmList").innerHTML = h + '</tbody></table>';
+        }
+        function gmClick(ev) {
+            var b = ev.target.closest("button[data-act]"); if (!b) return;
+            var em = b.getAttribute("data-e"), act = b.getAttribute("data-act");
+            if (act === "toggle") toggleStatus(em);
+            else if (act === "role") changeRole(em);
+            else if (act === "logout") forceLogoutUser(em);
+            else if (act === "remove") removeGmail(em);
+            else if (act === "sess") viewSessions(em);
+        }
+        function saveGmailItems(items) {
+            var seen = {}, list = [];
+            items.forEach(function (it) {
+                if (!AUTH_EMAIL_RE.test(it.email) || _gmCache[it.email] || seen[it.email]) return;
+                seen[it.email] = 1;
+                it.role = (it.role === "admin" && isCoderUser()) ? "admin" : "user";
+                list.push(it);
+            });
+            var skipped = items.length - list.length;
+            if (!list.length) { showPop("নতুন কোনো বৈধ Gmail পাওয়া যায়নি।" + (skipped ? "\n(" + skipped + " টি বাদ: ভুল ফরম্যাট বা আগে থেকেই আছে)" : ""), "warning"); return; }
+            var chunks = [];
+            for (var i = 0; i < list.length; i += 400) chunks.push(list.slice(i, i + 400));
+            Promise.all(chunks.map(function (ch) {
+                var b = fsdb.batch();
+                ch.forEach(function (it) {
+                    b.set(fsdb.collection("authorizedUsers").doc(it.email), { email: it.email, displayName: it.name || "", role: it.role, status: "active", uid: "", createdAt: TS(), createdBy: currentUser.username, lastLogin: null });
+                });
+                return b.commit();
+            })).then(function () {
+                document.getElementById("gmEmails").value = "";
+                showPop("✅ " + list.length + " টি Gmail যোগ হয়েছে।" + (skipped ? "\n" + skipped + " টি বাদ (ভুল ফরম্যাট/আগে থেকেই আছে)।" : ""), "success");
+                loadGmailUsers(renderGmail);
+            }).catch(gmErr);
+        }
+        function addGmails() {
+            var role = document.getElementById("gmRole").value;
+            var items = document.getElementById("gmEmails").value.split(/[\s,;]+/).map(function (x) { return x.trim().toLowerCase(); }).filter(Boolean).map(function (e) { return { email: e, name: "", role: role }; });
+            if (!items.length) { showPop("কমপক্ষে একটি Gmail লিখুন।", "warning"); return; }
+            saveGmailItems(items);
+        }
+        function importGmailCsv(inp) {
+            var f = inp.files[0]; if (!f) return;
+            var rd = new FileReader();
+            rd.onload = function (e) {
+                var items = [];
+                String(e.target.result).split(/\r?\n/).forEach(function (ln) {
+                    ln = ln.trim(); if (!ln) return;
+                    var p = ln.split(",").map(function (x) { return x.trim().replace(/^"|"$/g, ""); });
+                    var em = (p[0] || "").toLowerCase();
+                    if (!AUTH_EMAIL_RE.test(em)) return;
+                    items.push({ email: em, name: p[1] || "", role: (p[2] || "user").toLowerCase() });
+                });
+                inp.value = "";
+                if (!items.length) { showPop("CSV-তে কোনো বৈধ Gmail পাওয়া যায়নি।", "warning"); return; }
+                saveGmailItems(items);
+            };
+            rd.readAsText(f);
+        }
+        function toggleStatus(em) {
+            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            var ns = u.status === "active" ? "inactive" : "active";
+            fsdb.collection("authorizedUsers").doc(em).update({ status: ns }).then(function () {
+                u.status = ns;
+                return ns === "inactive" ? forceLogoutUid(u.uid) : 0;
+            }).then(function () { renderGmail(); showPop(ns === "active" ? "▶ সক্রিয় করা হয়েছে।" : "⏸ নিষ্ক্রিয় করা হয়েছে এবং সব ডিভাইস থেকে Logout করানো হয়েছে।", "success"); }).catch(gmErr);
+        }
+        function changeRole(em) {
+            var u = _gmCache[em]; if (!u || !canManage(u) || !isCoderUser()) return;
+            var nr = u.role === "admin" ? "user" : "admin";
+            if (!confirm(em + " — Role বদলে " + nr.toUpperCase() + " করবেন?")) return;
+            fsdb.collection("authorizedUsers").doc(em).update({ role: nr }).then(function () { u.role = nr; renderGmail(); showPop("✅ Role আপডেট হয়েছে। ওই ব্যবহারকারী পরেরবার লগইন করলে কার্যকর হবে।", "success"); }).catch(gmErr);
+        }
+        function removeGmail(em) {
+            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            if (!confirm(em + " — অনুমোদিত তালিকা থেকে মুছবেন?")) return;
+            forceLogoutUid(u.uid).then(function () { return fsdb.collection("authorizedUsers").doc(em).delete(); }).then(function () { delete _gmCache[em]; renderGmail(); showPop("🗑️ মুছা হয়েছে।", "success"); }).catch(gmErr);
+        }
+        function forceLogoutUser(em) {
+            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            if (!u.uid) { showPop("এই ব্যবহারকারী এখনো লগইন করেননি।", "info"); return; }
+            if (!confirm(em + " — সব ডিভাইস থেকে Logout করাবেন?")) return;
+            forceLogoutUid(u.uid).then(function (n) { showPop("🚪 " + n + " টি সক্রিয় সেশন বন্ধ করা হয়েছে।", "success"); }).catch(gmErr);
+        }
+
+        // ─── SESSION MONITOR ───
+        var _sessView = null;
+        function sessStatusLabel(d) {
+            if (d.status !== "active") return '<span style="color:#dc2626;font-weight:700">⛔ Revoked</span>';
+            if (isExpiredSess(d)) return '<span style="color:#d97706;font-weight:700">⌛ মেয়াদোত্তীর্ণ</span>';
+            return '<span style="color:#16a34a;font-weight:700">🟢 Active</span>';
+        }
+        function showSessionTable(title, arr, showEmail) {
+            document.getElementById("sessTtl").textContent = title;
+            if (!arr.length) { document.getElementById("sessBody").innerHTML = '<div class="empty"><div class="ei">🖥</div><p>কোনো সেশন নেই।</p></div>'; }
+            else {
+                var h = '<table class="ltbl"><thead><tr>' + (showEmail ? '<th>Gmail</th>' : '') + '<th>ডিভাইস</th><th>ব্রাউজার</th><th>লগইন</th><th>শেষ সক্রিয়</th><th>Status</th><th></th></tr></thead><tbody>';
+                arr.forEach(function (d) {
+                    var live = d.status === "active" && !isExpiredSess(d);
+                    h += '<tr>' + (showEmail ? '<td style="font-size:11px">' + escHtml(d.email || "—") + '</td>' : '') + '<td>' + escHtml(d.deviceName || "—") + '</td><td>' + escHtml(d.browser || "—") + '</td><td style="font-size:11px;white-space:nowrap">' + fmtTs(d.createdAt) + '</td><td style="font-size:11px;white-space:nowrap">' + fmtTs(d.lastActiveAt) + '</td><td>' + sessStatusLabel(d) + '</td><td>' + (live ? '<button class="abtn d" onclick="revokeSession(\'' + d.id + '\')">বন্ধ</button>' : '') + '</td></tr>';
+                });
+                document.getElementById("sessBody").innerHTML = h + '</tbody></table>';
+            }
+            document.getElementById("sessBg").classList.add("on");
+        }
+        function viewSessions(em) {
+            var u = _gmCache[em]; if (!u) return;
+            if (!u.uid) { showPop("এই Gmail দিয়ে এখনো কেউ লগইন করেননি।", "info"); return; }
+            _sessView = function () { viewSessions(em); };
+            fsdb.collection("userSessions").where("uid", "==", u.uid).get().then(function (snap) {
+                var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; arr.push(x); });
+                arr.sort(function (a, b) { return tsMs(b.createdAt) - tsMs(a.createdAt); });
+                showSessionTable("🖥 লগইন ইতিহাস — " + em, arr.slice(0, 50), false);
+            }).catch(gmErr);
+        }
+        function showAllSessions() {
+            _sessView = showAllSessions;
+            fsdb.collection("userSessions").where("status", "==", "active").get().then(function (snap) {
+                var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; arr.push(x); });
+                arr.sort(function (a, b) { return tsMs(b.lastActiveAt) - tsMs(a.lastActiveAt); });
+                showSessionTable("🖥 সব Active Session (" + arr.length + ")", arr, true);
+            }).catch(gmErr);
+        }
+        function revokeSession(sid) {
+            if (!confirm("এই সেশন বন্ধ করবেন? ওই ডিভাইস Login স্ক্রিনে চলে যাবে।")) return;
+            fsdb.collection("userSessions").doc(sid).update({ status: "revoked", revokedAt: TS() }).then(function () { if (_sessView) _sessView(); }).catch(gmErr);
+        }
 
         // ─── POPUP ───
         function showPop(msg, type, title) { type = type || "info"; var titles = { success: "সফল ✅", error: "ত্রুটি ❌", warning: "সতর্কতা ⚠️", info: "তথ্য ℹ️" }; document.getElementById("popBox").className = "pop " + type; document.getElementById("popTtl").textContent = title || titles[type] || "বার্তা"; document.getElementById("popMsg").innerHTML = msg.replace(/\n/g, "<br>"); document.getElementById("popBg").classList.add("on"); }
@@ -4948,9 +5185,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         document.querySelectorAll(".price").forEach(function (el) { el.addEventListener("input", updateTotal); });
         autoSlash("fDob"); autoSlash("fConn");
         document.getElementById("fPorishod").addEventListener("input", updateTotal);
-        document.getElementById("lbtn").addEventListener("click", doLogin);
-        document.getElementById("lpass").addEventListener("keydown", function (e) { if (e.key === "Enter") doLogin(); });
-        document.getElementById("lusr").addEventListener("keydown", function (e) { if (e.key === "Enter") document.getElementById("lpass").focus(); });
+        document.getElementById("lbtn").addEventListener("click", doGoogleLogin);
         document.getElementById("tbSearch").addEventListener("keydown", function (e) { if (e.key === "Enter") doTopSearch(this.value); });
 
         // ─── HOMEPAGE ───
@@ -5397,7 +5632,8 @@ function buildRevenueList(arr) {
     return h;
 }
 
-        function doLogout() {
+        function doLogout(skipEnd) {
+            if (skipEnd !== true) endSessionAndSignOut();
             currentUser = null;
             localStorage.removeItem("agni_session");
             localStorage.removeItem("agni_page");
@@ -5448,23 +5684,10 @@ function buildRevenueList(arr) {
         window.addEventListener("load", function () {
             applyTheme(curTheme);
             updateAreaDatalist("");
-            loadSaved();
-            loadUsersFromFirebase(function (users) {
-                _cachedUsers = users;
-                try {
-                    var sess = JSON.parse(localStorage.getItem("agni_session") || "null");
-                    if (sess && sess.u && sess.p) {
-                        var u2 = getUsers();
-                        if (u2[sess.u] && u2[sess.u].pass === sess.p) {
-                            currentUser = { username: sess.u, role: u2[sess.u].role, display: u2[sess.u].display || sess.u };
-                            document.getElementById("loginScreen").style.display = "none";
-                            document.getElementById("sidebar").style.display = "flex";
-                            document.getElementById("appWrap").style.display = "block";
-                            setupRole(); initApp();
-                        } else { localStorage.removeItem("agni_session"); }
-                    }
-                } catch (e) { localStorage.removeItem("agni_session"); }
-            });
+            var gl = document.getElementById("gmList"); if (gl) gl.addEventListener("click", gmClick);
+            // আগে লগইন করা থাকলে Firebase নিজেই session ফিরিয়ে আনে, তারপর অনুমোদন যাচাই হয়
+            fbAuth.onAuthStateChanged(function (user) { if (user) handleAuthUser(user); });
+            document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });
         });
 
         // Responsive: hide/show mobile bar on resize
