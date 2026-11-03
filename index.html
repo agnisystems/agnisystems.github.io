@@ -4262,7 +4262,7 @@
                 <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">যেটা ON করবেন, এই Admin শুধু সেই ধরনের ব্যবহারকারী যোগ, নিষ্ক্রিয়, Logout ও মুছতে পারবে। Coder এর উপর কোনো ক্ষমতা পাবে না।</div>
                 <div class="perm-row"><div><b>👑 Admin যোগ/পরিচালনা</b><small>অন্য Admin তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmAdmin"><span></span></label></div>
                 <div class="perm-row"><div><b>✏️ Editor যোগ/পরিচালনা</b><small>Editor তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmEditor"><span></span></label></div>
-                <div class="perm-row"><div><b>👁 Viewer যোগ/পরিচালনা</b><small>Viewer তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmViewer"><span></span></label></div>
+                <div class="perm-row"><div><b>💎 Management যোগ/পরিচালনা</b><small>Management ব্যবহারকারী তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmViewer"><span></span></label></div>
             </div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closePerm()">বাতিল</button><button class="pbtn green" onclick="savePerm()">✓ সেভ করুন</button></div>
         </div>
@@ -4357,7 +4357,6 @@
         function applyHexTheme(inputId) { var val = document.getElementById(inputId).value.trim(); if (!val.startsWith("#")) val = "#" + val; if (!/^#[0-9a-fA-F]{6}$/.test(val)) { showPop("সঠিক ৬ সংখ্যার Hex কোড দিন।\nযেমন: #a3c45f", "warning"); return; } curCustomHex = val; localStorage.setItem("agni_custom_hex", val); var el = document.getElementById("sbHexIn"); if (el) el.value = val; applyTheme("custom"); }
 
         // ─── SESSION / AUTH HELPERS ───
-        var SUPER_ADMIN_EMAIL = "arafatahmed.cit.bd@gmail.com";   // এই Gmail সবসময় Super Admin (Firestore Rules-এও একই ঠিকানা আছে)
         var SESSION_TTL_MS = 12 * 60 * 60 * 1000;   // ১২ ঘণ্টা নিষ্ক্রিয় থাকলে সেশন শেষ
         var HEARTBEAT_MS = 2 * 60 * 1000;           // প্রতি ২ মিনিটে "আমি সক্রিয়" জানানো
         var MAX_SESSIONS = 2;
@@ -4373,7 +4372,7 @@
 
         // নতুন সেশন তৈরি। ইতিমধ্যে ২টি সক্রিয় থাকলে তৃতীয় লগইনে সব পুরোনো সেশন revoke হয়।
         // Firestore transaction ব্যবহার হয়, তাই একসাথে দুই ডিভাইস লগইন করলেও সীমা ভাঙে না।
-        function registerSession(user, email) {
+        function registerSession(user, email, hide) {
             var stateRef = fsdb.collection("sessionState").doc(user.uid);
             var newId = rand32();
             var newRef = fsdb.collection("userSessions").doc(newId);
@@ -4397,19 +4396,19 @@
                             keep = live.map(function (r) { return r.id; }).concat([newId]);
                         }
                         tx.set(stateRef, { uid: user.uid, ids: keep, updatedAt: TS() });
-                        tx.set(newRef, { uid: user.uid, email: email, deviceId: getDeviceId(), deviceName: getDeviceName(), browser: getBrowser(), createdAt: TS(), lastActiveAt: TS(), status: "active", revokedAt: null });
+                        tx.set(newRef, { uid: user.uid, email: email, deviceId: getDeviceId(), deviceName: getDeviceName(), browser: getBrowser(), createdAt: TS(), lastActiveAt: TS(), status: "active", revokedAt: null, hide: hide === true });
                     });
                 });
             }).then(function () { return newId; });
         }
 
         // আগের সেশন (পেজ রিফ্রেশ) বৈধ থাকলে সেটাই ব্যবহার, নাহলে নতুন সেশন
-        function resumeOrRegister(user, email) {
+        function resumeOrRegister(user, email, hide) {
             var sid = null; try { sid = localStorage.getItem("agni_sid"); } catch (e) { }
-            if (!sid) return registerSession(user, email).then(function (id) { return { id: id, fresh: true }; });
+            if (!sid) return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
             return fsdb.collection("userSessions").doc(sid).get().then(function (sn) { return sn; }, function () { return null; }).then(function (sn) {
                 if (sn && sn.exists && sn.data().uid === user.uid && sn.data().status === "active" && !isExpiredSess(sn.data())) return { id: sid, fresh: false };
-                return registerSession(user, email).then(function (id) { return { id: id, fresh: true }; });
+                return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
             });
         }
 
@@ -4452,9 +4451,10 @@
             doLogout(true);
             loginFail(msg);
         }
+        function sessQ(q) { return isCoderUser() ? q : q.where("hide", "==", false); }
         function forceLogoutUid(uid) {
             if (!uid) return Promise.resolve(0);
-            return fsdb.collection("userSessions").where("uid", "==", uid).get().then(function (snap) {
+            return sessQ(fsdb.collection("userSessions").where("uid", "==", uid)).get().then(function (snap) {
                 var b = fsdb.batch(), n = 0;
                 snap.forEach(function (d) { if (d.data().status === "active") { b.update(d.ref, { status: "revoked", revokedAt: TS() }); n++; } });
                 return n ? b.commit().then(function () { return n; }) : 0;
@@ -4499,22 +4499,16 @@
             _authBusy = true;
             var email = (user.email || "").toLowerCase();
             if (!email || !user.emailVerified) { denyAccess("যাচাইকৃত Gmail প্রয়োজন।"); return; }
-            var isSuper = (email === SUPER_ADMIN_EMAIL);
             fsdb.collection("authorizedUsers").doc(email).get().then(function (snap) {
                 if (snap.exists) return snap.data();
-                if (isSuper) {
-                    // Super Admin-এর ডকুমেন্ট না থাকলে প্রথম লগইনে নিজে তৈরি হয়
-                    var nd = { email: email, displayName: user.displayName || "Super Admin", role: "coder", status: "active", uid: user.uid, createdAt: TS(), createdBy: email, lastLogin: null };
-                    return fsdb.collection("authorizedUsers").doc(email).set(nd).then(function () { return nd; });
-                }
-                denyAccess("এই Gmail (" + email + ") অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।");
-                return null;
+                // ডকুমেন্ট নেই: শুধু ডাটাবেস Rules-এ নির্ধারিত Super Admin নিজের Coder ডকুমেন্ট তৈরি করতে পারে, অন্য কেউ পারে না
+                var nd = { email: email, displayName: user.displayName || "Coder", role: "coder", status: "active", uid: user.uid, createdAt: TS(), createdBy: "system", lastLogin: null };
+                return fsdb.collection("authorizedUsers").doc(email).set(nd).then(function () { return nd; }, function () { return null; });
             }).then(function (d) {
-                if (!d) return;
-                if (isSuper) { d.role = "coder"; d.status = "active"; }
+                if (!d) { denyAccess("এই Gmail (" + email + ") অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
                 if (d.status !== "active") { denyAccess("এই অ্যাকাউন্ট নিষ্ক্রিয় করা আছে।"); return; }
                 if (["coder", "admin", "editor", "viewer"].indexOf(normRole(d.role)) < 0) { denyAccess("এই অ্যাকাউন্টের Role বৈধ নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
-                return resumeOrRegister(user, email).then(function (r) {
+                return resumeOrRegister(user, email, normRole(d.role) === "coder").then(function (r) {
                     startSessionWatch(r.id);
                     if (r.fresh || d.uid !== user.uid) {
                         fsdb.collection("authorizedUsers").doc(email).update({ uid: user.uid, displayName: user.displayName || "", lastLogin: TS() }).catch(function (e) { console.error(e); });
@@ -4546,7 +4540,12 @@
             // Avatar initials
             var initials = (currentUser.display || currentUser.username).split(" ").map(function (w) { return w[0] || ""; }).join("").slice(0, 2).toUpperCase();
             var avatarEl = document.getElementById("sbAvatarCircle");
-            if (avatarEl) avatarEl.textContent = initials;
+            if (avatarEl) {
+                avatarEl.textContent = initials;
+                if (role === "viewer") { avatarEl.style.background = "linear-gradient(135deg,#f7e08a,#c9a227 55%,#8a6a0a)"; avatarEl.style.color = "#2b1f00"; avatarEl.style.boxShadow = "0 0 0 2px rgba(201,162,39,.55), 0 4px 14px rgba(201,162,39,.35)"; }
+            }
+            var urEl = document.getElementById("sbUrole");
+            if (urEl && role === "viewer") { urEl.style.color = "#e7c55a"; urEl.style.fontWeight = "700"; urEl.style.letterSpacing = ".3px"; }
 
             // Verified tick color
             var tick = document.getElementById("sbVerifiedTick");
@@ -4555,7 +4554,7 @@
                 if (role === "coder" && tickSvg) tickSvg.setAttribute("fill", "#1d9bf0");
                 else if (role === "admin" && tickSvg) tickSvg.setAttribute("fill", "#1d9bf0");
                 else if (role === "editor" && tickSvg) tickSvg.setAttribute("fill", "#f59e0b");
-                else if (role === "viewer" && tickSvg) tickSvg.setAttribute("fill", "#94a3b8");
+                else if (role === "viewer" && tickSvg) tickSvg.setAttribute("fill", "#c9a227");
             }
 
 
@@ -4574,7 +4573,7 @@
             var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
             for (var k = 0; k < nb.length; k++) nb[k].style.display = hideNew ? "none" : "";
             var wm = document.getElementById("welcomeMsg");
-            if (wm) wm.textContent = "স্বাগতম, " + currentUser.display + " 👋";
+            if (wm) wm.textContent = "স্বাগতম, " + currentUser.display + (role === "viewer" ? " 💎" : " 👋");
             var myReqEl = document.getElementById("sMyReqs");
             if (myReqEl) myReqEl.style.display = "none";
         }
@@ -4649,7 +4648,8 @@ function onAreaInput() {
         function nowStr() { var d = new Date(); return d.toLocaleDateString("en-GB") + ", " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); }
         var FIELD_LABELS = { name: "নাম", login: "লগইন ID", pass: "পাসওয়ার্ড", mobile: "মোবাইল", recharge: "রিচার্জ", nid: "NID", dob: "জন্ম তারিখ", house: "বাসা নং", area: "এলাকা", ward: "ওয়ার্ড নং", thana: "থানা", conn: "সংযোগ তারিখ", remark: "মন্তব্য", customer_type: "গ্রাহক ধরন", package_type: "প্যাকেজ", splitter_type: "Splitter", totalPrice: "মোট মূল্য", eRm: "রাউটার মডেল", eRq: "রাউটার সংখ্যা", eRs: "রাউটার Serial", eRp: "রাউটার মূল্য", eC1m: "ক্যাবল১ মডেল", eC1q: "ক্যাবল১ সংখ্যা", eC1s: "ক্যাবল১ Serial", eC1p: "ক্যাবল১ মূল্য", eC2m: "ক্যাবল২ মডেল", eC2q: "ক্যাবল২ সংখ্যা", eC2s: "ক্যাবল২ Serial", eC2p: "ক্যাবল২ মূল্য", eOm: "ONU মডেল", eOq: "ONU সংখ্যা", eOs: "ONU Serial", eOp: "ONU মূল্য", eTq: "TJ Box সংখ্যা", eTs: "TJ Box Serial", eTp: "TJ Box মূল্য", eT4: "TJ 4-port", eT8: "TJ 8-port", ePm: "প্যাচকোড মডেল", ePq: "প্যাচকোড সংখ্যা", ePs: "প্যাচকোড Serial", ePp: "প্যাচকোড মূল্য", eSs: "Splitter Serial", eSp: "Splitter মূল্য", porishod: "পরিশোধ", totPrice: "বাকি" };
         function diffData(oldD, newD) { if (!oldD) return []; var changes = [], keys = Object.keys(FIELD_LABELS); for (var i = 0; i < keys.length; i++) { var k = keys[i], ov = String(oldD[k] || ""), nv = String(newD[k] || ""); if (ov !== nv) changes.push({ field: FIELD_LABELS[k], key: k, old: ov, new: nv }); } return changes; }
-        function mkAudit(action, oldData, newData) { var entry = { action: action, by: currentUser.username, display: currentUser.display, role: currentUser.role, time: nowStr(), ts: Date.now() }; if (oldData && newData && (action === "updated" || action === "approved")) entry.changes = diffData(oldData, newData); return entry; }
+        function auditWho(e) { if (e && (e.role === "system" || (e.role === "coder" && !isCoderUser()))) return { display: "System", by: "system" }; return { display: (e && e.display) || "", by: (e && e.by) || "" }; }
+        function mkAudit(action, oldData, newData) { var isC = currentUser.role === "coder"; var entry = { action: action, by: isC ? "system" : currentUser.username, display: isC ? "System" : currentUser.display, role: isC ? "system" : currentUser.role, time: nowStr(), ts: Date.now() }; if (oldData && newData && (action === "updated" || action === "approved")) entry.changes = diffData(oldData, newData); return entry; }
         function fbSet(col, id, data, cb) { fsdb.collection(col).doc(String(id)).set(flat(data)).then(function () { if (cb) cb(true); }).catch(function (e) { console.error(e); if (cb) cb(false); }); }
         function fbDel(col, id, cb) { fsdb.collection(col).doc(String(id)).delete().then(function () { if (cb) cb(true); }).catch(function (e) { console.error(e); if (cb) cb(false); }); }
         function fbGetAll(col, cb) { fsdb.collection(col).get().then(function (snap) { var a = []; snap.forEach(function (d) { a.push(d.data()); }); cb(a); }).catch(function (e) { console.error(e); cb([]); }); }
@@ -4765,7 +4765,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 html += '<div style="background:rgba(16,163,74,.1);padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;user-select:none">';
                 html += '<div onclick="toggleAcc(\'' + accId + '\')" style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;min-width:0;">';
                 html += '<span style="font-weight:700;font-size:10px;flex-shrink:0">' + al(e.action) + '</span>';
-                html += '<span style="font-size:10px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + e.display + ' (' + e.by + ') &nbsp;·&nbsp; ' + e.time + '</span>';
+                html += '<span style="font-size:10px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + auditWho(e).display + ' (' + auditWho(e).by + ') &nbsp;·&nbsp; ' + e.time + '</span>';
                 html += '<span id="arr_' + accId + '" style="font-size:10px;transition:transform .2s;display:inline-block;flex-shrink:0;transform:' + (isFirst ? 'rotate(180deg)' : 'rotate(0deg)') + '">▾</span>';
                 html += '</div>';
                 var isCoder = window.currentUser && window.currentUser.role === "coder";
@@ -4843,7 +4843,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             else if (mode === "view" && !isA && !isViewer()) { var pendReq = null, aprReq = null; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(curId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") aprReq = EREQS[i]; else if (EREQS[i].status === "pending") pendReq = EREQS[i]; } } if (aprReq) { document.getElementById("bOk").classList.add("show"); bLoadEd.style.display = "flex"; } else if (pendReq) { document.getElementById("bReq").classList.add("show"); document.getElementById("bReqTxt").textContent = "Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।"; } else { bReq.style.display = "flex"; } }
             syncMobileBar();
         }
-        function startNew() { if (isViewer()) { showPop("👁 Viewer শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); showHome(); return; } localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
+        function startNew() { if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); showHome(); return; } localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
         function goDisabled() { fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("disabled"); showHome(); }
         function backFromFullPage() {
             if (!_fullPageBack) return;
@@ -4862,7 +4862,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         }
 
         // ─── SAVE ───
-        function doSave() { if (!currentUser) return; if (isViewer()) { showPop("👁 Viewer শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
+        function doSave() { if (!currentUser) return; if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
         function lockSaveShowEdit() { var bSave = document.getElementById("btnSave"), bEdit = document.getElementById("btnEdit"); bSave.disabled = true; bSave.style.opacity = "0.4"; bSave.style.cursor = "not-allowed"; if (isPrivileged()) bEdit.style.display = "flex"; syncMobileBar(); }
         function enterEditMode() { if (!curId || isViewer()) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
 
@@ -4919,7 +4919,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             lsVal: document.getElementById("lsIn").value
         };
     } else { _vpBackState = null; }
-    var rec = null; if (mode === "pending") { for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(id) || String(PENDING[i].id) === String(id)) { rec = PENDING[i]; break; } } } else { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { rec = DB[i]; break; } } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } curId = id; var isA = isPrivileged(); var rows = [["গ্রাহক ID", rec.id], ["নাম", rec.name], ["লগিন ID", rec.login], ["পাসওয়ার্ড", rec.pass], ["মোবাইল", rec.mobile], ["ধরন", rec.customer_type], ["প্যাকেজ", rec.package_type], ["রিচার্জ", rec.recharge], ["NID", rec.nid], ["জন্ম তারিখ", rec.dob], ["বাসা", rec.house], ["এলাকা", rec.area], ["ওয়ার্ড নং", rec.ward], ["থানা", rec.thana], ["সংযোগ তারিখ", rec.conn], ["মন্তব্য", rec.remark], ["Splitter", rec.splitter_type], ["রাউটার মডেল", rec.eRm], ["রাউটার Serial", rec.eRs], ["রাউটার মূল্য", rec.eRp], ["ONU মডেল", rec.eOm], ["ONU Serial", rec.eOs], ["ONU মূল্য", rec.eOp], ["মোট মূল্য", rec.totalPrice]]; var al = function (a) { return a === "created" ? "✅ তৈরি" : a === "updated" ? "✏️ আপডেট" : a === "approved" ? "✔️ অনুমোদন" : "পরিবর্তন"; }; var log = rec.auditLog || []; var auditH = ""; if (log.length) { auditH = '<div class="asec">🗒 ইতিহাস</div><table class="vtbl">'; var rev = log.slice().reverse(); for (var i = 0; i < rev.length; i++) { var e = rev[i], chTxt = ""; if (e.changes && e.changes.length) { chTxt = '<details style="margin-top:4px"><summary style="font-size:10px;color:#2563eb;cursor:pointer">' + e.changes.length + ' টি পরিবর্তন দেখুন</summary>'; chTxt += '<table style="font-size:10px;margin-top:3px;border-collapse:collapse;width:100%"><tr style="background:#f0f9ff"><th style="padding:2px 5px;text-align:left">ফিল্ড</th><th style="padding:2px 5px;text-align:left;color:#dc2626">আগে</th><th style="padding:2px 5px;text-align:left;color:#16a34a">পরে</th></tr>'; for (var ci = 0; ci < e.changes.length; ci++) { var cc = e.changes[ci]; chTxt += '<tr style="border-top:1px solid #e0f2fe"><td style="padding:2px 5px;font-weight:600">' + cc.field + '</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through">' + (cc.old || '—') + '</td><td style="padding:2px 5px;color:#16a34a;font-weight:600">' + (cc.new || '—') + '</td></tr>'; } chTxt += '</table></details>'; } auditH += '<tr><td class="vl" style="background:#eff6ff;color:#1e40af;white-space:nowrap">🕐 ' + e.time + '</td><td><b>' + e.display + '</b> (' + e.by + ') — ' + al(e.action) + chTxt + '</td></tr>'; } auditH += '</table>'; } var tbody = '<table class="vtbl">'; for (var ri = 0; ri < rows.length; ri++)tbody += '<tr><td class="vl">' + rows[ri][0] + '</td><td>' + (rows[ri][1] || "—") + '</td></tr>'; tbody += '</table>'; document.getElementById("vpBody").innerHTML = tbody + auditH; var foot = document.getElementById("vpFoot"); foot.innerHTML = ""; if (mode === "pending" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="approveP(\'' + (rec.pendingId || id) + '\')">✔ Approve</button><button class="pbtn red" onclick="rejectP(\'' + (rec.pendingId || id) + '\')">✕ Reject</button>'; } else if (mode === "list" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="viewFromVP(\'' + id + '\')">👁 View</button><button class="pbtn blue" onclick="editFromVP(\'' + id + '\')">✏ Edit</button><button class="pbtn red" onclick="delFromVP(\'' + id + '\')">🗑️ Delete</button>'; } else if (mode === "list" && !isA) { var pendReq = null, aprReq = null; for (var ei = 0; ei < EREQS.length; ei++) { if (String(EREQS[ei].recordId) === String(id) && EREQS[ei].requestedBy === currentUser.username) { if (EREQS[ei].status === "approved") aprReq = EREQS[ei]; else pendReq = EREQS[ei]; } } if (aprReq) foot.innerHTML += '<button class="pbtn green" onclick="loadEditAndClose(\'' + id + '\')">✏ Edit Mode</button>'; else if (pendReq) foot.innerHTML += '<button class="pbtn grey" style="opacity:.6;cursor:not-allowed">⏳ অনুমোদনের অপেক্ষায়</button>'; else foot.innerHTML += '<button class="pbtn orange" onclick="sendReqFor(\'' + id + '\')">📨 Edit Request</button>'; } foot.innerHTML += '<button class="pbtn grey" onclick="closeVP()">বন্ধ করুন</button>';
+    var rec = null; if (mode === "pending") { for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(id) || String(PENDING[i].id) === String(id)) { rec = PENDING[i]; break; } } } else { for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { rec = DB[i]; break; } } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } curId = id; var isA = isPrivileged(); var rows = [["গ্রাহক ID", rec.id], ["নাম", rec.name], ["লগিন ID", rec.login], ["পাসওয়ার্ড", rec.pass], ["মোবাইল", rec.mobile], ["ধরন", rec.customer_type], ["প্যাকেজ", rec.package_type], ["রিচার্জ", rec.recharge], ["NID", rec.nid], ["জন্ম তারিখ", rec.dob], ["বাসা", rec.house], ["এলাকা", rec.area], ["ওয়ার্ড নং", rec.ward], ["থানা", rec.thana], ["সংযোগ তারিখ", rec.conn], ["মন্তব্য", rec.remark], ["Splitter", rec.splitter_type], ["রাউটার মডেল", rec.eRm], ["রাউটার Serial", rec.eRs], ["রাউটার মূল্য", rec.eRp], ["ONU মডেল", rec.eOm], ["ONU Serial", rec.eOs], ["ONU মূল্য", rec.eOp], ["মোট মূল্য", rec.totalPrice]]; var al = function (a) { return a === "created" ? "✅ তৈরি" : a === "updated" ? "✏️ আপডেট" : a === "approved" ? "✔️ অনুমোদন" : "পরিবর্তন"; }; var log = rec.auditLog || []; var auditH = ""; if (log.length) { auditH = '<div class="asec">🗒 ইতিহাস</div><table class="vtbl">'; var rev = log.slice().reverse(); for (var i = 0; i < rev.length; i++) { var e = rev[i], chTxt = ""; if (e.changes && e.changes.length) { chTxt = '<details style="margin-top:4px"><summary style="font-size:10px;color:#2563eb;cursor:pointer">' + e.changes.length + ' টি পরিবর্তন দেখুন</summary>'; chTxt += '<table style="font-size:10px;margin-top:3px;border-collapse:collapse;width:100%"><tr style="background:#f0f9ff"><th style="padding:2px 5px;text-align:left">ফিল্ড</th><th style="padding:2px 5px;text-align:left;color:#dc2626">আগে</th><th style="padding:2px 5px;text-align:left;color:#16a34a">পরে</th></tr>'; for (var ci = 0; ci < e.changes.length; ci++) { var cc = e.changes[ci]; chTxt += '<tr style="border-top:1px solid #e0f2fe"><td style="padding:2px 5px;font-weight:600">' + cc.field + '</td><td style="padding:2px 5px;color:#dc2626;text-decoration:line-through">' + (cc.old || '—') + '</td><td style="padding:2px 5px;color:#16a34a;font-weight:600">' + (cc.new || '—') + '</td></tr>'; } chTxt += '</table></details>'; } auditH += '<tr><td class="vl" style="background:#eff6ff;color:#1e40af;white-space:nowrap">🕐 ' + e.time + '</td><td><b>' + auditWho(e).display + '</b> (' + auditWho(e).by + ') — ' + al(e.action) + chTxt + '</td></tr>'; } auditH += '</table>'; } var tbody = '<table class="vtbl">'; for (var ri = 0; ri < rows.length; ri++)tbody += '<tr><td class="vl">' + rows[ri][0] + '</td><td>' + (rows[ri][1] || "—") + '</td></tr>'; tbody += '</table>'; document.getElementById("vpBody").innerHTML = tbody + auditH; var foot = document.getElementById("vpFoot"); foot.innerHTML = ""; if (mode === "pending" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="approveP(\'' + (rec.pendingId || id) + '\')">✔ Approve</button><button class="pbtn red" onclick="rejectP(\'' + (rec.pendingId || id) + '\')">✕ Reject</button>'; } else if (mode === "list" && isA) { foot.innerHTML += '<button class="pbtn green" onclick="viewFromVP(\'' + id + '\')">👁 View</button><button class="pbtn blue" onclick="editFromVP(\'' + id + '\')">✏ Edit</button><button class="pbtn red" onclick="delFromVP(\'' + id + '\')">🗑️ Delete</button>'; } else if (mode === "list" && !isA) { var pendReq = null, aprReq = null; for (var ei = 0; ei < EREQS.length; ei++) { if (String(EREQS[ei].recordId) === String(id) && EREQS[ei].requestedBy === currentUser.username) { if (EREQS[ei].status === "approved") aprReq = EREQS[ei]; else pendReq = EREQS[ei]; } } if (aprReq) foot.innerHTML += '<button class="pbtn green" onclick="loadEditAndClose(\'' + id + '\')">✏ Edit Mode</button>'; else if (pendReq) foot.innerHTML += '<button class="pbtn grey" style="opacity:.6;cursor:not-allowed">⏳ অনুমোদনের অপেক্ষায়</button>'; else foot.innerHTML += '<button class="pbtn orange" onclick="sendReqFor(\'' + id + '\')">📨 Edit Request</button>'; } foot.innerHTML += '<button class="pbtn grey" onclick="closeVP()">বন্ধ করুন</button>';
     document.getElementById("lpBg").classList.remove("on");
     document.getElementById("vpBackBtn").style.display = _vpBackState ? "flex" : "none";
     document.getElementById("vpBg").classList.add("on");
@@ -5037,7 +5037,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         function permDel(id) { for (var i = 0; i < TRASH.length; i++) { if (String(TRASH[i].id) === String(id)) { if (!confirm("স্থায়ীভাবে মুছবেন?")) return; TRASH.splice(i, 1); fbDel("trash", id, function () { }); showTrash(); return; } } }
 
         // ─── EXCEL / EXPORT / IMPORT ───
-        function doExcel() { if (!currentUser || !isPrivileged()) return; cloudSync(function () { if (!DB.length) { showPop("ডাটা নেই", "warning"); return; } var h = ["#", "ID", "নাম", "Login", "Pass", "Mobile", "Type", "Package", "Recharge", "NID", "DOB", "House", "Area", "Thana", "Conn", "Remarks", "Router M", "Router Q", "Router S", "Router P", "Cable1 M", "Cable1 Q", "Cable1 S", "Cable1 P", "Cable2 M", "Cable2 Q", "Cable2 S", "Cable2 P", "ONU M", "ONU Q", "ONU S", "ONU P", "TJ Q", "TJ S", "TJ P", "TJ 4", "TJ 8", "PC M", "PC Q", "PC S", "PC P", "Splitter", "Spl S", "Spl P", "Total", "Created By", "Updated By"]; var rows = []; for (var i = 0; i < DB.length; i++) { var c = DB[i], log = c.auditLog || [], cb = log.length ? log[0].display : "", lu = log.length ? log[log.length - 1].display + " (" + log[log.length - 1].time + ")" : ""; rows.push([i + 1, c.id || "", c.name || "", c.login || "", c.pass || "", c.mobile || "", c.customer_type || "", c.package_type || "", c.recharge || "", c.nid || "", c.dob || "", c.house || "", c.area || "", c.thana || "", c.conn || "", c.remark || "", c.eRm || "", c.eRq || "", c.eRs || "", c.eRp || "", c.eC1m || "", c.eC1q || "", c.eC1s || "", c.eC1p || "", c.eC2m || "", c.eC2q || "", c.eC2s || "", c.eC2p || "", c.eOm || "", c.eOq || "", c.eOs || "", c.eOp || "", c.eTq || "", c.eTs || "", c.eTp || "", c.eT4 || "", c.eT8 || "", c.ePm || "", c.ePq || "", c.ePs || "", c.ePp || "", c.splitter_type || "", c.eSs || "", c.eSp || "", c.totalPrice || 0, cb, lu]); } var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([h].concat(rows)); XLSX.utils.book_append_sheet(wb, ws, "Customers"); XLSX.writeFile(wb, "Agni-" + new Date().toISOString().slice(0, 10) + ".xlsx"); showPop("✅ Excel ডাউনলোড! " + DB.length + " জন।", "success"); }); }
+        function doExcel() { if (!currentUser || !isPrivileged()) return; cloudSync(function () { if (!DB.length) { showPop("ডাটা নেই", "warning"); return; } var h = ["#", "ID", "নাম", "Login", "Pass", "Mobile", "Type", "Package", "Recharge", "NID", "DOB", "House", "Area", "Thana", "Conn", "Remarks", "Router M", "Router Q", "Router S", "Router P", "Cable1 M", "Cable1 Q", "Cable1 S", "Cable1 P", "Cable2 M", "Cable2 Q", "Cable2 S", "Cable2 P", "ONU M", "ONU Q", "ONU S", "ONU P", "TJ Q", "TJ S", "TJ P", "TJ 4", "TJ 8", "PC M", "PC Q", "PC S", "PC P", "Splitter", "Spl S", "Spl P", "Total", "Created By", "Updated By"]; var rows = []; for (var i = 0; i < DB.length; i++) { var c = DB[i], log = c.auditLog || [], cb = log.length ? auditWho(log[0]).display : "", lu = log.length ? auditWho(log[log.length - 1]).display + " (" + log[log.length - 1].time + ")" : ""; rows.push([i + 1, c.id || "", c.name || "", c.login || "", c.pass || "", c.mobile || "", c.customer_type || "", c.package_type || "", c.recharge || "", c.nid || "", c.dob || "", c.house || "", c.area || "", c.thana || "", c.conn || "", c.remark || "", c.eRm || "", c.eRq || "", c.eRs || "", c.eRp || "", c.eC1m || "", c.eC1q || "", c.eC1s || "", c.eC1p || "", c.eC2m || "", c.eC2q || "", c.eC2s || "", c.eC2p || "", c.eOm || "", c.eOq || "", c.eOs || "", c.eOp || "", c.eTq || "", c.eTs || "", c.eTp || "", c.eT4 || "", c.eT8 || "", c.ePm || "", c.ePq || "", c.ePs || "", c.ePp || "", c.splitter_type || "", c.eSs || "", c.eSp || "", c.totalPrice || 0, cb, lu]); } var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([h].concat(rows)); XLSX.utils.book_append_sheet(wb, ws, "Customers"); XLSX.writeFile(wb, "Agni-" + new Date().toISOString().slice(0, 10) + ".xlsx"); showPop("✅ Excel ডাউনলোড! " + DB.length + " জন।", "success"); }); }
         function doExport() { if (!DB.length) { showPop("ডাটা নেই", "warning"); return; } var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(DB, null, 2)], { type: "application/json" })); a.download = "customers-" + new Date().toISOString().slice(0, 10) + ".json"; a.click(); showPop("✅ Export সম্পন্ন!", "success"); }
         function doImport() { document.getElementById("impFile").click(); }
         document.getElementById("impFile").addEventListener("change", function (e) { var file = e.target.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var imp = JSON.parse(ev.target.result); if (!Array.isArray(imp)) imp = [imp]; var n = 0; for (var i = 0; i < imp.length; i++) { var rec = imp[i]; if (!rec.id) continue; var exists = false; for (var j = 0; j < DB.length; j++) { if (String(DB[j].id) === String(rec.id)) { exists = true; break; } } if (!exists) { if (!rec.auditLog) rec.auditLog = [mkAudit("created")]; DB.push(rec); n++; fbSet("customers", rec.id, rec, function () { }); } } DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); updateBadges(); showPop(imp.length + " রেকর্ড ইম্পোর্ট, " + n + " নতুন।", "success"); } catch (err) { showPop("JSON Error: " + err.message, "error"); } }; reader.readAsText(file); e.target.value = ""; });
@@ -5046,9 +5046,9 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         // ─── ইউজার ম্যানেজমেন্ট: Coder / Admin / Editor / Viewer ───
         var AUTH_EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
         var _gmCache = {};
-        var ROLE_LABEL = { coder: "⚡ Coder", admin: "👑 Admin", editor: "✏️ Editor", viewer: "👁 Viewer" };
-        var ROLE_COLOR = { coder: "#6366f1", admin: "#2563eb", editor: "#d97706", viewer: "#64748b" };
-        function normRole(r) { return r === "user" ? "editor" : r; }   // পুরোনো "user" = Editor
+        var ROLE_LABEL = { coder: "⚡ Coder", admin: "👑 Admin", editor: "✏️ Editor", viewer: "💎 Management" };
+        var ROLE_COLOR = { coder: "#6366f1", admin: "#2563eb", editor: "#d97706", viewer: "#c9a227" };
+        function normRole(r) { return r === "user" ? "editor" : (r === "management" ? "viewer" : r); }   // পুরোনো "user" = Editor
         function isCoderUser() { return currentUser && currentUser.role === "coder"; }
         function isViewer() { return currentUser && currentUser.role === "viewer"; }
         function allowedRoles() {
@@ -5114,7 +5114,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 } else role = roleBadge(nr);
                 if (nr === "admin" && isCoderUser()) {
                     var p = d.perms || {};
-                    role += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">অনুমতি: Admin ' + (p.addAdmin ? "✅" : "❌") + ' · Editor ' + (p.addEditor ? "✅" : "❌") + ' · Viewer ' + (p.addViewer ? "✅" : "❌") + '</div>';
+                    role += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">অনুমতি: Admin ' + (p.addAdmin ? "✅" : "❌") + ' · Editor ' + (p.addEditor ? "✅" : "❌") + ' · Management ' + (p.addViewer ? "✅" : "❌") + '</div>';
                 }
                 var st = d.status === "active" ? '<span style="color:#16a34a;font-weight:700">🟢 Active</span>' : '<span style="color:#dc2626;font-weight:700">⛔ Inactive</span>';
                 var btns = '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
@@ -5155,7 +5155,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             Promise.all(chunks.map(function (ch) {
                 var b = fsdb.batch();
                 ch.forEach(function (it) {
-                    b.set(fsdb.collection("authorizedUsers").doc(it.email), { email: it.email, displayName: it.name || "", role: it.role, status: "active", uid: "", createdAt: TS(), createdBy: currentUser.username, lastLogin: null });
+                    b.set(fsdb.collection("authorizedUsers").doc(it.email), { email: it.email, displayName: it.name || "", role: it.role, status: "active", uid: "", createdAt: TS(), createdBy: isCoderUser() ? "system" : currentUser.username, lastLogin: null });
                 });
                 return b.commit();
             })).then(function () {
@@ -5263,7 +5263,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             var u = _gmCache[em]; if (!u) return;
             if (!u.uid) { showPop("এই Gmail দিয়ে এখনো কেউ লগইন করেননি।", "info"); return; }
             _sessView = function () { viewSessions(em); };
-            fsdb.collection("userSessions").where("uid", "==", u.uid).get().then(function (snap) {
+            sessQ(fsdb.collection("userSessions").where("uid", "==", u.uid)).get().then(function (snap) {
                 var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; arr.push(x); });
                 arr.sort(function (a, b) { return tsMs(b.createdAt) - tsMs(a.createdAt); });
                 showSessionTable("🖥 লগইন ইতিহাস — " + em, arr.slice(0, 50), false);
@@ -5271,7 +5271,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         }
         function showAllSessions() {
             _sessView = showAllSessions;
-            fsdb.collection("userSessions").where("status", "==", "active").get().then(function (snap) {
+            sessQ(fsdb.collection("userSessions").where("status", "==", "active")).get().then(function (snap) {
                 var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; if (isCoderUser() || x.email === currentUser.username || _gmCache[x.email]) arr.push(x); });
                 arr.sort(function (a, b) { return tsMs(b.lastActiveAt) - tsMs(a.lastActiveAt); });
                 showSessionTable("🖥 সব Active Session (" + arr.length + ")", arr, true);

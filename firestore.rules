@@ -67,13 +67,14 @@ service cloud.firestore {
       allow create: if superEmail() && name == email()
         && request.resource.data.email == name
         && request.resource.data.role == 'coder'
+        && request.resource.data.createdBy == 'system'
         && request.resource.data.status == 'active';
 
       // নতুন ব্যবহারকারী তৈরি: Coder সব Role। Admin শুধু যে Role-এর অনুমতি ON। Coder কখনো তৈরি হয় না।
       allow create: if isAdmin()
         && request.resource.data.email == name
         && request.resource.data.status in ['active', 'inactive']
-        && request.resource.data.createdBy == email()
+        && request.resource.data.createdBy == (isCoder() ? 'system' : email())
         && request.resource.data.role in ['admin', 'editor', 'viewer']
         && mayManage(request.resource.data.role)
         && (isCoder() || !request.resource.data.keys().hasAny(['perms']));
@@ -117,15 +118,22 @@ service cloud.firestore {
     }
 
     match /userSessions/{sid} {
+      // hide == true শুধু Coder-এর সেশনে বসে। Admin শুধু hide == false সেশন দেখতে পায়।
       allow create: if active()
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.status == 'active';
-      allow get: if active() && (resource.data.uid == request.auth.uid || (isAdmin() && sessionNotCoder()));
-      allow list: if active() && (isAdmin() || resource.data.uid == request.auth.uid);
+        && request.resource.data.status == 'active'
+        && request.resource.data.hide == isCoder();
+      allow get: if active() && (resource.data.uid == request.auth.uid
+                                 || isCoder()
+                                 || (isAdmin() && resource.data.get('hide', false) == false && sessionNotCoder()));
+      allow list: if active() && (isCoder()
+                                  || resource.data.uid == request.auth.uid
+                                  || (isAdmin() && resource.data.hide == false));
       allow update: if active() && (
         (isAdmin() && sessionNotCoder())
         || (resource.data.uid == request.auth.uid
             && request.resource.data.uid == resource.data.uid
+            && request.resource.data.get('hide', null) == resource.data.get('hide', null)
             && !(resource.data.status == 'revoked' && request.resource.data.status == 'active'))
       );
       allow delete: if isCoder();
