@@ -4381,42 +4381,56 @@
         // Firestore transaction ব্যবহার হয়, তাই একসাথে দুই ডিভাইস লগইন করলেও সীমা ভাঙে না।
         function registerSession(user, email, hide) {
             var stateRef = fsdb.collection("sessionState").doc(user.uid);
-            var newId = rand32();
+            var newId = rand32(), myDev = getDeviceId();
             var newRef = fsdb.collection("userSessions").doc(newId);
+            var clearedIds = [], clearedOther = 0;
             return fsdb.runTransaction(function (tx) {
+                clearedIds = []; clearedOther = 0;
                 return tx.get(stateRef).then(function (st) {
                     var ids = (st.exists && st.data().ids) || [];
                     return Promise.all(ids.map(function (id) { return tx.get(fsdb.collection("userSessions").doc(id)); })).then(function (snaps) {
                         var live = [];
                         snaps.forEach(function (sn) {
                             var d = sn.exists ? sn.data() : null;
-                            if (d && d.status === "active") {
-                                if (isExpiredSess(d)) tx.update(sn.ref, { status: "revoked", revokedAt: TS() });
-                                else live.push(sn.ref);
-                            }
+                            if (!d || d.status !== "active") return;
+                            if (isExpiredSess(d)) { tx.update(sn.ref, { status: "revoked", revokedAt: TS() }); clearedIds.push(sn.id); }
+                            else if (d.deviceId === myDev) { tx.update(sn.ref, { status: "revoked", revokedAt: TS() }); clearedIds.push(sn.id); }   // একই ডিভাইসের আগের সেশন নতুনটি দিয়ে বদলায়, স্লট নেয় না
+                            else live.push(sn.ref);
                         });
                         var keep;
                         if (live.length >= MAX_SESSIONS) {
-                            live.forEach(function (r) { tx.update(r, { status: "revoked", revokedAt: TS() }); });
+                            // ২টি অন্য ডিভাইস চালু আছে: নতুন ডিভাইস ঢুকতে হলে সব পুরোনো সেশন বাতিল
+                            live.forEach(function (r) { tx.update(r, { status: "revoked", revokedAt: TS() }); clearedIds.push(r.id); clearedOther++; });
                             keep = [newId];
                         } else {
                             keep = live.map(function (r) { return r.id; }).concat([newId]);
                         }
                         tx.set(stateRef, { uid: user.uid, ids: keep, updatedAt: TS() });
-                        tx.set(newRef, { uid: user.uid, email: email, deviceId: getDeviceId(), deviceName: getDeviceName(), browser: getBrowser(), createdAt: TS(), lastActiveAt: TS(), status: "active", revokedAt: null, hide: hide === true });
+                        tx.set(newRef, { uid: user.uid, email: email, deviceId: myDev, deviceName: getDeviceName(), browser: getBrowser(), createdAt: TS(), lastActiveAt: TS(), status: "active", revokedAt: null, hide: hide === true });
                     });
                 });
-            }).then(function () { return newId; });
+            }).then(function () {
+                // যাচাই: পুরোনো সেশন সত্যিই বাতিল হয়েছে এবং নতুনটি চালু আছে, নইলে লগইন হবে না
+                return Promise.all(clearedIds.map(function (id) { return fsdb.collection("userSessions").doc(id).get(); }).concat([newRef.get()])).then(function (snaps) {
+                    var mine = snaps.pop();
+                    if (!mine.exists || mine.data().status !== "active") throw new Error("new-session-not-active");
+                    snaps.forEach(function (sn) { if (sn.exists && sn.data().status === "active") throw new Error("old-session-not-cleared"); });
+                    return { id: newId, clearedOther: clearedOther };
+                });
+            });
         }
 
-        // আগের সেশন (পেজ রিফ্রেশ) বৈধ থাকলে সেটাই ব্যবহার, নাহলে নতুন সেশন
+        // আগের সেশন (পেজ রিফ্রেশ) বৈধ থাকলে সেটাই ব্যবহার, নাহলে নতুন সেশন। সেশন তৈরি বা পুরোনো সেশন পরিষ্কার ব্যর্থ হলে লগইন হবে না।
+        function regStrict(user, email, hide) {
+            return registerSession(user, email, hide).then(function (r) { return { id: r.id, fresh: true, clearedOther: r.clearedOther }; }).catch(function (e) { e = e || new Error("session"); e.sessErr = true; throw e; });
+        }
         function resumeOrRegister(user, email, hide) {
             var sid = null; try { sid = localStorage.getItem("agni_sid"); } catch (e) { }
-            if (!sid) return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
+            if (!sid) return regStrict(user, email, hide);
             if (!navigator.onLine) return Promise.resolve({ id: sid, fresh: false });   // অফলাইনে আগের সেশনই চলবে
             return fsdb.collection("userSessions").doc(sid).get().then(function (sn) { return sn; }, function () { return null; }).then(function (sn) {
                 if (sn && sn.exists && sn.data().uid === user.uid && sn.data().status === "active" && !isExpiredSess(sn.data())) return { id: sid, fresh: false };
-                return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
+                return regStrict(user, email, hide);
             });
         }
 
@@ -4518,6 +4532,7 @@
                 if (["coder", "admin", "editor", "viewer"].indexOf(normRole(d.role)) < 0) { denyAccess("এই অ্যাকাউন্টের Role বৈধ নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
                 return resumeOrRegister(user, email, normRole(d.role) === "coder").then(function (r) {
                     startSessionWatch(r.id);
+                    if (r.clearedOther > 0) setTimeout(function () { showPop("ℹ️ ২টি ডিভাইস আগে থেকেই চালু ছিল, তাই " + r.clearedOther + " টি পুরোনো সেশন বন্ধ করে আপনাকে ঢোকানো হয়েছে।", "info"); }, 600);
                     if (r.fresh || d.uid !== user.uid) {
                         fsdb.collection("authorizedUsers").doc(email).update({ uid: user.uid, displayName: user.displayName || "", lastLogin: TS() }).catch(function (e) { console.error(e); });
                     }
@@ -4531,7 +4546,8 @@
                 });
             }).catch(function (e) {
                 console.error(e);
-                if (e && e.code === "permission-denied") denyAccess("এই Gmail অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।");
+                if (e && e.sessErr) { try { localStorage.removeItem("agni_sid"); } catch (x) { } denyAccess("পুরোনো সেশন পরিষ্কার করা যায়নি, তাই লগইন বাতিল হয়েছে। ইন্টারনেট দেখে আবার চেষ্টা করুন।"); }
+                else if (e && e.code === "permission-denied") denyAccess("এই Gmail অনুমোদিত নয়। Admin-এর সাথে যোগাযোগ করুন।");
                 else denyAccess("সংযোগ ব্যর্থ: " + ((e && (e.code || e.message)) || ""));
             });
         }

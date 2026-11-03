@@ -1,6 +1,6 @@
 // Agni Systems — Service Worker (অফলাইনে অ্যাপ চালানোর জন্য)
 // অ্যাপ আপডেট দিলে নিচের VERSION সংখ্যা বাড়ান।
-var VERSION = "agni-v6";
+var VERSION = "agni-v7";
 var CORE = ["./", "index.html", "manifest.json", "agni-patch.js", "logo.png", "encrypted.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 var CDN = [
   "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js",
