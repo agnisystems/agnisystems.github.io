@@ -3391,6 +3391,17 @@
             border: 1px solid;
             white-space: nowrap;
         }
+    
+        /* ON/OFF toggle switch (permission panel) */
+        .tgl { position: relative; display: inline-block; width: 46px; height: 26px; flex-shrink: 0; }
+        .tgl input { opacity: 0; width: 0; height: 0; position: absolute; }
+        .tgl span { position: absolute; inset: 0; background: #475569; border-radius: 26px; transition: .2s; cursor: pointer; }
+        .tgl span:before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+        .tgl input:checked + span { background: #16a34a; }
+        .tgl input:checked + span:before { transform: translateX(20px); }
+        .perm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 4px; border-bottom: 1px solid rgba(148,163,184,.2); }
+        .perm-row b { display: block; font-size: 14px; }
+        .perm-row small { color: #94a3b8; font-size: 11px; }
     </style>
 </head>
 
@@ -4215,16 +4226,14 @@
     <div class="pop-bg" id="admBg">
         <div class="pop wide">
             <div class="pop-hdr">
-                <h3>📧 Gmail Access Management</h3><button class="pop-x" onclick="closeAdm()">✕</button>
+                <h3>📧 ইউজার ও Gmail Access ম্যানেজমেন্ট</h3><button class="pop-x" onclick="closeAdm()">✕</button>
             </div>
             <div class="pop-body" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
                 <div class="adm-sec">
                     <h4>➕ Gmail যোগ করুন</h4>
                     <textarea class="adm-in" id="gmEmails" rows="3" placeholder="এক বা একাধিক Gmail (কমা বা নতুন লাইন দিয়ে আলাদা করুন)"></textarea>
                     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
-                        <select class="adm-in" id="gmRole" style="width:auto;flex:1;min-width:130px;margin-bottom:0">
-                            <option value="user">👤 User</option>
-                        </select>
+                        <select class="adm-in" id="gmRole" style="width:auto;flex:1;min-width:130px;margin-bottom:0"></select>
                         <button class="pbtn green" onclick="addGmails()">যোগ করুন</button>
                         <button class="pbtn blue" onclick="document.getElementById('gmCsv').click()">📄 CSV Import</button>
                         <input type="file" id="gmCsv" accept=".csv,.txt" style="display:none" onchange="importGmailCsv(this)" />
@@ -4241,6 +4250,21 @@
                 </div>
             </div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closeAdm()">বন্ধ করুন</button></div>
+        </div>
+    </div>
+
+    <div class="pop-bg" id="permBg" style="z-index:3000">
+        <div class="pop">
+            <div class="pop-hdr">
+                <h3 id="permTtl">🔑 Admin অনুমতি</h3><button class="pop-x" onclick="closePerm()">✕</button>
+            </div>
+            <div class="pop-body">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">যেটা ON করবেন, এই Admin শুধু সেই ধরনের ব্যবহারকারী যোগ, নিষ্ক্রিয়, Logout ও মুছতে পারবে। Coder এর উপর কোনো ক্ষমতা পাবে না।</div>
+                <div class="perm-row"><div><b>👑 Admin যোগ/পরিচালনা</b><small>অন্য Admin তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmAdmin"><span></span></label></div>
+                <div class="perm-row"><div><b>✏️ Editor যোগ/পরিচালনা</b><small>Editor তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmEditor"><span></span></label></div>
+                <div class="perm-row"><div><b>👁 Viewer যোগ/পরিচালনা</b><small>Viewer তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmViewer"><span></span></label></div>
+            </div>
+            <div class="pop-foot"><button class="pbtn grey" onclick="closePerm()">বাতিল</button><button class="pbtn green" onclick="savePerm()">✓ সেভ করুন</button></div>
         </div>
     </div>
 
@@ -4489,12 +4513,13 @@
                 if (!d) return;
                 if (isSuper) { d.role = "coder"; d.status = "active"; }
                 if (d.status !== "active") { denyAccess("এই অ্যাকাউন্ট নিষ্ক্রিয় করা আছে।"); return; }
+                if (["coder", "admin", "editor", "viewer"].indexOf(normRole(d.role)) < 0) { denyAccess("এই অ্যাকাউন্টের Role বৈধ নয়। Admin-এর সাথে যোগাযোগ করুন।"); return; }
                 return resumeOrRegister(user, email).then(function (r) {
                     startSessionWatch(r.id);
                     if (r.fresh || d.uid !== user.uid) {
                         fsdb.collection("authorizedUsers").doc(email).update({ uid: user.uid, displayName: user.displayName || "", lastLogin: TS() }).catch(function (e) { console.error(e); });
                     }
-                    currentUser = { username: email, role: d.role, display: d.displayName || user.displayName || email, uid: user.uid };
+                    currentUser = { username: email, role: normRole(d.role), perms: d.perms || {}, display: d.displayName || user.displayName || email, uid: user.uid };
                     _authBusy = false;
                     document.getElementById("lerr").style.display = "none";
                     document.getElementById("loginScreen").style.display = "none";
@@ -4516,7 +4541,7 @@
             document.getElementById("sbUname").textContent = currentUser.display;
 
             // @username
-            document.getElementById("sbUrole").textContent = "@" + currentUser.username;
+            document.getElementById("sbUrole").textContent = "@" + currentUser.username + " · " + (ROLE_LABEL[role] || role);
 
             // Avatar initials
             var initials = (currentUser.display || currentUser.username).split(" ").map(function (w) { return w[0] || ""; }).join("").slice(0, 2).toUpperCase();
@@ -4529,7 +4554,8 @@
                 var tickSvg = tick.querySelector("path:first-child");
                 if (role === "coder" && tickSvg) tickSvg.setAttribute("fill", "#1d9bf0");
                 else if (role === "admin" && tickSvg) tickSvg.setAttribute("fill", "#1d9bf0");
-                else if (role === "user" && tickSvg) tickSvg.setAttribute("fill", "#f59e0b");
+                else if (role === "editor" && tickSvg) tickSvg.setAttribute("fill", "#f59e0b");
+                else if (role === "viewer" && tickSvg) tickSvg.setAttribute("fill", "#94a3b8");
             }
 
 
@@ -4540,6 +4566,13 @@
                 if (adminIds[i] === "sdAdmin" || adminIds[i] === "ssAdmin") el.style.display = priv ? "block" : "none";
                 else el.style.display = priv ? "flex" : "none";
             }
+            // Gmail Access: Coder সবসময়, Admin শুধু অন্তত একটি অনুমতি ON থাকলে
+            var sAd = document.getElementById("sAdmin");
+            if (sAd && role === "admin" && allowedRoles().length === 0) sAd.style.display = "none";
+            // Viewer: নতুন গ্রাহক যোগের বাটন লুকানো
+            var hideNew = isViewer();
+            var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
+            for (var k = 0; k < nb.length; k++) nb[k].style.display = hideNew ? "none" : "";
             var wm = document.getElementById("welcomeMsg");
             if (wm) wm.textContent = "স্বাগতম, " + currentUser.display + " 👋";
             var myReqEl = document.getElementById("sMyReqs");
@@ -4807,10 +4840,10 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             if (mode === "view" && !isA) document.body.classList.add("user-view"); else document.body.classList.remove("user-view");
             if (mode === "new" || mode === "edit") { bSave.style.display = "flex"; document.getElementById("btnSave").disabled = false; document.getElementById("btnSave").style.opacity = "1"; }
             else if (mode === "view" && isA) { bSave.style.display = "flex"; }
-            else if (mode === "view" && !isA) { var pendReq = null, aprReq = null; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(curId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") aprReq = EREQS[i]; else if (EREQS[i].status === "pending") pendReq = EREQS[i]; } } if (aprReq) { document.getElementById("bOk").classList.add("show"); bLoadEd.style.display = "flex"; } else if (pendReq) { document.getElementById("bReq").classList.add("show"); document.getElementById("bReqTxt").textContent = "Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।"; } else { bReq.style.display = "flex"; } }
+            else if (mode === "view" && !isA && !isViewer()) { var pendReq = null, aprReq = null; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(curId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") aprReq = EREQS[i]; else if (EREQS[i].status === "pending") pendReq = EREQS[i]; } } if (aprReq) { document.getElementById("bOk").classList.add("show"); bLoadEd.style.display = "flex"; } else if (pendReq) { document.getElementById("bReq").classList.add("show"); document.getElementById("bReqTxt").textContent = "Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।"; } else { bReq.style.display = "flex"; } }
             syncMobileBar();
         }
-        function startNew() { localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
+        function startNew() { if (isViewer()) { showPop("👁 Viewer শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); showHome(); return; } localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
         function goDisabled() { fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("disabled"); showHome(); }
         function backFromFullPage() {
             if (!_fullPageBack) return;
@@ -4829,14 +4862,14 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         }
 
         // ─── SAVE ───
-        function doSave() { if (!currentUser) return; var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
+        function doSave() { if (!currentUser) return; if (isViewer()) { showPop("👁 Viewer শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
         function lockSaveShowEdit() { var bSave = document.getElementById("btnSave"), bEdit = document.getElementById("btnEdit"); bSave.disabled = true; bSave.style.opacity = "0.4"; bSave.style.cursor = "not-allowed"; if (isPrivileged()) bEdit.style.display = "flex"; syncMobileBar(); }
-        function enterEditMode() { if (!curId) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
+        function enterEditMode() { if (!curId || isViewer()) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
 
         // ─── EDIT REQUEST ───
-        function sendReq() { if (!currentUser || isPrivileged() || !curId) return; sendReqFor(curId); }
-        function sendReqFor(recordId) { if (!currentUser || isPrivileged()) return; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(recordId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") showPop("✅ Request অনুমোদিত হয়েছে।", "info"); else showPop("পাঠানো Request অনুমোদনের অপেক্ষায় আছে।", "info"); return; } } var rec = null; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(recordId)) { rec = DB[i]; break; } } var req = { reqId: "er_" + Date.now(), recordId: recordId, recordName: rec ? rec.name : "", requestedBy: currentUser.username, requestedDisplay: currentUser.display, requestedTime: nowStr(), status: "pending" }; fbSet("editreqs", req.reqId, req, function (ok) { if (ok) { EREQS.push(req); updateBadges(); closeVP(); showPop("📨 Edit Request পাঠানো হয়েছে!", "success"); } }); }
-        function loadEditCur() { if (!curId) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
+        function sendReq() { if (!currentUser || isPrivileged() || isViewer() || !curId) return; sendReqFor(curId); }
+        function sendReqFor(recordId) { if (!currentUser || isPrivileged() || isViewer()) return; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(recordId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") showPop("✅ Request অনুমোদিত হয়েছে।", "info"); else showPop("পাঠানো Request অনুমোদনের অপেক্ষায় আছে।", "info"); return; } } var rec = null; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(recordId)) { rec = DB[i]; break; } } var req = { reqId: "er_" + Date.now(), recordId: recordId, recordName: rec ? rec.name : "", requestedBy: currentUser.username, requestedDisplay: currentUser.display, requestedTime: nowStr(), status: "pending" }; fbSet("editreqs", req.reqId, req, function (ok) { if (ok) { EREQS.push(req); updateBadges(); closeVP(); showPop("📨 Edit Request পাঠানো হয়েছে!", "success"); } }); }
+        function loadEditCur() { if (!curId || isViewer()) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
 
         // ─── NAVIGATION ───
         function prevRec() { if (!DB.length) { showPop("কোনো ডাটা নেই", "warning"); return; } cur = (cur - 1 + DB.length) % DB.length; curId = DB[cur].id; fSet(DB[cur]); hideHome(); setMode("view"); document.getElementById("navId").value = cur + 1; }
@@ -5010,30 +5043,62 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         document.getElementById("impFile").addEventListener("change", function (e) { var file = e.target.files[0]; if (!file) return; var reader = new FileReader(); reader.onload = function (ev) { try { var imp = JSON.parse(ev.target.result); if (!Array.isArray(imp)) imp = [imp]; var n = 0; for (var i = 0; i < imp.length; i++) { var rec = imp[i]; if (!rec.id) continue; var exists = false; for (var j = 0; j < DB.length; j++) { if (String(DB[j].id) === String(rec.id)) { exists = true; break; } } if (!exists) { if (!rec.auditLog) rec.auditLog = [mkAudit("created")]; DB.push(rec); n++; fbSet("customers", rec.id, rec, function () { }); } } DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); updateBadges(); showPop(imp.length + " রেকর্ড ইম্পোর্ট, " + n + " নতুন।", "success"); } catch (err) { showPop("JSON Error: " + err.message, "error"); } }; reader.readAsText(file); e.target.value = ""; });
 
         // ─── ADMIN ───
-        // ─── GMAIL ACCESS MANAGEMENT ───
+        // ─── ইউজার ম্যানেজমেন্ট: Coder / Admin / Editor / Viewer ───
         var AUTH_EMAIL_RE = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/;
         var _gmCache = {};
+        var ROLE_LABEL = { coder: "⚡ Coder", admin: "👑 Admin", editor: "✏️ Editor", viewer: "👁 Viewer" };
+        var ROLE_COLOR = { coder: "#6366f1", admin: "#2563eb", editor: "#d97706", viewer: "#64748b" };
+        function normRole(r) { return r === "user" ? "editor" : r; }   // পুরোনো "user" = Editor
         function isCoderUser() { return currentUser && currentUser.role === "coder"; }
+        function isViewer() { return currentUser && currentUser.role === "viewer"; }
+        function allowedRoles() {
+            if (!currentUser) return [];
+            if (currentUser.role === "coder") return ["admin", "editor", "viewer"];
+            if (currentUser.role === "admin") {
+                var p = currentUser.perms || {}, a = [];
+                if (p.addAdmin === true) a.push("admin");
+                if (p.addEditor === true) a.push("editor");
+                if (p.addViewer === true) a.push("viewer");
+                return a;
+            }
+            return [];
+        }
         function canManage(t) {
             if (!currentUser || !isPrivileged()) return false;
             if (t.role === "coder" || t.email === currentUser.username) return false;
-            return isCoderUser() || t.role === "user";
+            return allowedRoles().indexOf(normRole(t.role)) >= 0;
         }
+        function roleBadge(r) { r = normRole(r); return '<span style="background:' + (ROLE_COLOR[r] || "#64748b") + '22;color:' + (ROLE_COLOR[r] || "#64748b") + ';padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700;border:1px solid ' + (ROLE_COLOR[r] || "#64748b") + '55;white-space:nowrap">' + (ROLE_LABEL[r] || escHtml(r)) + '</span>'; }
         function escAttr(x) { return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"); }
         function gmErr(e) { console.error(e); showPop("ব্যর্থ: " + ((e && (e.code || e.message)) || "অজানা ত্রুটি"), "error"); }
         function loadGmailUsers(cb) {
-            fsdb.collection("authorizedUsers").get().then(function (snap) {
-                var m = {}; snap.forEach(function (d) { m[d.id] = d.data(); }); _gmCache = m; cb();
-            }).catch(function (e) { gmErr(e); cb(); });
+            var done = function (m) { Object.keys(m).forEach(function (k) { if (m[k].role === "coder" && !isCoderUser()) delete m[k]; }); _gmCache = m; cb(); };
+            if (isCoderUser()) {
+                fsdb.collection("authorizedUsers").get().then(function (snap) { var m = {}; snap.forEach(function (d) { m[d.id] = d.data(); }); done(m); }).catch(function (e) { gmErr(e); cb(); });
+            } else {
+                // Admin: Coder-এর তথ্য কখনো আনা হয় না (Rules-ও ব্লক করে), তাই Role ধরে আলাদা কুয়েরি
+                Promise.all(["admin", "editor", "viewer", "user"].map(function (r) { return fsdb.collection("authorizedUsers").where("role", "==", r).get(); })).then(function (snaps) {
+                    var m = {}; snaps.forEach(function (snap) { snap.forEach(function (d) { m[d.id] = d.data(); }); }); done(m);
+                }).catch(function (e) { gmErr(e); cb(); });
+            }
         }
         function openAdmin() {
             if (!currentUser || !isPrivileged()) return;
-            var sel = document.getElementById("gmRole");
-            sel.innerHTML = '<option value="user">👤 User</option>' + (isCoderUser() ? '<option value="admin">👑 Admin</option>' : "");
-            loadGmailUsers(function () { renderGmail(); document.getElementById("admBg").classList.add("on"); });
+            // নিজের সর্বশেষ অনুমতি আবার পড়া হয় (Coder বদলে থাকলে)
+            fsdb.collection("authorizedUsers").doc(currentUser.username).get().then(function (sn) {
+                if (sn.exists) { currentUser.perms = sn.data().perms || {}; }
+            }).catch(function () { }).then(function () {
+                var roles = allowedRoles();
+                if (!roles.length) { showPop("আপনার কোনো ব্যবহারকারী যোগ বা পরিচালনার অনুমতি নেই। Coder-এর কাছে অনুমতি চান।", "warning"); return; }
+                var sel = document.getElementById("gmRole");
+                sel.innerHTML = roles.map(function (r) { return '<option value="' + r + '">' + ROLE_LABEL[r] + '</option>'; }).join("");
+                sel.value = roles.indexOf("viewer") >= 0 ? "viewer" : roles[0];
+                loadGmailUsers(function () { renderGmail(); document.getElementById("admBg").classList.add("on"); });
+            });
         }
         function closeAdm() { document.getElementById("admBg").classList.remove("on"); }
         function closeSess() { document.getElementById("sessBg").classList.remove("on"); }
+        function closePerm() { document.getElementById("permBg").classList.remove("on"); }
         function renderGmail() {
             var q = (document.getElementById("gmSearch").value || "").trim().toLowerCase();
             var keys = Object.keys(_gmCache).filter(function (e) { var d = _gmCache[e]; return !q || e.indexOf(q) >= 0 || String(d.displayName || "").toLowerCase().indexOf(q) >= 0; }).sort();
@@ -5041,13 +5106,21 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             if (!keys.length) { document.getElementById("gmList").innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:10px">কোনো Gmail নেই</div>'; return; }
             var h = '<table class="ltbl"><thead><tr><th>Gmail</th><th>নাম</th><th>Role</th><th>Status</th><th>শেষ লগইন</th><th>একশন</th></tr></thead><tbody>';
             keys.forEach(function (e) {
-                var d = _gmCache[e], em = escAttr(e);
-                var role = d.role === "coder" ? '<span style="background:rgba(99,102,241,.15);color:#6366f1;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700">⚡ Super Admin</span>' : d.role === "admin" ? '<span class="u-role admin">👑 Admin</span>' : '<span class="u-role user">👤 User</span>';
+                var d = _gmCache[e], em = escAttr(e), nr = normRole(d.role), mg = canManage(d);
+                var role;
+                if (mg && isCoderUser()) {
+                    role = '<select data-act="rolesel" data-e="' + em + '" style="font-size:11px;padding:3px 4px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#e2e8f0">' +
+                        ["admin", "editor", "viewer"].map(function (r) { return '<option value="' + r + '"' + (r === nr ? " selected" : "") + '>' + ROLE_LABEL[r] + '</option>'; }).join("") + '</select>';
+                } else role = roleBadge(nr);
+                if (nr === "admin" && isCoderUser()) {
+                    var p = d.perms || {};
+                    role += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">অনুমতি: Admin ' + (p.addAdmin ? "✅" : "❌") + ' · Editor ' + (p.addEditor ? "✅" : "❌") + ' · Viewer ' + (p.addViewer ? "✅" : "❌") + '</div>';
+                }
                 var st = d.status === "active" ? '<span style="color:#16a34a;font-weight:700">🟢 Active</span>' : '<span style="color:#dc2626;font-weight:700">⛔ Inactive</span>';
                 var btns = '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
-                if (canManage(d)) {
+                if (mg) {
                     btns += '<button class="abtn ' + (d.status === "active" ? "no" : "ok") + '" data-act="toggle" data-e="' + em + '">' + (d.status === "active" ? "⏸" : "▶") + '</button>';
-                    if (isCoderUser()) btns += '<button class="abtn" style="background:#2563eb" data-act="role" data-e="' + em + '" title="Role বদলান">👑↔👤</button>';
+                    if (nr === "admin" && isCoderUser()) btns += '<button class="abtn" style="background:#0d9488" data-act="perm" data-e="' + em + '" title="Admin-এর অনুমতি ON/OFF">🔑</button>';
                     btns += '<button class="abtn" style="background:#ea580c" data-act="logout" data-e="' + em + '" title="সব ডিভাইস থেকে Logout">🚪</button>';
                     btns += '<button class="abtn d" data-act="remove" data-e="' + em + '">🗑️</button>';
                 } else btns += '<span style="font-size:11px;color:#94a3b8;margin-left:4px">🔒</span>';
@@ -5059,21 +5132,24 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             var b = ev.target.closest("button[data-act]"); if (!b) return;
             var em = b.getAttribute("data-e"), act = b.getAttribute("data-act");
             if (act === "toggle") toggleStatus(em);
-            else if (act === "role") changeRole(em);
+            else if (act === "perm") openPerm(em);
             else if (act === "logout") forceLogoutUser(em);
             else if (act === "remove") removeGmail(em);
             else if (act === "sess") viewSessions(em);
         }
+        function gmChange(ev) {
+            var sel = ev.target.closest("select[data-act='rolesel']"); if (!sel) return;
+            setUserRole(sel.getAttribute("data-e"), sel.value);
+        }
         function saveGmailItems(items) {
-            var seen = {}, list = [];
+            var allowed = allowedRoles(), seen = {}, list = [];
             items.forEach(function (it) {
-                if (!AUTH_EMAIL_RE.test(it.email) || _gmCache[it.email] || seen[it.email]) return;
-                seen[it.email] = 1;
-                it.role = (it.role === "admin" && isCoderUser()) ? "admin" : "user";
-                list.push(it);
+                it.role = normRole(it.role);
+                if (!AUTH_EMAIL_RE.test(it.email) || _gmCache[it.email] || seen[it.email] || allowed.indexOf(it.role) < 0) return;
+                seen[it.email] = 1; list.push(it);
             });
             var skipped = items.length - list.length;
-            if (!list.length) { showPop("নতুন কোনো বৈধ Gmail পাওয়া যায়নি।" + (skipped ? "\n(" + skipped + " টি বাদ: ভুল ফরম্যাট বা আগে থেকেই আছে)" : ""), "warning"); return; }
+            if (!list.length) { showPop("নতুন কোনো বৈধ Gmail পাওয়া যায়নি।" + (skipped ? "\n(" + skipped + " টি বাদ: ভুল ফরম্যাট, আগে থেকেই আছে, বা ওই Role যোগের অনুমতি নেই)" : ""), "warning"); return; }
             var chunks = [];
             for (var i = 0; i < list.length; i += 400) chunks.push(list.slice(i, i + 400));
             Promise.all(chunks.map(function (ch) {
@@ -5084,7 +5160,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 return b.commit();
             })).then(function () {
                 document.getElementById("gmEmails").value = "";
-                showPop("✅ " + list.length + " টি Gmail যোগ হয়েছে।" + (skipped ? "\n" + skipped + " টি বাদ (ভুল ফরম্যাট/আগে থেকেই আছে)।" : ""), "success");
+                showPop("✅ " + list.length + " টি Gmail যোগ হয়েছে।" + (skipped ? "\n" + skipped + " টি বাদ (ভুল ফরম্যাট / আগে থেকেই আছে / অনুমতি নেই)।" : ""), "success");
                 loadGmailUsers(renderGmail);
             }).catch(gmErr);
         }
@@ -5104,7 +5180,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                     var p = ln.split(",").map(function (x) { return x.trim().replace(/^"|"$/g, ""); });
                     var em = (p[0] || "").toLowerCase();
                     if (!AUTH_EMAIL_RE.test(em)) return;
-                    items.push({ email: em, name: p[1] || "", role: (p[2] || "user").toLowerCase() });
+                    items.push({ email: em, name: p[1] || "", role: (p[2] || "viewer").toLowerCase() });
                 });
                 inp.value = "";
                 if (!items.length) { showPop("CSV-তে কোনো বৈধ Gmail পাওয়া যায়নি।", "warning"); return; }
@@ -5120,11 +5196,36 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 return ns === "inactive" ? forceLogoutUid(u.uid) : 0;
             }).then(function () { renderGmail(); showPop(ns === "active" ? "▶ সক্রিয় করা হয়েছে।" : "⏸ নিষ্ক্রিয় করা হয়েছে এবং সব ডিভাইস থেকে Logout করানো হয়েছে।", "success"); }).catch(gmErr);
         }
-        function changeRole(em) {
-            var u = _gmCache[em]; if (!u || !canManage(u) || !isCoderUser()) return;
-            var nr = u.role === "admin" ? "user" : "admin";
-            if (!confirm(em + " — Role বদলে " + nr.toUpperCase() + " করবেন?")) return;
-            fsdb.collection("authorizedUsers").doc(em).update({ role: nr }).then(function () { u.role = nr; renderGmail(); showPop("✅ Role আপডেট হয়েছে। ওই ব্যবহারকারী পরেরবার লগইন করলে কার্যকর হবে।", "success"); }).catch(gmErr);
+        // শুধু Coder Role বদলাতে পারে
+        function setUserRole(em, nr) {
+            var u = _gmCache[em]; if (!u || !canManage(u) || !isCoderUser()) { renderGmail(); return; }
+            if (["admin", "editor", "viewer"].indexOf(nr) < 0 || nr === normRole(u.role)) { renderGmail(); return; }
+            if (!confirm(em + " — Role বদলে " + ROLE_LABEL[nr] + " করবেন?\n(সে সব ডিভাইস থেকে Logout হবে, আবার লগইন করলে নতুন Role পাবে)")) { renderGmail(); return; }
+            var upd = { role: nr };
+            if (nr !== "admin") upd.perms = firebase.firestore.FieldValue.delete();
+            fsdb.collection("authorizedUsers").doc(em).update(upd).then(function () {
+                u.role = nr; if (nr !== "admin") delete u.perms;
+                return forceLogoutUid(u.uid);
+            }).then(function () { renderGmail(); showPop("✅ Role আপডেট হয়েছে।", "success"); }).catch(function (e) { gmErr(e); renderGmail(); });
+        }
+        // Admin-এর ON/OFF অনুমতি (শুধু Coder)
+        var _permFor = null;
+        function openPerm(em) {
+            var u = _gmCache[em]; if (!u || !isCoderUser() || normRole(u.role) !== "admin") return;
+            _permFor = em; var p = u.perms || {};
+            document.getElementById("pmAdmin").checked = p.addAdmin === true;
+            document.getElementById("pmEditor").checked = p.addEditor === true;
+            document.getElementById("pmViewer").checked = p.addViewer === true;
+            document.getElementById("permTtl").textContent = "🔑 অনুমতি — " + em;
+            document.getElementById("permBg").classList.add("on");
+        }
+        function savePerm() {
+            var em = _permFor, u = _gmCache[em]; if (!u || !isCoderUser()) return;
+            var perms = { addAdmin: document.getElementById("pmAdmin").checked, addEditor: document.getElementById("pmEditor").checked, addViewer: document.getElementById("pmViewer").checked };
+            fsdb.collection("authorizedUsers").doc(em).update({ perms: perms }).then(function () {
+                u.perms = perms; closePerm(); renderGmail();
+                showPop("✅ অনুমতি সেভ হয়েছে। ওই Admin-এর পরের Gmail Access খোলায় কার্যকর হবে।", "success");
+            }).catch(gmErr);
         }
         function removeGmail(em) {
             var u = _gmCache[em]; if (!u || !canManage(u)) return;
@@ -5171,7 +5272,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         function showAllSessions() {
             _sessView = showAllSessions;
             fsdb.collection("userSessions").where("status", "==", "active").get().then(function (snap) {
-                var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; arr.push(x); });
+                var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; if (isCoderUser() || x.email === currentUser.username || _gmCache[x.email]) arr.push(x); });
                 arr.sort(function (a, b) { return tsMs(b.lastActiveAt) - tsMs(a.lastActiveAt); });
                 showSessionTable("🖥 সব Active Session (" + arr.length + ")", arr, true);
             }).catch(gmErr);
@@ -5694,7 +5795,7 @@ function buildRevenueList(arr) {
         window.addEventListener("load", function () {
             applyTheme(curTheme);
             updateAreaDatalist("");
-            var gl = document.getElementById("gmList"); if (gl) gl.addEventListener("click", gmClick);
+            var gl = document.getElementById("gmList"); if (gl) { gl.addEventListener("click", gmClick); gl.addEventListener("change", gmChange); }
             // আগে লগইন করা থাকলে Firebase নিজেই session ফিরিয়ে আনে, তারপর অনুমোদন যাচাই হয়
             fbAuth.onAuthStateChanged(function (user) { if (user) handleAuthUser(user); });
             document.addEventListener("visibilitychange", function () { if (!document.hidden) beat(); });

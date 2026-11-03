@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────── সাহায্যকারী ফাংশন ─────────
+    function email() {
+      return request.auth.token.email.lower();
+    }
+    function mePath() {
+      return /databases/$(database)/documents/authorizedUsers/$(email());
+    }
+    // Super Admin Gmail (সবসময় Coder, Google যাচাইকৃত হতে হবে)
+    function superEmail() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == 'arafatahmed.cit.bd@gmail.com';
+    }
+    // Google দিয়ে লগইন + যাচাইকৃত Gmail + অনুমোদিত তালিকায় আছে + Active
+    function active() {
+      return superEmail()
+        || (request.auth != null
+            && request.auth.token.email != null
+            && request.auth.token.email_verified == true
+            && exists(mePath())
+            && get(mePath()).data.status == 'active');
+    }
+    function isCoder() {
+      return superEmail() || (active() && get(mePath()).data.role == 'coder');
+    }
+    function isAdmin() {
+      return superEmail() || (active() && get(mePath()).data.role in ['admin', 'coder']);
+    }
+    function isViewerRole() {
+      return !superEmail() && get(mePath()).data.role == 'viewer';
+    }
+    // Viewer বাদে সবাই (Editor / Admin / Coder) লিখতে পারবে
+    function canWrite() {
+      return active() && !isViewerRole();
+    }
+    // Admin-এর ON/OFF অনুমতি (Coder সেট করে)
+    function perm(k) {
+      return get(mePath()).data.get('perms', {}).get(k, false) == true;
+    }
+    // এই Role-এর ব্যবহারকারী পরিচালনা করা যাবে কি? (Coder-কে কেউ পরিচালনা করতে পারে না)
+    function mayManage(r) {
+      return isCoder()
+        || (isAdmin() && (
+             (r == 'admin' && perm('addAdmin'))
+          || ((r == 'editor' || r == 'user') && perm('addEditor'))
+          || (r == 'viewer' && perm('addViewer'))));
+    }
+
+    // ───────── অনুমোদিত ব্যবহারকারী (ডকুমেন্ট আইডি = ছোট হাতের Gmail) ─────────
+    match /authorizedUsers/{name} {
+      // নিজের ডকুমেন্ট পড়া যাবে। Coder সবার। Admin Coder ছাড়া সবার।
+      allow get: if (request.auth != null && name == email())
+        || isCoder()
+        || (isAdmin() && resource.data.role != 'coder');
+
+      // তালিকা: Coder সব দেখে। Admin Coder-কে দেখতে পায় না (কুয়েরি Role ধরে হতে হবে)
+      allow list: if isCoder()
+        || (isAdmin() && (resource.data.role == 'admin' || resource.data.role == 'editor'
+                          || resource.data.role == 'viewer' || resource.data.role == 'user'));
+
+      // Super Admin নিজের Coder ডকুমেন্ট প্রথমবার তৈরি করতে পারবে
+      allow create: if superEmail() && name == email()
+        && request.resource.data.email == name
+        && request.resource.data.role == 'coder'
+        && request.resource.data.status == 'active';
+
+      // নতুন ব্যবহারকারী তৈরি: Coder সব Role। Admin শুধু যে Role-এর অনুমতি ON। Coder কখনো তৈরি হয় না।
+      allow create: if isAdmin()
+        && request.resource.data.email == name
+        && request.resource.data.status in ['active', 'inactive']
+        && request.resource.data.createdBy == email()
+        && request.resource.data.role in ['admin', 'editor', 'viewer']
+        && mayManage(request.resource.data.role)
+        && (isCoder() || !request.resource.data.keys().hasAny(['perms']));
+
+      // Coder: Role / অনুমতি / সব বদলাতে পারে (Coder ডকুমেন্ট ও নিজেকে বাদে)
+      allow update: if isCoder() && name != email()
+        && resource.data.role != 'coder'
+        && request.resource.data.role in ['admin', 'editor', 'viewer']
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdBy == resource.data.createdBy;
+
+      // Admin: শুধু status (Active/Inactive) বদলাতে পারে, অনুমতি থাকা Role-এর উপর
+      allow update: if isAdmin() && !isCoder() && name != email()
+        && resource.data.role != 'coder'
+        && mayManage(resource.data.role)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+
+      // প্রথম লগইনে নিজের শুধু uid / lastLogin / displayName। Role বা অনুমতি বদলানো যাবে না।
+      allow update: if active() && name == email()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'lastLogin', 'displayName']);
+
+      allow delete: if isAdmin() && name != email()
+        && resource.data.role != 'coder'
+        && mayManage(resource.data.role);
+    }
+
+    // ───────── সেশন ─────────
+    match /sessionState/{u} {
+      allow get: if active() && u == request.auth.uid;
+      allow create, update: if active() && u == request.auth.uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.ids.size() <= 2;
+      allow delete: if isCoder();
+    }
+
+    // Admin Coder-এর সেশন বন্ধ করতে পারবে না
+    function sessionNotCoder() {
+      return isCoder()
+        || !exists(/databases/$(database)/documents/authorizedUsers/$(resource.data.email))
+        || get(/databases/$(database)/documents/authorizedUsers/$(resource.data.email)).data.role != 'coder';
+    }
+
+    match /userSessions/{sid} {
+      allow create: if active()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'active';
+      allow get: if active() && (resource.data.uid == request.auth.uid || (isAdmin() && sessionNotCoder()));
+      allow list: if active() && (isAdmin() || resource.data.uid == request.auth.uid);
+      allow update: if active() && (
+        (isAdmin() && sessionNotCoder())
+        || (resource.data.uid == request.auth.uid
+            && request.resource.data.uid == resource.data.uid
+            && !(resource.data.status == 'revoked' && request.resource.data.status == 'active'))
+      );
+      allow delete: if isCoder();
+    }
+
+    // ───────── অ্যাপের ডাটা ─────────
+    match /customers/{id} {
+      allow read: if active();
+      allow create, update: if canWrite();
+      allow delete: if isAdmin();
+    }
+
+    match /trash/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /pending/{id} {
+      allow create: if canWrite();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /editreqs/{id} {
+      allow read: if canWrite();
+      allow create: if canWrite() && request.resource.data.requestedBy == email();
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (canWrite() && resource.data.requestedBy == email());
+    }
+
+    // বাকি সব বন্ধ
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
