@@ -4406,6 +4406,7 @@
         function resumeOrRegister(user, email, hide) {
             var sid = null; try { sid = localStorage.getItem("agni_sid"); } catch (e) { }
             if (!sid) return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
+            if (!navigator.onLine) return Promise.resolve({ id: sid, fresh: false });   // অফলাইনে আগের সেশনই চলবে
             return fsdb.collection("userSessions").doc(sid).get().then(function (sn) { return sn; }, function () { return null; }).then(function (sn) {
                 if (sn && sn.exists && sn.data().uid === user.uid && sn.data().status === "active" && !isExpiredSess(sn.data())) return { id: sid, fresh: false };
                 return registerSession(user, email, hide).then(function (id) { return { id: id, fresh: true }; });
@@ -4650,9 +4651,28 @@ function onAreaInput() {
         function diffData(oldD, newD) { if (!oldD) return []; var changes = [], keys = Object.keys(FIELD_LABELS); for (var i = 0; i < keys.length; i++) { var k = keys[i], ov = String(oldD[k] || ""), nv = String(newD[k] || ""); if (ov !== nv) changes.push({ field: FIELD_LABELS[k], key: k, old: ov, new: nv }); } return changes; }
         function auditWho(e) { if (e && (e.role === "system" || (e.role === "coder" && !isCoderUser()))) return { display: "System", by: "system" }; return { display: (e && e.display) || "", by: (e && e.by) || "" }; }
         function mkAudit(action, oldData, newData) { var isC = currentUser.role === "coder"; var entry = { action: action, by: isC ? "system" : currentUser.username, display: isC ? "System" : currentUser.display, role: isC ? "system" : currentUser.role, time: nowStr(), ts: Date.now() }; if (oldData && newData && (action === "updated" || action === "approved")) entry.changes = diffData(oldData, newData); return entry; }
-        function fbSet(col, id, data, cb) { fsdb.collection(col).doc(String(id)).set(flat(data)).then(function () { if (cb) cb(true); }).catch(function (e) { console.error(e); if (cb) cb(false); }); }
-        function fbDel(col, id, cb) { fsdb.collection(col).doc(String(id)).delete().then(function () { if (cb) cb(true); }).catch(function (e) { console.error(e); if (cb) cb(false); }); }
-        function fbGetAll(col, cb) { fsdb.collection(col).get().then(function (snap) { var a = []; snap.forEach(function (d) { a.push(d.data()); }); cb(a); }).catch(function (e) { console.error(e); cb([]); }); }
+        // ── অফলাইন-নিরাপদ লেখা ──
+        // নেট না থাকলে লেখা ফোনে জমা হয়, কোড সাথে সাথে "সেভ হয়েছে" ধরে নেয়, নেট এলে Firebase নিজে পাঠায়।
+        var _pendingW = 0;
+        function fbWrite(label, op, cb) {
+            var settled = false, offline = !navigator.onLine;
+            _pendingW++; if (window.updNet) updNet();
+            var p = op();
+            var finish = function (ok) { if (!settled) { settled = true; clearTimeout(t); if (cb) cb(ok); return true; } return false; };
+            var t = setTimeout(function () {
+                if (finish(true) && !navigator.onLine) showPop("📴 অফলাইনে সেভ হয়েছে। ইন্টারনেট এলে নিজে সিঙ্ক হবে।", "info");
+                else if (settled && navigator.onLine) { /* ধীর নেটে আগেই সফল ধরা হয়েছে */ }
+            }, offline ? 0 : 8000);
+            p.then(function () { _pendingW = Math.max(0, _pendingW - 1); if (window.updNet) updNet(); finish(true); })
+                .catch(function (e) {
+                    _pendingW = Math.max(0, _pendingW - 1); if (window.updNet) updNet();
+                    console.error(e);
+                    if (!finish(false)) showPop("⚠️ " + label + " সিঙ্ক ব্যর্থ: " + ((e && (e.code || e.message)) || "অজানা ত্রুটি") + "\nপেজ রিফ্রেশ করে ডাটা যাচাই করুন।", "error");
+                });
+        }
+        function fbSet(col, id, data, cb) { fbWrite("সেভ", function () { return fsdb.collection(col).doc(String(id)).set(flat(data)); }, cb); }
+        function fbDel(col, id, cb) { fbWrite("মোছা", function () { return fsdb.collection(col).doc(String(id)).delete(); }, cb); }
+        function fbGetAll(col, cb) { fsdb.collection(col).get(navigator.onLine ? undefined : { source: "cache" }).then(function (snap) { var a = []; snap.forEach(function (d) { a.push(d.data()); }); cb(a); }).catch(function (e) { console.error(e); cb([]); }); }
         function cloudSync(cb) { sync2("syncing", "লোড হচ্ছে..."); var done = 0, res = { c: [], t: [], p: [], e: [] }; function check() { done++; if (done === 4) { DB = res.c; TRASH = res.t; PENDING = res.p; EREQS = res.e; DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); sync2("synced", "● সংযুক্ত"); updateBadges(); if (cb) cb(); } } fbGetAll("customers", function (r) { res.c = r; check(); }); fbGetAll("trash", function (r) { res.t = r; check(); }); fbGetAll("pending", function (r) { res.p = r; check(); }); fbGetAll("editreqs", function (r) { res.e = r; check(); }); }
         function nextId() { var all = DB.concat(TRASH).concat(PENDING), max = 0; for (var i = 0; i < all.length; i++) { var n = Number(all[i].id) || 0; if (n > max) max = n; } return String(max + 1).padStart(4, "0"); }
         function updateBadges() {
@@ -5842,7 +5862,13 @@ function buildRevenueList(arr) {
             else if (_isIOS) alert("iPhone/iPad-এ: Safari-র নিচের Share (⬆) বাটন চাপুন → 'Add to Home Screen' বেছে নিন।");
             else alert("ব্রাউজারের মেনু (⋮) থেকে 'Install app' বা 'Add to Home screen' চাপুন।");
         }
-        function updNet() { var o = document.getElementById("offBadge"); if (o) o.style.display = navigator.onLine ? "none" : "block"; }
+        function updNet() {
+            var o = document.getElementById("offBadge"); if (!o) return;
+            var n = window._pendingW || 0;
+            if (!navigator.onLine) { o.textContent = "📴 অফলাইন মোড — " + (n ? n + " টি পরিবর্তন সিঙ্কের অপেক্ষায়" : "ইন্টারনেট এলে ডাটা সিঙ্ক হবে"); o.style.background = "#b45309"; o.style.display = "block"; }
+            else if (n > 0) { o.textContent = "🔄 সিঙ্ক হচ্ছে (" + n + ")"; o.style.background = "#0369a1"; o.style.display = "block"; }
+            else o.style.display = "none";
+        }
         window.addEventListener("online", updNet); window.addEventListener("offline", updNet); updNet();
         if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("SW:", e); }); });
     </script>
