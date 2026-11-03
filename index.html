@@ -4229,7 +4229,7 @@
                 <h3>📧 ইউজার ও Gmail Access ম্যানেজমেন্ট</h3><button class="pop-x" onclick="closeAdm()">✕</button>
             </div>
             <div class="pop-body" style="max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-                <div class="adm-sec">
+                <div class="adm-sec" id="gmAddSec">
                     <h4>➕ Gmail যোগ করুন</h4>
                     <textarea class="adm-in" id="gmEmails" rows="3" placeholder="এক বা একাধিক Gmail (কমা বা নতুন লাইন দিয়ে আলাদা করুন)"></textarea>
                     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
@@ -4244,7 +4244,7 @@
                     <h4>📋 অনুমোদিত Gmail <span id="gmCount" style="color:#64748b;font-weight:400"></span></h4>
                     <div style="display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap">
                         <input class="adm-in" id="gmSearch" oninput="renderGmail()" placeholder="🔍 Gmail / নাম খুঁজুন" style="margin-bottom:0;flex:1;min-width:160px" />
-                        <button class="pbtn orange" onclick="showAllSessions()">🖥 Active Sessions</button>
+                        <button class="pbtn orange" id="gmSessBtn" onclick="showAllSessions()">🖥 Active Sessions</button>
                     </div>
                     <div id="gmList" style="overflow-x:auto"></div>
                 </div>
@@ -4258,11 +4258,18 @@
             <div class="pop-hdr">
                 <h3 id="permTtl">🔑 Admin অনুমতি</h3><button class="pop-x" onclick="closePerm()">✕</button>
             </div>
-            <div class="pop-body">
-                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px">যেটা ON করবেন, এই Admin শুধু সেই ধরনের ব্যবহারকারী যোগ, নিষ্ক্রিয়, Logout ও মুছতে পারবে। Coder এর উপর কোনো ক্ষমতা পাবে না।</div>
-                <div class="perm-row"><div><b>👑 Admin যোগ/পরিচালনা</b><small>অন্য Admin তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmAdmin"><span></span></label></div>
-                <div class="perm-row"><div><b>✏️ Editor যোগ/পরিচালনা</b><small>Editor তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmEditor"><span></span></label></div>
-                <div class="perm-row"><div><b>💎 Management যোগ/পরিচালনা</b><small>Management ব্যবহারকারী তৈরি ও পরিচালনা</small></div><label class="tgl"><input type="checkbox" id="pmViewer"><span></span></label></div>
+            <div class="pop-body" style="max-height:68vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+                <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">যেটা ON করবেন, এই Admin সেটাই করতে পারবে। Coder এর উপর কোনো ক্ষমতা পাবে না।</div>
+                <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin:10px 0 2px">১) কোন Role-এর ব্যবহারকারীর উপর কাজ করতে পারবে</div>
+                <div class="perm-row"><div><b>👑 Admin</b><small>অন্য Admin-দের উপর</small></div><label class="tgl"><input type="checkbox" id="pmAdmin"><span></span></label></div>
+                <div class="perm-row"><div><b>✏️ Editor</b><small>Editor-দের উপর</small></div><label class="tgl"><input type="checkbox" id="pmEditor"><span></span></label></div>
+                <div class="perm-row"><div><b>💎 Management</b><small>Management-দের উপর</small></div><label class="tgl"><input type="checkbox" id="pmViewer"><span></span></label></div>
+                <div style="font-size:12px;font-weight:700;color:#e2e8f0;margin:14px 0 2px">২) কোন একশন করতে পারবে</div>
+                <div class="perm-row"><div><b>➕ Gmail যোগ / CSV Import</b><small>নতুন ব্যবহারকারী যোগ করা</small></div><label class="tgl"><input type="checkbox" id="pmAdd"><span></span></label></div>
+                <div class="perm-row"><div><b>⏸ Active / Inactive</b><small>ব্যবহারকারী চালু বা বন্ধ করা</small></div><label class="tgl"><input type="checkbox" id="pmToggle"><span></span></label></div>
+                <div class="perm-row"><div><b>🚪 Force Logout</b><small>সব ডিভাইস থেকে Logout করানো</small></div><label class="tgl"><input type="checkbox" id="pmLogout"><span></span></label></div>
+                <div class="perm-row"><div><b>🗑️ মুছে ফেলা</b><small>তালিকা থেকে ব্যবহারকারী মোছা</small></div><label class="tgl"><input type="checkbox" id="pmRemove"><span></span></label></div>
+                <div class="perm-row"><div><b>🖥 সেশন ও লগইন ইতিহাস</b><small>Active Sessions ও ডিভাইস দেখা</small></div><label class="tgl"><input type="checkbox" id="pmSess"><span></span></label></div>
             </div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closePerm()">বাতিল</button><button class="pbtn green" onclick="savePerm()">✓ সেভ করুন</button></div>
         </div>
@@ -4568,7 +4575,7 @@
             }
             // Gmail Access: Coder সবসময়, Admin শুধু অন্তত একটি অনুমতি ON থাকলে
             var sAd = document.getElementById("sAdmin");
-            if (sAd && role === "admin" && allowedRoles().length === 0) sAd.style.display = "none";
+            if (sAd && role === "admin" && !hasAdminAccess()) sAd.style.display = "none";
             // Viewer: নতুন গ্রাহক যোগের বাটন লুকানো
             var hideNew = isViewer();
             var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
@@ -5083,6 +5090,9 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             }
             return [];
         }
+        var ACTS = ["actAdd", "actToggle", "actLogout", "actRemove", "actSess"];
+        function can(act) { return !!currentUser && (currentUser.role === "coder" || (currentUser.role === "admin" && (currentUser.perms || {})[act] === true)); }
+        function hasAdminAccess() { return allowedRoles().length > 0 && ACTS.some(can); }
         function canManage(t) {
             if (!currentUser || !isPrivileged()) return false;
             if (t.role === "coder" || t.email === currentUser.username) return false;
@@ -5109,7 +5119,9 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 if (sn.exists) { currentUser.perms = sn.data().perms || {}; }
             }).catch(function () { }).then(function () {
                 var roles = allowedRoles();
-                if (!roles.length) { showPop("আপনার কোনো ব্যবহারকারী যোগ বা পরিচালনার অনুমতি নেই। Coder-এর কাছে অনুমতি চান।", "warning"); return; }
+                if (!hasAdminAccess()) { showPop("আপনার কোনো ব্যবহারকারী যোগ বা পরিচালনার অনুমতি নেই। Coder-এর কাছে অনুমতি চান।", "warning"); return; }
+                document.getElementById("gmAddSec").style.display = can("actAdd") ? "" : "none";
+                document.getElementById("gmSessBtn").style.display = can("actSess") ? "" : "none";
                 var sel = document.getElementById("gmRole");
                 sel.innerHTML = roles.map(function (r) { return '<option value="' + r + '">' + ROLE_LABEL[r] + '</option>'; }).join("");
                 sel.value = roles.indexOf("viewer") >= 0 ? "viewer" : roles[0];
@@ -5133,17 +5145,19 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                         ["admin", "editor", "viewer"].map(function (r) { return '<option value="' + r + '"' + (r === nr ? " selected" : "") + '>' + ROLE_LABEL[r] + '</option>'; }).join("") + '</select>';
                 } else role = roleBadge(nr);
                 if (nr === "admin" && isCoderUser()) {
-                    var p = d.perms || {};
-                    role += '<div style="font-size:10px;color:#94a3b8;margin-top:3px">অনুমতি: Admin ' + (p.addAdmin ? "✅" : "❌") + ' · Editor ' + (p.addEditor ? "✅" : "❌") + ' · Management ' + (p.addViewer ? "✅" : "❌") + '</div>';
+                    var p = d.perms || {}, chip = function (on, t) { return '<span style="display:inline-block;margin:1px 2px 0 0;padding:1px 6px;border-radius:8px;font-size:10px;background:' + (on ? "rgba(22,163,74,.18);color:#4ade80" : "rgba(100,116,139,.18);color:#94a3b8;text-decoration:line-through") + '">' + t + '</span>'; };
+                    role += '<div style="margin-top:3px;max-width:230px;white-space:normal">' + chip(p.addAdmin, "👑") + chip(p.addEditor, "✏️") + chip(p.addViewer, "💎") + ' ' + chip(p.actAdd, "➕") + chip(p.actToggle, "⏸") + chip(p.actLogout, "🚪") + chip(p.actRemove, "🗑") + chip(p.actSess, "🖥") + '</div>';
                 }
                 var st = d.status === "active" ? '<span style="color:#16a34a;font-weight:700">🟢 Active</span>' : '<span style="color:#dc2626;font-weight:700">⛔ Inactive</span>';
-                var btns = '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
+                var btns = "";
+                if (can("actSess")) btns += '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
                 if (mg) {
-                    btns += '<button class="abtn ' + (d.status === "active" ? "no" : "ok") + '" data-act="toggle" data-e="' + em + '">' + (d.status === "active" ? "⏸" : "▶") + '</button>';
+                    if (can("actToggle")) btns += '<button class="abtn ' + (d.status === "active" ? "no" : "ok") + '" data-act="toggle" data-e="' + em + '">' + (d.status === "active" ? "⏸" : "▶") + '</button>';
                     if (nr === "admin" && isCoderUser()) btns += '<button class="abtn" style="background:#0d9488" data-act="perm" data-e="' + em + '" title="Admin-এর অনুমতি ON/OFF">🔑</button>';
-                    btns += '<button class="abtn" style="background:#ea580c" data-act="logout" data-e="' + em + '" title="সব ডিভাইস থেকে Logout">🚪</button>';
-                    btns += '<button class="abtn d" data-act="remove" data-e="' + em + '">🗑️</button>';
-                } else btns += '<span style="font-size:11px;color:#94a3b8;margin-left:4px">🔒</span>';
+                    if (can("actLogout")) btns += '<button class="abtn" style="background:#ea580c" data-act="logout" data-e="' + em + '" title="সব ডিভাইস থেকে Logout">🚪</button>';
+                    if (can("actRemove")) btns += '<button class="abtn d" data-act="remove" data-e="' + em + '">🗑️</button>';
+                }
+                if (!btns) btns = '<span style="font-size:11px;color:#94a3b8;margin-left:4px">🔒</span>';
                 h += '<tr><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px">' + escHtml(e) + '</td><td>' + escHtml(d.displayName || "—") + '</td><td>' + role + '</td><td>' + st + '</td><td style="font-size:11px;white-space:nowrap">' + fmtTs(d.lastLogin) + '</td><td style="white-space:nowrap">' + btns + '</td></tr>';
             });
             document.getElementById("gmList").innerHTML = h + '</tbody></table>';
@@ -5162,6 +5176,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             setUserRole(sel.getAttribute("data-e"), sel.value);
         }
         function saveGmailItems(items) {
+            if (!can("actAdd")) { showPop("Gmail যোগ করার অনুমতি নেই।", "error"); return; }
             var allowed = allowedRoles(), seen = {}, list = [];
             items.forEach(function (it) {
                 it.role = normRole(it.role);
@@ -5209,11 +5224,11 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             rd.readAsText(f);
         }
         function toggleStatus(em) {
-            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            var u = _gmCache[em]; if (!u || !canManage(u) || !can("actToggle")) return;
             var ns = u.status === "active" ? "inactive" : "active";
             fsdb.collection("authorizedUsers").doc(em).update({ status: ns }).then(function () {
                 u.status = ns;
-                return ns === "inactive" ? forceLogoutUid(u.uid) : 0;
+                return (ns === "inactive" && can("actLogout")) ? forceLogoutUid(u.uid) : 0;
             }).then(function () { renderGmail(); showPop(ns === "active" ? "▶ সক্রিয় করা হয়েছে।" : "⏸ নিষ্ক্রিয় করা হয়েছে এবং সব ডিভাইস থেকে Logout করানো হয়েছে।", "success"); }).catch(gmErr);
         }
         // শুধু Coder Role বদলাতে পারে
@@ -5236,24 +5251,29 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("pmAdmin").checked = p.addAdmin === true;
             document.getElementById("pmEditor").checked = p.addEditor === true;
             document.getElementById("pmViewer").checked = p.addViewer === true;
+            document.getElementById("pmAdd").checked = p.actAdd === true;
+            document.getElementById("pmToggle").checked = p.actToggle === true;
+            document.getElementById("pmLogout").checked = p.actLogout === true;
+            document.getElementById("pmRemove").checked = p.actRemove === true;
+            document.getElementById("pmSess").checked = p.actSess === true;
             document.getElementById("permTtl").textContent = "🔑 অনুমতি — " + em;
             document.getElementById("permBg").classList.add("on");
         }
         function savePerm() {
             var em = _permFor, u = _gmCache[em]; if (!u || !isCoderUser()) return;
-            var perms = { addAdmin: document.getElementById("pmAdmin").checked, addEditor: document.getElementById("pmEditor").checked, addViewer: document.getElementById("pmViewer").checked };
+            var perms = { addAdmin: document.getElementById("pmAdmin").checked, addEditor: document.getElementById("pmEditor").checked, addViewer: document.getElementById("pmViewer").checked, actAdd: document.getElementById("pmAdd").checked, actToggle: document.getElementById("pmToggle").checked, actLogout: document.getElementById("pmLogout").checked, actRemove: document.getElementById("pmRemove").checked, actSess: document.getElementById("pmSess").checked };
             fsdb.collection("authorizedUsers").doc(em).update({ perms: perms }).then(function () {
                 u.perms = perms; closePerm(); renderGmail();
                 showPop("✅ অনুমতি সেভ হয়েছে। ওই Admin-এর পরের Gmail Access খোলায় কার্যকর হবে।", "success");
             }).catch(gmErr);
         }
         function removeGmail(em) {
-            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            var u = _gmCache[em]; if (!u || !canManage(u) || !can("actRemove")) return;
             if (!confirm(em + " — অনুমোদিত তালিকা থেকে মুছবেন?")) return;
-            forceLogoutUid(u.uid).then(function () { return fsdb.collection("authorizedUsers").doc(em).delete(); }).then(function () { delete _gmCache[em]; renderGmail(); showPop("🗑️ মুছা হয়েছে।", "success"); }).catch(gmErr);
+            (can("actLogout") ? forceLogoutUid(u.uid) : Promise.resolve(0)).then(function () { return fsdb.collection("authorizedUsers").doc(em).delete(); }).then(function () { delete _gmCache[em]; renderGmail(); showPop("🗑️ মুছা হয়েছে।", "success"); }).catch(gmErr);
         }
         function forceLogoutUser(em) {
-            var u = _gmCache[em]; if (!u || !canManage(u)) return;
+            var u = _gmCache[em]; if (!u || !canManage(u) || !can("actLogout")) return;
             if (!u.uid) { showPop("এই ব্যবহারকারী এখনো লগইন করেননি।", "info"); return; }
             if (!confirm(em + " — সব ডিভাইস থেকে Logout করাবেন?")) return;
             forceLogoutUid(u.uid).then(function (n) { showPop("🚪 " + n + " টি সক্রিয় সেশন বন্ধ করা হয়েছে।", "success"); }).catch(gmErr);
@@ -5280,7 +5300,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("sessBg").classList.add("on");
         }
         function viewSessions(em) {
-            var u = _gmCache[em]; if (!u) return;
+            var u = _gmCache[em]; if (!u || !can("actSess")) return;
             if (!u.uid) { showPop("এই Gmail দিয়ে এখনো কেউ লগইন করেননি।", "info"); return; }
             _sessView = function () { viewSessions(em); };
             sessQ(fsdb.collection("userSessions").where("uid", "==", u.uid)).get().then(function (snap) {
@@ -5290,6 +5310,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             }).catch(gmErr);
         }
         function showAllSessions() {
+            if (!can("actSess")) return;
             _sessView = showAllSessions;
             sessQ(fsdb.collection("userSessions").where("status", "==", "active")).get().then(function (snap) {
                 var arr = []; snap.forEach(function (d) { var x = d.data(); x.id = d.id; if (isCoderUser() || x.email === currentUser.username || _gmCache[x.email]) arr.push(x); });
