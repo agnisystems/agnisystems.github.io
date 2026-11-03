@@ -3402,6 +3402,10 @@
         .perm-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 4px; border-bottom: 1px solid rgba(148,163,184,.2); }
         .perm-row b { display: block; font-size: 14px; }
         .perm-row small { color: #94a3b8; font-size: 11px; }
+    
+        /* প্যাকেজ / ওয়ার্ড / এলাকা কার্ডের সারিতে ক্লিক করলে গ্রাহক তালিকা */
+        .pkg-item[data-kind] { cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; }
+        .pkg-item[data-kind]:hover { transform: translateX(3px); box-shadow: 0 4px 14px rgba(0,0,0,.25); border-color: rgba(139,92,246,.6); }
     </style>
 </head>
 
@@ -4939,6 +4943,30 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 document.getElementById("lpBg").classList.add("on");
             });
         }
+        // ─── হোমের প্যাকেজ / ওয়ার্ড / এলাকা সারিতে ক্লিক: ওই গ্রাহকদের তালিকা ───
+        function showGroup(kind, key) {
+            cloudSync(function () {
+                var arr = DB.filter(function (c) {
+                    if (kind === "pkg") return (c.package_type || "অজানা") === key;
+                    if (kind === "ward") return (c.ward || findWardByArea(c.area) || "অজানা") === key;
+                    return (c.area || "অজানা") === key;
+                });
+                var title = kind === "pkg" ? "📦 প্যাকেজ: " + key : kind === "ward" ? "🏘️ " + (key === "অজানা" ? "ওয়ার্ড: অজানা" : "ওয়ার্ড " + key) : "📍 এলাকা: " + key;
+                _lm = "list"; _la = arr;
+                document.getElementById("lpTtl").textContent = title + " — " + arr.length + " জন";
+                document.getElementById("lpBody").innerHTML = buildList(arr, "list");
+                document.getElementById("lsIn").value = "";
+                document.querySelector(".ls-wrap").style.display = "block";
+                var foot = document.querySelector("#lpBg .pop-foot");
+                if (foot) foot.innerHTML = '<button class="pbtn grey" onclick="closeLP()">বন্ধ করুন</button>';
+                document.getElementById("lpBg").classList.add("on");
+            });
+        }
+        function groupClick(ev) {
+            var it = ev.target.closest(".pkg-item[data-kind]"); if (!it) return;
+            showGroup(it.getAttribute("data-kind"), it.getAttribute("data-key"));
+        }
+
         function filterL() { var q = document.getElementById("lsIn").value.toLowerCase(); var filtered = _la.filter(function (c) { return [c.id, c.name, c.mobile, c.login].some(function (f) { return f && f.toLowerCase().indexOf(q) >= 0; }); }); document.getElementById("lpBody").innerHTML = buildList(filtered, _lm); }
         function closeLP() {
             document.getElementById("lpBg").classList.remove("on");
@@ -5427,7 +5455,7 @@ var ar = c.area || "অজানা"; areaCount[ar] = (areaCount[ar] || 0) + 1;
             var pkgLabels = Object.keys(pkgCount).sort(function (a, b) { return pkgCount[b] - pkgCount[a]; });
             var pkgColors = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#06b6d4", "#84cc16", "#f97316"];
             var pkgMax = Math.max.apply(null, pkgLabels.map(function (k) { return pkgCount[k]; })) || 1;
-            var pkgHtml = pkgLabels.slice(0, 7).map(function (k, i) { var pct = Math.round((pkgCount[k] / pkgMax) * 100); return '<div class="pkg-item"><span class="pkg-name">' + k + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + pkgCount[k] + '</span></div>'; }).join("");
+            var pkgHtml = pkgLabels.slice(0, 7).map(function (k, i) { var pct = Math.round((pkgCount[k] / pkgMax) * 100); return '<div class="pkg-item" data-kind="pkg" data-key="' + escAttr(k) + '" title="ক্লিক করে গ্রাহক তালিকা দেখুন"><span class="pkg-name">' + k + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + pkgCount[k] + '</span></div>'; }).join("");
             document.getElementById("pkgList").innerHTML = pkgHtml || '<div style="font-size:12px;color:' + textDim + ';text-align:center;padding:20px">ডাটা নেই</div>';
             document.getElementById("pkgTotalBadge").textContent = DB.length + " জন";
 
@@ -5436,13 +5464,13 @@ var ar = c.area || "অজানা"; areaCount[ar] = (areaCount[ar] || 0) + 1;
 
 var wardLabels = Object.keys(wardCount).sort(function (a, b) { return wardCount[b] - wardCount[a]; });
 var wardMax = Math.max.apply(null, wardLabels.map(function (k) { return wardCount[k]; })) || 1;
-var wardHtml = wardLabels.map(function (k, i) { var pct = Math.round((wardCount[k] / wardMax) * 100); var lbl = (k === "অজানা") ? "অজানা" : ("ওয়ার্ড " + k); return '<div class="pkg-item"><span class="pkg-name">' + lbl + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + wardCount[k] + '</span></div>'; }).join("");
+var wardHtml = wardLabels.map(function (k, i) { var pct = Math.round((wardCount[k] / wardMax) * 100); var lbl = (k === "অজানা") ? "অজানা" : ("ওয়ার্ড " + k); return '<div class="pkg-item" data-kind="ward" data-key="' + escAttr(k) + '" title="ক্লিক করে গ্রাহক তালিকা দেখুন"><span class="pkg-name">' + lbl + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + wardCount[k] + '</span></div>'; }).join("");
 document.getElementById("wardList").innerHTML = wardHtml || '<div style="font-size:12px;color:' + textDim + ';text-align:center;padding:20px">ডাটা নেই</div>';
 document.getElementById("wardTotalBadge").textContent = DB.length + " জন";
 
 var areaLabels = Object.keys(areaCount).sort(function (a, b) { return areaCount[b] - areaCount[a]; });
 var areaMax = Math.max.apply(null, areaLabels.map(function (k) { return areaCount[k]; })) || 1;
-var areaHtml = areaLabels.map(function (k, i) { var pct = Math.round((areaCount[k] / areaMax) * 100); return '<div class="pkg-item"><span class="pkg-name">' + escHtml(k) + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + areaCount[k] + '</span></div>'; }).join("");
+var areaHtml = areaLabels.map(function (k, i) { var pct = Math.round((areaCount[k] / areaMax) * 100); return '<div class="pkg-item" data-kind="area" data-key="' + escAttr(k) + '" title="ক্লিক করে গ্রাহক তালিকা দেখুন"><span class="pkg-name">' + escHtml(k) + '</span><div class="pkg-bar-wrap"><div class="pkg-bar" style="width:' + pct + '%;background:' + pkgColors[i % pkgColors.length] + '"></div></div><span class="pkg-count" style="color:' + pkgColors[i % pkgColors.length] + '">' + areaCount[k] + '</span></div>'; }).join("");
 document.getElementById("areaList").innerHTML = areaHtml || '<div style="font-size:12px;color:' + textDim + ';text-align:center;padding:20px">ডাটা নেই</div>';
 document.getElementById("areaTotalBadge").textContent = DB.length + " জন";
 
@@ -5852,6 +5880,7 @@ function buildRevenueList(arr) {
         window.addEventListener("load", function () {
             applyTheme(curTheme);
             updateAreaDatalist("");
+            ["pkgList", "wardList", "areaList"].forEach(function (id) { var el = document.getElementById(id); if (el) el.addEventListener("click", groupClick); });
             var gl = document.getElementById("gmList"); if (gl) { gl.addEventListener("click", gmClick); gl.addEventListener("change", gmChange); }
             // আগে লগইন করা থাকলে Firebase নিজেই session ফিরিয়ে আনে, তারপর অনুমোদন যাচাই হয়
             fbAuth.onAuthStateChanged(function (user) { if (user) handleAuthUser(user); });
