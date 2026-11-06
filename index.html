@@ -3406,6 +3406,15 @@
         /* প্যাকেজ / ওয়ার্ড / এলাকা কার্ডের সারিতে ক্লিক করলে গ্রাহক তালিকা */
         .pkg-item[data-kind] { cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; }
         .pkg-item[data-kind]:hover { transform: translateX(3px); box-shadow: 0 4px 14px rgba(0,0,0,.25); border-color: rgba(139,92,246,.6); }
+    
+        /* ড্যাশবোর্ডের নিচের কপিরাইট ও ভার্সন */
+        .app-foot { margin: 22px 0 10px; padding: 16px 12px 6px; border-top: 1px solid rgba(148,163,184,.18); text-align: center; }
+        .app-foot .af-line { font-size: 12px; color: rgba(148,163,184,.8); line-height: 1.9; }
+        .app-foot .af-line b { color: rgba(226,232,240,.9); font-weight: 700; }
+        .app-foot a { color: #818cf8; font-weight: 600; text-decoration: none; }
+        .app-foot a:hover { text-decoration: underline; }
+        .app-foot .af-ver { display: inline-block; padding: 2px 12px; border-radius: 20px; font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .4px; color: #fff; background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 2px 10px rgba(99,102,241,.35); }
+        .app-foot .af-date { margin-left: 8px; font-size: 11px; color: rgba(148,163,184,.65); }
     </style>
 </head>
 
@@ -3697,6 +3706,11 @@
                         </table>
                     </div>
                 </div>
+            </div>
+            <div class="app-foot">
+                <div class="af-line">© <span id="afYear">2026</span> <b>Agni Systems Limited</b> · Panchagarh · সর্বস্বত্ব সংরক্ষিত</div>
+                <div class="af-line">Developed by <a href="https://wa.me/8801786945337" target="_blank" rel="noopener">Arafat Ahmed</a></div>
+                <div class="af-line"><span class="af-ver" id="appVer" title="অ্যাপের সংস্করণ">v1.0.0</span><span class="af-date" id="appVerDate"></span></div>
             </div>
         </div>
         <!-- END HOMEPAGE -->
@@ -5915,6 +5929,19 @@ function buildRevenueList(arr) {
 
     <!--clean autocomplete সিস্টেম-->
     <script>
+        // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
+        var APP_VERSION = "2.0.0";
+        var APP_DATE = "2026-11-06";
+        (function () {
+            function fill() {
+                var v = document.getElementById("appVer"), d = document.getElementById("appVerDate"), y = document.getElementById("afYear");
+                if (v) v.textContent = "v" + APP_VERSION;
+                if (d) { var p = APP_DATE.split("-"), mn = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"]; d.textContent = "আপডেট: " + Number(p[2]) + " " + mn[Number(p[1]) - 1] + " " + p[0]; }
+                if (y) y.textContent = APP_DATE.split("-")[0];
+            }
+            if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fill); else fill();
+        })();
+
         // ─── PWA: Install + Offline ───
         var _installEv = null;
         var _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
