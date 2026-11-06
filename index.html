@@ -6078,7 +6078,7 @@ function buildRevenueList(arr) {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.0.4";
+        var APP_VERSION = "2.0.5";
         var APP_DATE = "2026-11-06";
         (function () {
             function fill() {
@@ -6121,8 +6121,8 @@ function buildRevenueList(arr) {
                 return sig === "||" ? null : sig;
             }).catch(function () { return null; });
         }
-        // ডেভেলপারের WhatsApp নম্বর (দেশের কোড সহ, + ছাড়া, যেমন 8801XXXXXXXXX)। এখানে বসান।
-        var DEV_WA = "";
+
+        var DEV_WA = "+8801786945337";
         function showUpdateBar(sig) {
             if (_updShown || _updDismissed === sig) return;
             _updShown = true;
