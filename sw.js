@@ -1,6 +1,6 @@
 // Agni Systems — Service Worker (অফলাইনে অ্যাপ চালানোর জন্য)
 // অ্যাপ আপডেট দিলে নিচের VERSION সংখ্যা বাড়ান।
-var VERSION = "agni-v8";
+var VERSION = "agni-v9";
 var CORE = ["./", "index.html", "manifest.json", "agni-patch.js", "logo.png", "encrypted.png", "icon-192.png", "icon-512.png", "icon-maskable-512.png"];
 var CDN = [
   "https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js",
@@ -31,6 +31,7 @@ self.addEventListener("fetch", function (e) {
   var req = e.request;
   if (req.method !== "GET") return;
   var url = new URL(req.url);
+  if (req.cache === "no-store" || req.cache === "reload") return;   // "আপডেট চেক" ও জোর-রিফ্রেশ সরাসরি সার্ভারে যায়
 
   // পেজ নিজে: আগে নেটওয়ার্ক (নতুন সংস্করণ পেতে), না পেলে ক্যাশ
   if (req.mode === "navigate") {
