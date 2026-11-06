@@ -4298,6 +4298,7 @@
                 <div class="perm-row"><div><b>🚪 Force Logout</b><small>সব ডিভাইস থেকে Logout করানো</small></div><label class="tgl"><input type="checkbox" id="pmLogout"><span></span></label></div>
                 <div class="perm-row"><div><b>🗑️ মুছে ফেলা</b><small>তালিকা থেকে ব্যবহারকারী মোছা</small></div><label class="tgl"><input type="checkbox" id="pmRemove"><span></span></label></div>
                 <div class="perm-row"><div><b>🖥 সেশন ও লগইন ইতিহাস</b><small>Active Sessions ও ডিভাইস দেখা</small></div><label class="tgl"><input type="checkbox" id="pmSess"><span></span></label></div>
+                <div class="perm-row"><div><b>🖨 রিপোর্ট প্রিন্ট</b><small>ON = রিপোর্ট দেখা ও প্রিন্ট করতে পারবে, OFF = বন্ধ</small></div><label class="tgl"><input type="checkbox" id="pmRpt"><span></span></label></div>
             </div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closePerm()">বাতিল</button><button class="pbtn green" onclick="savePerm()">✓ সেভ করুন</button></div>
         </div>
@@ -5459,14 +5460,16 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("pmLogout").checked = p.actLogout === true;
             document.getElementById("pmRemove").checked = p.actRemove === true;
             document.getElementById("pmSess").checked = p.actSess === true;
+            document.getElementById("pmRpt").checked = canReport({ role: "admin", rpt: u.rpt });
             document.getElementById("permTtl").textContent = "🔑 অনুমতি — " + em;
             document.getElementById("permBg").classList.add("on");
         }
         function savePerm() {
             var em = _permFor, u = _gmCache[em]; if (!u || !isCoderUser()) return;
             var perms = { addAdmin: document.getElementById("pmAdmin").checked, addEditor: document.getElementById("pmEditor").checked, addViewer: document.getElementById("pmViewer").checked, actAdd: document.getElementById("pmAdd").checked, actToggle: document.getElementById("pmToggle").checked, actLogout: document.getElementById("pmLogout").checked, actRemove: document.getElementById("pmRemove").checked, actSess: document.getElementById("pmSess").checked };
-            fsdb.collection("authorizedUsers").doc(em).update({ perms: perms }).then(function () {
-                u.perms = perms; closePerm(); renderGmail();
+            var rptv = document.getElementById("pmRpt").checked ? "on" : "off";
+            fsdb.collection("authorizedUsers").doc(em).update({ perms: perms, rpt: rptv }).then(function () {
+                u.perms = perms; u.rpt = rptv; closePerm(); renderGmail();
                 showPop("✅ অনুমতি সেভ হয়েছে। ওই Admin-এর পরের Gmail Access খোলায় কার্যকর হবে।", "success");
             }).catch(gmErr);
         }
@@ -6075,7 +6078,7 @@ function buildRevenueList(arr) {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.0.1";
+        var APP_VERSION = "2.0.4";
         var APP_DATE = "2026-11-06";
         (function () {
             function fill() {
@@ -6118,15 +6121,37 @@ function buildRevenueList(arr) {
                 return sig === "||" ? null : sig;
             }).catch(function () { return null; });
         }
+        // ডেভেলপারের WhatsApp নম্বর (দেশের কোড সহ, + ছাড়া, যেমন 8801XXXXXXXXX)। এখানে বসান।
+        var DEV_WA = "";
         function showUpdateBar(sig) {
             if (_updShown || _updDismissed === sig) return;
             _updShown = true;
+            if (!document.getElementById("updCss")) {
+                var st = document.createElement("style"); st.id = "updCss";
+                st.textContent = "@keyframes updIn{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}@keyframes updSpin{to{transform:rotate(360deg)}}@keyframes updGlow{0%,100%{box-shadow:0 0 0 0 rgba(230,59,46,.45)}50%{box-shadow:0 0 0 14px rgba(230,59,46,0)}}" +
+                    "#updBar{position:fixed;inset:0;z-index:10100;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,8,18,.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}" +
+                    "#updBar .uc{width:100%;max-width:360px;text-align:center;color:#f1f5f9;border-radius:24px;padding:30px 24px 22px;font-family:'Hind Siliguri',sans-serif;background:linear-gradient(160deg,#1a2038 0%,#0d1224 100%);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);animation:updIn .4s cubic-bezier(.2,.9,.3,1.2);position:relative;overflow:hidden}" +
+                    "#updBar .uc:before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#e63b2e,#f59e0b,#e63b2e)}" +
+                    "#updBar .ui{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#e63b2e,#f97316);animation:updGlow 2s infinite}" +
+                    "#updBar h3{margin:0 0 6px;font-size:20px;font-weight:700;letter-spacing:.2px}" +
+                    "#updBar p{margin:0 0 6px;font-size:13.5px;line-height:1.55;color:#94a3b8}" +
+                    "#updBar .uv{display:inline-block;margin:4px 0 18px;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600;color:#fbbf24;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3)}" +
+                    "#updBar .us{margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.09);font-size:12px;line-height:1.6;color:#94a3b8}#updBar .us a{color:#fbbf24;font-weight:700;font-size:14px;text-decoration:none;border-bottom:1px dashed rgba(251,191,36,.6)}#updBar .us b{color:#cbd5e1;font-weight:600}" +
+                    "#updBar .ub{display:flex;gap:10px}" +
+                    "#updBar button{flex:1;border:0;border-radius:13px;padding:12px 10px;font:700 14px 'Hind Siliguri',sans-serif;cursor:pointer;transition:transform .12s,filter .15s}" +
+                    "#updBar button:active{transform:scale(.96)}" +
+                    "#updBar #updGo{color:#fff;background:linear-gradient(135deg,#e63b2e,#f97316);box-shadow:0 8px 22px rgba(230,59,46,.4)}" +
+                    "#updBar #updLater{color:#cbd5e1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14)}" +
+                    "#updBar #updLater:hover{filter:brightness(1.2)}";
+                document.head.appendChild(st);
+            }
             var d = document.createElement("div");
             d.id = "updBar";
-            d.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:10100;max-width:94vw;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border-radius:14px;padding:10px 14px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center";
-            d.innerHTML = '<span>🔄 অ্যাপের নতুন সংস্করণ এসেছে</span>' +
-                '<button id="updGo" style="background:#fff;color:#4338ca;border:0;border-radius:9px;padding:6px 14px;font:700 13px \'Hind Siliguri\',sans-serif;cursor:pointer">এখনই আপডেট করুন</button>' +
-                '<button id="updLater" style="background:transparent;color:#e0e7ff;border:1px solid rgba(255,255,255,.5);border-radius:9px;padding:6px 12px;font:600 12px \'Hind Siliguri\',sans-serif;cursor:pointer">পরে</button>';
+            d.innerHTML = '<div class="uc"><div class="ui">🚀</div><h3>নতুন আপডেট এসেছে!</h3>' +
+                '<p>অ্যাপের নতুন সংস্করণ প্রস্তুত। আপডেট করলে নতুন ফিচার ও উন্নতিগুলো পাবেন। আপনার ডাটা নিরাপদ থাকবে।</p>' +
+                '<span class="uv">✨ নতুন সংস্করণ উপলব্ধ</span>' +
+                '<div class="ub"><button id="updLater">পরে</button><button id="updGo">🔄 আপডেট করুন</button></div>' +
+                '<div class="us">ধন্যবাদান্তে,<br><a href="https://wa.me/' + DEV_WA + '" target="_blank" rel="noopener" title="WhatsApp-এ মেসেজ করুন">💬 Arafat Ahmed</a><br><b>Full Stack Web Engineer</b><br>Web &amp; Software Department<br>of Creative IT Institute</div></div>';
             document.body.appendChild(d);
             document.getElementById("updGo").onclick = applyUpdate;
             document.getElementById("updLater").onclick = function () { _updDismissed = sig; _updShown = false; d.remove(); };
