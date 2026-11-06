@@ -4289,8 +4289,8 @@
         </div>
     </div>
 
-    <button id="pwaBtn" onclick="installApp()" style="display:none;position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;background:#6366f1;color:#fff;border:0;border-radius:24px;padding:11px 18px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer">📲 App Install</button>
-    <div id="offBadge" style="display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top));z-index:9500;background:#b45309;color:#fff;border-radius:16px;padding:5px 14px;font:600 12px 'Hind Siliguri',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.4)">📴 অফলাইন মোড — ইন্টারনেট এলে ডাটা সিঙ্ক হবে</div>
+    <button id="pwaBtn" onclick="installApp()" style="display:none;position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:10050;background:#6366f1;color:#fff;border:0;border-radius:24px;padding:11px 18px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer">📲 App Install</button>
+    <div id="offBadge" style="display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top));z-index:10050;background:#b45309;color:#fff;border-radius:16px;padding:5px 14px;font:600 12px 'Hind Siliguri',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.4)">📴 অফলাইন মোড — ইন্টারনেট এলে ডাটা সিঙ্ক হবে</div>
 
     <script>
         "use strict";
@@ -4622,7 +4622,7 @@ var _fullPageBack = null;
         var EQ = ["eRm", "eRq", "eRs", "eRp", "eC1m", "eC1q", "eC1s", "eC1p", "eC2m", "eC2q", "eC2s", "eC2p", "eTm", "eOq", "eOs", "eOp", "eTs", "eTp", "eT4", "eT8", "eTsB", "eTpB", "eROm", "eROq", "eROs", "eROp", "eSq", "eSs", "eSp"];
 // ─── WARD ↔ AREA MAP (পঞ্চগড় পৌরসভা) ───
 var WARD_AREAS = {
-    "01": ["Dokarpara", "Mithapur", "Kayetpara", "Molani Bodapara"],
+    "01": ["Dokarpara", "Mithapur", "Kajetpara", "Molani Bodapara"],
     "02": ["Puraton Campus", "Ramer Dangga", "Masjid Para"],
     "03": ["Islam Bag", "Roshan Bag (Poschim)", "New Market", "Panchagarh Bazar"],
     "04": ["Jalasi", "Chan Para"],
@@ -5936,7 +5936,56 @@ function buildRevenueList(arr) {
             else o.style.display = "none";
         }
         window.addEventListener("online", updNet); window.addEventListener("offline", updNet); updNet();
-        if ("serviceWorker" in navigator) window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function (e) { console.warn("SW:", e); }); });
+        // ─── অ্যাপ আপডেট: GitHub-এ নতুন ফাইল আপলোড করলে ব্যবহারকারী "আপডেট করুন" বাটন পায় ───
+        var _updShown = false, _updDismissed = "", _pageSig = null;
+        function pageSig() {
+            // index.html-এর সার্ভার-পরিচয় (ETag / সংশোধনের সময় / আকার)। ফাইল বদলালে এটা বদলায়।
+            return fetch(location.pathname.replace(/[^\/]*$/, "") + "index.html", { method: "HEAD", cache: "no-store" }).then(function (r) {
+                if (!r.ok) return null;
+                var sig = (r.headers.get("etag") || "") + "|" + (r.headers.get("last-modified") || "") + "|" + (r.headers.get("content-length") || "");
+                return sig === "||" ? null : sig;
+            }).catch(function () { return null; });
+        }
+        function showUpdateBar(sig) {
+            if (_updShown || _updDismissed === sig) return;
+            _updShown = true;
+            var d = document.createElement("div");
+            d.id = "updBar";
+            d.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:10100;max-width:94vw;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;border-radius:14px;padding:10px 14px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center";
+            d.innerHTML = '<span>🔄 অ্যাপের নতুন সংস্করণ এসেছে</span>' +
+                '<button id="updGo" style="background:#fff;color:#4338ca;border:0;border-radius:9px;padding:6px 14px;font:700 13px \'Hind Siliguri\',sans-serif;cursor:pointer">এখনই আপডেট করুন</button>' +
+                '<button id="updLater" style="background:transparent;color:#e0e7ff;border:1px solid rgba(255,255,255,.5);border-radius:9px;padding:6px 12px;font:600 12px \'Hind Siliguri\',sans-serif;cursor:pointer">পরে</button>';
+            document.body.appendChild(d);
+            document.getElementById("updGo").onclick = applyUpdate;
+            document.getElementById("updLater").onclick = function () { _updDismissed = sig; _updShown = false; d.remove(); };
+        }
+        function applyUpdate() {
+            if ((window._pendingW || 0) > 0 && !confirm("এখনো " + window._pendingW + " টি পরিবর্তন সিঙ্কের অপেক্ষায় আছে (ফোনে সংরক্ষিত, হারাবে না)। এখন আপডেট করবেন?")) return;
+            var go = function () { location.reload(); };
+            var done = function () { if ("caches" in window) caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).then(go, go); else go(); };
+            if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistration().then(function (r) { return r ? r.update() : null; }).then(done, done); else done();
+        }
+        function checkUpdate() {
+            if (!navigator.onLine) return;
+            pageSig().then(function (sig) {
+                if (!sig) return;
+                if (_pageSig === null) { _pageSig = sig; return; }   // প্রথমবার: বর্তমান সংস্করণ মনে রাখা
+                if (sig !== _pageSig) showUpdateBar(sig);
+            });
+        }
+        if ("serviceWorker" in navigator) {
+            var _hadCtl = !!navigator.serviceWorker.controller;
+            navigator.serviceWorker.addEventListener("controllerchange", function () { if (_hadCtl) showUpdateBar("sw"); _hadCtl = true; });
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("sw.js").then(function (reg) {
+                    setInterval(function () { reg.update().catch(function () { }); }, 10 * 60 * 1000);
+                }).catch(function (e) { console.warn("SW:", e); });
+                checkUpdate();
+                setInterval(checkUpdate, 5 * 60 * 1000);
+                document.addEventListener("visibilitychange", function () { if (!document.hidden) checkUpdate(); });
+                window.addEventListener("online", checkUpdate);
+            });
+        }
     </script>
     <script src="agni-patch.js"></script>
 
