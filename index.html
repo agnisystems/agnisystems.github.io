@@ -3419,6 +3419,8 @@
         .app-foot .af-btn:hover { background: rgba(99,102,241,.28); }
         .app-foot .af-btn:disabled { opacity: .6; cursor: default; }
         .app-foot .af-msg { font-weight: 600; margin-top: 2px; }
+            .rp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(148,163,184,.4); cursor: pointer; font-size: 13px; font-weight: 600; user-select: none; }
+        .rp-chip:has(input:checked) { background: rgba(99,102,241,.2); border-color: #818cf8; }
     </style>
 </head>
 
@@ -3512,6 +3514,8 @@
         <div class="sb-sec">ডাউনলোড</div>
         <div class="sb-item" id="sExcel" style="display:none" onclick="doExcel();closeSidebar();"><span
                 class="sb-ico">📊</span> Excel Export</div>
+        <div class="sb-item" id="sReport" style="display:none" onclick="openReport();closeSidebar();"><span
+                class="sb-ico">🖨</span> রিপোর্ট প্রিন্ট</div>
         <div class="sb-item" id="sExport" style="display:none" onclick="doExport();closeSidebar();"><span
                 class="sb-ico">⬇</span> JSON Export</div>
         <div class="sb-item" id="sImport" style="display:none" onclick="doImport();closeSidebar();"><span
@@ -4299,6 +4303,29 @@
         </div>
     </div>
 
+    <div class="pop-bg" id="rpBg" style="z-index:3000">
+        <div class="pop wide">
+            <div class="pop-hdr">
+                <h3>🖨 রিপোর্ট প্রিন্ট</h3><button class="pop-x" onclick="closeReport()">✕</button>
+            </div>
+            <div class="pop-body" style="max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                    <label class="rp-chip"><input type="radio" name="rpT" value="summary" checked onchange="rpRefresh()"> 📊 সারসংক্ষেপ</label><label class="rp-chip"><input type="radio" name="rpT" value="list" onchange="rpRefresh()"> 📋 গ্রাহক তালিকা</label><label class="rp-chip"><input type="radio" name="rpT" value="due" onchange="rpRefresh()"> 💸 বাকি তালিকা</label>
+                </div>
+                <div id="rpFilters" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                    <select class="adm-in" id="rpPkg" onchange="rpRefresh()" style="width:auto;flex:1;min-width:130px;margin:0"></select>
+                    <select class="adm-in" id="rpWard" onchange="rpRefresh()" style="width:auto;flex:1;min-width:130px;margin:0"></select>
+                    <select class="adm-in" id="rpArea" onchange="rpRefresh()" style="width:auto;flex:1;min-width:130px;margin:0"></select>
+                    <select class="adm-in" id="rpTyp" onchange="rpRefresh()" style="width:auto;flex:1;min-width:110px;margin:0"></select>
+                </div>
+                <div id="rpInfo" style="font-size:12px;color:#94a3b8;margin-bottom:6px"></div>
+                <iframe id="rpFrame" title="রিপোর্ট প্রিভিউ" style="width:100%;height:52vh;border:1px solid rgba(148,163,184,.3);border-radius:8px;background:#fff"></iframe>
+                <div style="font-size:11px;color:#94a3b8;margin-top:6px">PDF চাইলে প্রিন্ট ডায়ালগে "Save as PDF" বেছে নিন। পাসওয়ার্ড ও NID রিপোর্টে আসে না।</div>
+            </div>
+            <div class="pop-foot"><button class="pbtn grey" onclick="closeReport()">বন্ধ করুন</button><button class="pbtn green" onclick="printReport()">🖨 প্রিন্ট করুন</button></div>
+        </div>
+    </div>
+
     <div class="pop-bg" id="sessBg" style="z-index:3000">
         <div class="pop wide">
             <div class="pop-hdr">
@@ -4616,6 +4643,9 @@
             // Gmail Access: Coder সবসময়, Admin শুধু অন্তত একটি অনুমতি ON থাকলে
             var sAd = document.getElementById("sAdmin");
             if (sAd && role === "admin" && !hasAdminAccess()) sAd.style.display = "none";
+            // রিপোর্ট প্রিন্ট: Coder, Admin ও Management। Editor নয়
+            var sRp = document.getElementById("sReport");
+            if (sRp) sRp.style.display = (role === "editor") ? "none" : "flex";
             // Viewer: নতুন গ্রাহক যোগের বাটন লুকানো
             var hideNew = isViewer();
             var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
@@ -4987,7 +5017,90 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             showGroup(it.getAttribute("data-kind"), it.getAttribute("data-key"));
         }
 
-        function filterL() { var q = document.getElementById("lsIn").value.toLowerCase(); var filtered = _la.filter(function (c) { return [c.id, c.name, c.mobile, c.login].some(function (f) { return f && f.toLowerCase().indexOf(q) >= 0; }); }); document.getElementById("lpBody").innerHTML = buildList(filtered, _lm); }
+// ─── রিপোর্ট প্রিন্ট ───
+        function rpNum(n) { return Number(n || 0).toLocaleString("en-IN"); }
+        function rpWard(c) { return c.ward || findWardByArea(c.area) || "অজানা"; }
+        function rpCount(arr, fn) { var m = {}; arr.forEach(function (c) { var k = fn(c); m[k] = (m[k] || 0) + 1; }); return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }).map(function (k) { return { k: k, n: m[k] }; }); }
+        function rpFillSel(id, first, items, fmt) { var el = document.getElementById(id), cur = el.value; el.innerHTML = '<option value="">' + first + '</option>' + items.map(function (x) { return '<option value="' + escAttr(x.k) + '">' + escHtml(fmt ? fmt(x.k) : x.k) + ' (' + x.n + ')</option>'; }).join(""); el.value = cur; }
+        function openReport() {
+            if (!currentUser || currentUser.role === "editor") return;
+            cloudSync(function () {
+                rpFillSel("rpPkg", "📦 সব প্যাকেজ", rpCount(DB, function (c) { return c.package_type || "অজানা"; }));
+                rpFillSel("rpWard", "🏘️ সব ওয়ার্ড", rpCount(DB, rpWard), function (k) { return k === "অজানা" ? k : "ওয়ার্ড " + k; });
+                rpFillSel("rpArea", "📍 সব এলাকা", rpCount(DB, function (c) { return c.area || "অজানা"; }));
+                rpFillSel("rpTyp", "🏠 সব ধরন", rpCount(DB, function (c) { return c.customer_type || "অজানা"; }));
+                document.getElementById("rpBg").classList.add("on");
+                rpRefresh();
+            });
+        }
+        function closeReport() { document.getElementById("rpBg").classList.remove("on"); document.getElementById("rpFrame").srcdoc = ""; }
+        function rpType() { var r = document.querySelector('input[name="rpT"]:checked'); return r ? r.value : "summary"; }
+        function rpRows(type) {
+            var pk = document.getElementById("rpPkg").value, wd = document.getElementById("rpWard").value, ar = document.getElementById("rpArea").value, ty = document.getElementById("rpTyp").value;
+            var rows = DB.filter(function (c) {
+                if (pk && (c.package_type || "অজানা") !== pk) return false;
+                if (wd && rpWard(c) !== wd) return false;
+                if (ar && (c.area || "অজানা") !== ar) return false;
+                if (ty && (c.customer_type || "অজানা") !== ty) return false;
+                if (type === "due" && !(Number(c.totPrice) || 0)) return false;
+                return true;
+            });
+            if (type === "due") rows.sort(function (a, b) { return (Number(b.totPrice) || 0) - (Number(a.totPrice) || 0); });
+            return rows;
+        }
+        function rpRefresh() {
+            var t = rpType();
+            document.getElementById("rpFilters").style.display = t === "summary" ? "none" : "flex";
+            var rows = t === "summary" ? DB : rpRows(t);
+            document.getElementById("rpInfo").textContent = t === "summary" ? "মোট " + DB.length + " জন গ্রাহকের সারসংক্ষেপ" : "রিপোর্টে " + rows.length + " জন গ্রাহক";
+            document.getElementById("rpFrame").srcdoc = buildReportHtml(t, rows);
+        }
+        function printReport() {
+            var f = document.getElementById("rpFrame");
+            try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { showPop("প্রিন্ট শুরু করা গেল না। ব্রাউজারের মেনু থেকে Print চাপুন।", "error"); }
+        }
+        function buildReportHtml(type, rows) {
+            var now = new Date(), when = now.toLocaleDateString("en-GB") + "  " + now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+            var title = type === "summary" ? "সারসংক্ষেপ রিপোর্ট" : type === "list" ? "গ্রাহক তালিকা" : "বাকি গ্রাহক তালিকা";
+            var sub = [];
+            if (type !== "summary") {
+                var sv = function (id, lbl, fmt) { var el = document.getElementById(id); if (el && el.value) sub.push(lbl + ": " + (fmt ? fmt(el.value) : el.value)); };
+                sv("rpPkg", "প্যাকেজ"); sv("rpWard", "ওয়ার্ড", function (v) { return v === "অজানা" ? v : "ওয়ার্ড " + v; }); sv("rpArea", "এলাকা"); sv("rpTyp", "ধরন");
+            }
+            var h = ['<!doctype html><html lang="bn"><head><meta charset="utf-8"><title>' + title + '</title>',
+                '<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">',
+                '<style>@page{size:A4;margin:14mm 12mm}*{box-sizing:border-box}body{font-family:"Hind Siliguri","Noto Sans Bengali","Nirmala UI",Arial,sans-serif;color:#0f172a;font-size:12px;margin:0;padding:10px}',
+                '.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #4f46e5;padding-bottom:8px;margin-bottom:12px}.hd h1{margin:0;font-size:20px;color:#1e1b4b}.hd .co{font-size:12px;color:#475569}.hd .rt{text-align:right;font-size:11px;color:#475569}',
+                'h2{font-size:14px;margin:16px 0 6px;color:#3730a3;border-left:4px solid #6366f1;padding-left:8px}.kp{display:flex;flex-wrap:wrap;gap:8px}.k{flex:1 1 130px;border:1px solid #c7d2fe;background:#eef2ff;border-radius:8px;padding:8px 10px}.k b{display:block;font-size:17px;color:#312e81}.k span{font-size:11px;color:#475569}',
+                'table{width:100%;border-collapse:collapse;margin-top:4px}th{background:#4f46e5;color:#fff;text-align:left;padding:5px 7px;font-size:11px}td{padding:4px 7px;border-bottom:1px solid #e2e8f0;font-size:11.5px}tr:nth-child(even) td{background:#f8fafc}thead{display:table-header-group}tr{page-break-inside:avoid}.r{text-align:right}.tot td{font-weight:700;background:#e0e7ff!important;border-top:2px solid #4f46e5}',
+                '.two{display:flex;gap:14px}.two>div{flex:1;min-width:0}.ft{margin-top:18px;padding-top:8px;border-top:1px solid #cbd5e1;font-size:10px;color:#64748b;text-align:center}.sub{font-size:11px;color:#475569;margin:-4px 0 8px}</style></head><body>',
+                '<div class="hd"><div><h1>' + escHtml(title) + '</h1><div class="co">Agni Systems Limited · Panchagarh</div></div><div class="rt">প্রস্তুতের সময়: ' + when + '<br>মোট: ' + rows.length + ' জন</div></div>'];
+            if (sub.length) h.push('<div class="sub">ফিল্টার — ' + escHtml(sub.join(" · ")) + '</div>');
+            if (type === "summary") {
+                var rev = 0, due = 0; DB.forEach(function (c) { rev += Number(c.totalPrice) || 0; due += Number(c.totPrice) || 0; });
+                var types = rpCount(DB, function (c) { return c.customer_type || "অজানা"; });
+                h.push('<div class="kp"><div class="k"><b>' + rpNum(DB.length) + '</b><span>মোট গ্রাহক</span></div>' + types.map(function (x) { return '<div class="k"><b>' + rpNum(x.n) + '</b><span>' + escHtml(x.k) + '</span></div>'; }).join("") +
+                    '<div class="k"><b>৳' + rpNum(rev) + '</b><span>মোট মূল্য</span></div><div class="k"><b>৳' + rpNum(due) + '</b><span>মোট বাকি</span></div></div>');
+                var tbl = function (arr, head, fmt) { var t = '<table><thead><tr><th>' + head + '</th><th class="r">গ্রাহক</th><th class="r">%</th></tr></thead><tbody>'; arr.forEach(function (x) { t += '<tr><td>' + escHtml(fmt ? fmt(x.k) : x.k) + '</td><td class="r">' + x.n + '</td><td class="r">' + (DB.length ? Math.round(x.n * 1000 / DB.length) / 10 : 0) + '%</td></tr>'; }); return t + '<tr class="tot"><td>মোট</td><td class="r">' + DB.length + '</td><td class="r">100%</td></tr></tbody></table>'; };
+                h.push('<div class="two"><div><h2>📦 প্যাকেজ বিতরণ</h2>' + tbl(rpCount(DB, function (c) { return c.package_type || "অজানা"; }), "প্যাকেজ") + '</div><div><h2>🏘️ ওয়ার্ড ভিত্তিক</h2>' + tbl(rpCount(DB, rpWard), "ওয়ার্ড", function (k) { return k === "অজানা" ? k : "ওয়ার্ড " + k; }) + '</div></div>');
+                h.push('<h2>📍 এলাকা ভিত্তিক</h2>' + tbl(rpCount(DB, function (c) { return c.area || "অজানা"; }), "এলাকা"));
+            } else if (!rows.length) {
+                h.push('<p style="text-align:center;color:#64748b;padding:30px">এই ফিল্টারে কোনো গ্রাহক নেই।</p>');
+            } else if (type === "list") {
+                h.push('<table><thead><tr><th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th><th>ধরন</th><th>ওয়ার্ড</th><th>এলাকা</th><th>সংযোগ</th></tr></thead><tbody>');
+                rows.forEach(function (c, i) { h.push('<tr><td>' + (i + 1) + '</td><td>' + escHtml(c.id || "") + '</td><td>' + escHtml(c.name || "") + '</td><td>' + escHtml(c.mobile || "") + '</td><td>' + escHtml(c.package_type || "—") + '</td><td>' + escHtml(c.customer_type || "—") + '</td><td>' + escHtml(rpWard(c)) + '</td><td>' + escHtml(c.area || "—") + '</td><td>' + escHtml(c.conn || "—") + '</td></tr>'); });
+                h.push('<tr class="tot"><td colspan="9">মোট গ্রাহক: ' + rows.length + ' জন</td></tr></tbody></table>');
+            } else {
+                var sum = 0;
+                h.push('<table><thead><tr><th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th><th>এলাকা</th><th class="r">বাকি (৳)</th></tr></thead><tbody>');
+                rows.forEach(function (c, i) { var d = Number(c.totPrice) || 0; sum += d; h.push('<tr><td>' + (i + 1) + '</td><td>' + escHtml(c.id || "") + '</td><td>' + escHtml(c.name || "") + '</td><td>' + escHtml(c.mobile || "") + '</td><td>' + escHtml(c.package_type || "—") + '</td><td>' + escHtml(c.area || "—") + '</td><td class="r">' + rpNum(d) + '</td></tr>'); });
+                h.push('<tr class="tot"><td colspan="6">মোট বাকি (' + rows.length + ' জন)</td><td class="r">৳' + rpNum(sum) + '</td></tr></tbody></table>');
+            }
+            h.push('<div class="ft">© ' + APP_DATE.split("-")[0] + ' Agni Systems Limited · Developed by Arafat Ahmed · v' + APP_VERSION + '</div></body></html>');
+            return h.join("");
+        }
+
+                function filterL() { var q = document.getElementById("lsIn").value.toLowerCase(); var filtered = _la.filter(function (c) { return [c.id, c.name, c.mobile, c.login].some(function (f) { return f && f.toLowerCase().indexOf(q) >= 0; }); }); document.getElementById("lpBody").innerHTML = buildList(filtered, _lm); }
         function closeLP() {
             document.getElementById("lpBg").classList.remove("on");
             document.querySelector(".ls-wrap").style.display = "block";
