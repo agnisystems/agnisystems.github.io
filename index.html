@@ -4587,7 +4587,7 @@
                     if (r.fresh || d.uid !== user.uid) {
                         fsdb.collection("authorizedUsers").doc(email).update({ uid: user.uid, displayName: user.displayName || "", lastLogin: TS() }).catch(function (e) { console.error(e); });
                     }
-                    currentUser = { username: email, role: normRole(d.role), perms: d.perms || {}, display: d.displayName || user.displayName || email, uid: user.uid };
+                    currentUser = { username: email, role: normRole(d.role), perms: d.perms || {}, rpt: d.rpt || "", display: d.displayName || user.displayName || email, uid: user.uid };
                     _authBusy = false;
                     document.getElementById("lerr").style.display = "none";
                     document.getElementById("loginScreen").style.display = "none";
@@ -4645,7 +4645,7 @@
             if (sAd && role === "admin" && !hasAdminAccess()) sAd.style.display = "none";
             // রিপোর্ট প্রিন্ট: Coder, Admin ও Management। Editor নয়
             var sRp = document.getElementById("sReport");
-            if (sRp) sRp.style.display = (role === "editor") ? "none" : "flex";
+            if (sRp) sRp.style.display = canReport(currentUser) ? "flex" : "none";
             // Viewer: নতুন গ্রাহক যোগের বাটন লুকানো
             var hideNew = isViewer();
             var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
@@ -5023,7 +5023,11 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
         function rpCount(arr, fn) { var m = {}; arr.forEach(function (c) { var k = fn(c); m[k] = (m[k] || 0) + 1; }); return Object.keys(m).sort(function (a, b) { return m[b] - m[a]; }).map(function (k) { return { k: k, n: m[k] }; }); }
         function rpFillSel(id, first, items, fmt) { var el = document.getElementById(id), cur = el.value; el.innerHTML = '<option value="">' + first + '</option>' + items.map(function (x) { return '<option value="' + escAttr(x.k) + '">' + escHtml(fmt ? fmt(x.k) : x.k) + ' (' + x.n + ')</option>'; }).join(""); el.value = cur; }
         function openReport() {
-            if (!currentUser || currentUser.role === "editor") return;
+            if (!currentUser || !canReport(currentUser)) { showPop("🔒 রিপোর্ট প্রিন্ট আপনার জন্য বন্ধ আছে। Coder-এর সাথে যোগাযোগ করুন।", "warning"); return; }
+            // Coder সম্প্রতি বন্ধ করে থাকলে সাথে সাথে ধরা পড়ে
+            var chk = currentUser.role === "coder" ? Promise.resolve() : fsdb.collection("authorizedUsers").doc(currentUser.username).get().then(function (sn) { if (sn.exists) currentUser.rpt = sn.data().rpt || ""; }, function () { });
+            chk.then(function () {
+                if (!canReport(currentUser)) { var sRp = document.getElementById("sReport"); if (sRp) sRp.style.display = "none"; showPop("🔒 রিপোর্ট প্রিন্ট আপনার জন্য বন্ধ আছে। Coder-এর সাথে যোগাযোগ করুন।", "warning"); return; }
             cloudSync(function () {
                 rpFillSel("rpPkg", "📦 সব প্যাকেজ", rpCount(DB, function (c) { return c.package_type || "অজানা"; }));
                 rpFillSel("rpWard", "🏘️ সব ওয়ার্ড", rpCount(DB, rpWard), function (k) { return k === "অজানা" ? k : "ওয়ার্ড " + k; });
@@ -5031,6 +5035,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 rpFillSel("rpTyp", "🏠 সব ধরন", rpCount(DB, function (c) { return c.customer_type || "অজানা"; }));
                 document.getElementById("rpBg").classList.add("on");
                 rpRefresh();
+            });
             });
         }
         function closeReport() { document.getElementById("rpBg").classList.remove("on"); document.getElementById("rpFrame").srcdoc = ""; }
@@ -5056,6 +5061,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("rpFrame").srcdoc = buildReportHtml(t, rows);
         }
         function printReport() {
+            if (!canReport(currentUser)) { showPop("🔒 রিপোর্ট প্রিন্ট বন্ধ আছে।", "warning"); return; }
             var f = document.getElementById("rpFrame");
             try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { showPop("প্রিন্ট শুরু করা গেল না। ব্রাউজারের মেনু থেকে Print চাপুন।", "error"); }
         }
@@ -5267,6 +5273,14 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             }
             return [];
         }
+        // রিপোর্ট প্রিন্ট: Coder সবসময় পারে। বাকিদের জন্য Coder চালু ("on") বা বন্ধ ("off") করে। ঠিক না করলে: Editor ছাড়া সবাই পারে।
+        function canReport(u) {
+            if (!u) return false;
+            if (u.role === "coder") return true;
+            if (u.rpt === "on") return true;
+            if (u.rpt === "off") return false;
+            return u.role !== "editor";
+        }
         var ACTS = ["actAdd", "actToggle", "actLogout", "actRemove", "actSess"];
         function can(act) { return !!currentUser && (currentUser.role === "coder" || (currentUser.role === "admin" && (currentUser.perms || {})[act] === true)); }
         function hasAdminAccess() { return allowedRoles().length > 0 && ACTS.some(can); }
@@ -5325,11 +5339,13 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                     var p = d.perms || {}, chip = function (on, t) { return '<span style="display:inline-block;margin:1px 2px 0 0;padding:1px 6px;border-radius:8px;font-size:10px;background:' + (on ? "rgba(22,163,74,.18);color:#4ade80" : "rgba(100,116,139,.18);color:#94a3b8;text-decoration:line-through") + '">' + t + '</span>'; };
                     role += '<div style="margin-top:3px;max-width:230px;white-space:normal">' + chip(p.addAdmin, "👑") + chip(p.addEditor, "✏️") + chip(p.addViewer, "💎") + ' ' + chip(p.actAdd, "➕") + chip(p.actToggle, "⏸") + chip(p.actLogout, "🚪") + chip(p.actRemove, "🗑") + chip(p.actSess, "🖥") + '</div>';
                 }
+                if (isCoderUser() && mg) role += '<div style="font-size:10px;margin-top:3px;color:' + (canReport({ role: nr, rpt: d.rpt }) ? "#4ade80" : "#f87171") + '">🖨 রিপোর্ট: ' + (canReport({ role: nr, rpt: d.rpt }) ? "চালু" : "🔒 বন্ধ") + '</div>';
                 var st = d.status === "active" ? '<span style="color:#16a34a;font-weight:700">🟢 Active</span>' : '<span style="color:#dc2626;font-weight:700">⛔ Inactive</span>';
                 var btns = "";
                 if (can("actSess")) btns += '<button class="abtn" style="background:#6366f1" data-act="sess" data-e="' + em + '" title="লগইন ইতিহাস / ডিভাইস">🖥</button>';
                 if (mg) {
                     if (can("actToggle")) btns += '<button class="abtn ' + (d.status === "active" ? "no" : "ok") + '" data-act="toggle" data-e="' + em + '">' + (d.status === "active" ? "⏸" : "▶") + '</button>';
+                    if (isCoderUser()) { var rOn = canReport({ role: nr, rpt: d.rpt }); btns += '<button class="abtn" style="background:' + (rOn ? "#16a34a" : "#dc2626") + '" data-act="rpt" data-e="' + em + '" title="' + (rOn ? "রিপোর্ট প্রিন্ট চালু আছে, চাপলে বন্ধ হবে" : "রিপোর্ট প্রিন্ট বন্ধ আছে, চাপলে চালু হবে") + '">' + (rOn ? "🖨" : "🔒") + '</button>'; }
                     if (nr === "admin" && isCoderUser()) btns += '<button class="abtn" style="background:#0d9488" data-act="perm" data-e="' + em + '" title="Admin-এর অনুমতি ON/OFF">🔑</button>';
                     if (can("actLogout")) btns += '<button class="abtn" style="background:#ea580c" data-act="logout" data-e="' + em + '" title="সব ডিভাইস থেকে Logout">🚪</button>';
                     if (can("actRemove")) btns += '<button class="abtn d" data-act="remove" data-e="' + em + '">🗑️</button>';
@@ -5344,6 +5360,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             var em = b.getAttribute("data-e"), act = b.getAttribute("data-act");
             if (act === "toggle") toggleStatus(em);
             else if (act === "perm") openPerm(em);
+            else if (act === "rpt") toggleReport(em);
             else if (act === "logout") forceLogoutUser(em);
             else if (act === "remove") removeGmail(em);
             else if (act === "sess") viewSessions(em);
@@ -5419,6 +5436,15 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                 u.role = nr; if (nr !== "admin") delete u.perms;
                 return forceLogoutUid(u.uid);
             }).then(function () { renderGmail(); showPop("✅ Role আপডেট হয়েছে।", "success"); }).catch(function (e) { gmErr(e); renderGmail(); });
+        }
+        // রিপোর্ট প্রিন্ট চালু/বন্ধ (শুধু Coder)
+        function toggleReport(em) {
+            var u = _gmCache[em]; if (!u || !isCoderUser() || u.role === "coder") return;
+            var nv = canReport({ role: normRole(u.role), rpt: u.rpt }) ? "off" : "on";
+            fsdb.collection("authorizedUsers").doc(em).update({ rpt: nv }).then(function () {
+                u.rpt = nv; renderGmail();
+                showPop(nv === "on" ? "🖨 রিপোর্ট প্রিন্ট চালু করা হয়েছে।" : "🔒 রিপোর্ট প্রিন্ট বন্ধ করা হয়েছে।", "success");
+            }).catch(gmErr);
         }
         // Admin-এর ON/OFF অনুমতি (শুধু Coder)
         var _permFor = null;
@@ -6049,7 +6075,7 @@ function buildRevenueList(arr) {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.0.0";
+        var APP_VERSION = "2.0.1";
         var APP_DATE = "2026-11-06";
         (function () {
             function fill() {
