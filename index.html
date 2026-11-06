@@ -3415,6 +3415,10 @@
         .app-foot a:hover { text-decoration: underline; }
         .app-foot .af-ver { display: inline-block; padding: 2px 12px; border-radius: 20px; font: 700 11px 'JetBrains Mono', monospace; letter-spacing: .4px; color: #fff; background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 2px 10px rgba(99,102,241,.35); }
         .app-foot .af-date { margin-left: 8px; font-size: 11px; color: rgba(148,163,184,.65); }
+            .app-foot .af-btn { margin-top: 4px; padding: 6px 16px; border-radius: 20px; border: 1px solid rgba(129,140,248,.5); background: rgba(99,102,241,.12); color: #c7d2fe; font: 600 12px 'Hind Siliguri', sans-serif; cursor: pointer; transition: background .15s; }
+        .app-foot .af-btn:hover { background: rgba(99,102,241,.28); }
+        .app-foot .af-btn:disabled { opacity: .6; cursor: default; }
+        .app-foot .af-msg { font-weight: 600; margin-top: 2px; }
     </style>
 </head>
 
@@ -3711,6 +3715,8 @@
                 <div class="af-line">© <span id="afYear">2026</span> <b>Agni Systems Limited</b> · Panchagarh · সর্বস্বত্ব সংরক্ষিত</div>
                 <div class="af-line">Developed by <a href="https://wa.me/8801786945337" target="_blank" rel="noopener">Arafat Ahmed</a></div>
                 <div class="af-line"><span class="af-ver" id="appVer" title="অ্যাপের সংস্করণ">v1.0.0</span><span class="af-date" id="appVerDate"></span></div>
+                <div class="af-line"><button type="button" class="af-btn" id="afCheck" onclick="manualUpdateCheck()">🔄 আপডেট চেক করুন</button></div>
+                <div class="af-line af-msg" id="afMsg" style="display:none"></div>
             </div>
         </div>
         <!-- END HOMEPAGE -->
@@ -5991,6 +5997,23 @@ function buildRevenueList(arr) {
             var go = function () { location.reload(); };
             var done = function () { if ("caches" in window) caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }).then(go, go); else go(); };
             if ("serviceWorker" in navigator) navigator.serviceWorker.getRegistration().then(function (r) { return r ? r.update() : null; }).then(done, done); else done();
+        }
+        // হাতে "আপডেট চেক করুন" চাপলে: সার্ভারের index.html পড়ে ভার্সন ও ফাইলের পরিচয় মেলানো হয়
+        function afSay(msg, color) { var m = document.getElementById("afMsg"); if (!m) return; m.textContent = msg; m.style.color = color || "#94a3b8"; m.style.display = "block"; clearTimeout(afSay._t); afSay._t = setTimeout(function () { m.style.display = "none"; }, 8000); }
+        function manualUpdateCheck() {
+            var btn = document.getElementById("afCheck");
+            if (!navigator.onLine) { afSay("📴 ইন্টারনেট নেই। নেট এলে আবার চেষ্টা করুন।", "#fbbf24"); return; }
+            btn.disabled = true; btn.textContent = "⏳ চেক হচ্ছে...";
+            var url = location.pathname.replace(/[^\/]*$/, "") + "index.html";
+            var reg = ("serviceWorker" in navigator) ? navigator.serviceWorker.getRegistration().then(function (r) { return r ? r.update() : null; }).catch(function () { }) : Promise.resolve();
+            // সার্ভারের ফাইলের পরিচয় (HEAD, ক্যাশ এড়িয়ে) + ভার্সন লেখা (GET) দুটোই মেলানো হয়
+            Promise.all([pageSig(), fetch(url, { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.text(); }), reg]).then(function (res) {
+                var sig = res[0], t = res[1];
+                var v = (t.match(/var APP_VERSION = "([^"]+)"/) || [])[1], d = (t.match(/var APP_DATE = "([^"]+)"/) || [])[1];
+                var changed = (v && v !== APP_VERSION) || (d && d !== APP_DATE) || (sig && _pageSig && sig !== _pageSig);
+                if (changed) { _updDismissed = ""; _updShown = false; var old = document.getElementById("updBar"); if (old) old.remove(); showUpdateBar(sig || "manual"); afSay("🔄 নতুন সংস্করণ পাওয়া গেছে" + (v && v !== APP_VERSION ? " (v" + v + ")" : "") + "। উপরের বাটন চাপুন।", "#818cf8"); }
+                else { if (_pageSig === null && sig) _pageSig = sig; afSay("✅ আপনি সর্বশেষ সংস্করণে আছেন (v" + APP_VERSION + ")", "#4ade80"); }
+            }).catch(function () { afSay("⚠️ চেক করা গেল না। একটু পরে আবার চেষ্টা করুন।", "#f87171"); }).then(function () { btn.disabled = false; btn.textContent = "🔄 আপডেট চেক করুন"; });
         }
         function checkUpdate() {
             if (!navigator.onLine) return;
