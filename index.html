@@ -1662,6 +1662,12 @@
         }
 
         /* ─── POPUPS ─── */
+        .st-tabs{display:flex;gap:6px;margin-bottom:12px}.st-tabs button{flex:1;padding:9px 6px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#cbd5e1;font:600 13px 'Hind Siliguri',sans-serif;cursor:pointer}.st-tabs button.on{background:linear-gradient(135deg,#e63b2e,#f97316);color:#fff;border-color:transparent}
+        .st-l{display:block;font-size:12px;color:#94a3b8;margin:10px 0 3px}.st-note{font-size:12px;color:#fbbf24;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:8px 10px;margin-bottom:10px;line-height:1.5}
+        .st-logo{display:flex;gap:14px;align-items:center;padding:10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}.st-logo small{display:block;font-size:11px;color:#94a3b8}.st-lbox{width:84px;height:60px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}.st-lbox img{max-width:100%;max-height:100%;object-fit:contain}
+        .st-w{border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:10px;background:rgba(255,255,255,.03);overflow:hidden}.st-wh{display:flex;align-items:center;gap:6px;padding:9px 10px;background:rgba(255,255,255,.06);color:#f1f5f9;font-weight:700;font-size:14px}.st-wh span.c{font-size:11px;color:#94a3b8;font-weight:500}.st-wh .sp{flex:1}
+        .st-a{display:flex;align-items:center;gap:6px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.06);color:#e2e8f0;font-size:13px;flex-wrap:wrap}.st-a .n{flex:1;min-width:120px}.st-a .n i{font-style:normal;font-size:11px;color:#94a3b8;margin-left:6px}.st-a select{background:#0f172a;color:#cbd5e1;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:4px 6px;font-size:12px}
+        .st-add{display:flex;gap:6px;padding:8px 10px}.st-add .adm-in{margin:0;flex:1}.st-ib{border:0;border-radius:8px;padding:5px 9px;font-size:13px;cursor:pointer;color:#fff;background:#475569}.st-ib.d{background:#dc2626}.st-ib.e{background:#2563eb}
         .pop-bg {
             display: none;
             position: fixed;
@@ -3441,17 +3447,17 @@
         <div class="shine-line"></div>
         <div class="lg-card">
             <div class="lg-brand">
-                <div class="lg-logo" id="lgLogo"><img src="logo.png" alt="" style="width:42px"
+                <div class="lg-logo" id="lgLogo"><img class="js-logo" src="logo.png" alt="" style="width:42px"
                         onerror="this.parentElement.innerHTML='&#128293;'" /></div>
-                <h1>AGNI SYSTEMS LIMITED</h1>
-                <p>Customer Management Portal</p>
+                <h1 class="js-sitename">AGNI SYSTEMS LIMITED</h1>
+                <p class="js-loginsub">Customer Management Portal</p>
             </div>
             <button class="lg-btn" id="lbtn" style="background:#fff;color:#1f2937;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)">
                 <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
                 <span>Continue with Google</span></button>
             <div style="text-align:center;margin-top:12px;font-size:12px;color:rgba(255,255,255,.4)">শুধু অনুমোদিত Gmail দিয়ে প্রবেশ করা যাবে</div>
             <div class="lg-err" id="lerr">❌ লগইন ব্যর্থ</div>
-            <div class="lg-foot">© 2025 Agni Systems Limited · Panchagarh</div>
+            <div class="lg-foot js-foot">© 2025 Agni Systems Limited · Panchagarh</div>
             <div class="lg-foot">Developed by <a href="https://wa.me/8801786945337">Arafat Ahmed</a> · 2026</div>
         </div>
     </div>
@@ -3462,14 +3468,14 @@
             <div style="display:flex;align-items:center;gap:11px;width:100%;">
                 <div class="sb-logo" id="sbLogo"
                     style="width:80px;height:50px;border-radius:10px;flex-shrink:0;margin:0;">
-                    <img src="logo.png" alt="Logo" style="width:78px;height:48px;object-fit:contain;border-radius:6px;"
+                    <img class="js-logo" src="logo.png" alt="Logo" style="width:78px;height:48px;object-fit:contain;border-radius:6px;"
                         onerror="this.parentElement.innerHTML='🔥'" />
                     <span class="sb-home-dot">🏠</span>
                 </div>
                 <div style="flex:1;min-width:0;">
-                    <div class="sb-brand-txt" style="text-align:left;font-size:12px;letter-spacing:.3px;">AGNI SYSTEMS
+                    <div class="sb-brand-txt js-brand" style="text-align:left;font-size:12px;letter-spacing:.3px;">AGNI SYSTEMS
                     </div>
-                    <div class="sb-brand-sub" style="text-align:left;margin-top:1px;font-size:10px;">Management Portal
+                    <div class="sb-brand-sub js-brandsub" style="text-align:left;margin-top:1px;font-size:10px;">Management Portal
                     </div>
                 </div>
             </div>
@@ -3530,6 +3536,8 @@
                 class="sb-ico">✍🏻</span> Edit Requests <span class="sb-badge gold" id="sBadgeER">0</span></div>
         <div class="sb-item" id="sAdmin" style="display:none" onclick="openAdmin();closeSidebar();"><span
                 class="sb-ico">⚙</span> Gmail Access</div>
+        <div class="sb-item" id="sSite" style="display:none" onclick="openSite();closeSidebar();"><span
+                class="sb-ico">🛠</span> সাইট সেটিংস</div>
         <div class="sb-div"></div>
         <div class="sb-logout"><button onclick="doLogout()">🚪 Log out</button></div>
         <input type="file" id="impFile" accept=".json" style="display:none" />
@@ -3741,8 +3749,8 @@
                     <div class="hdr-wrap">
                         <div class="hdr-num" id="hdrNum">#0001</div>
                         <div class="hdr-ctr">
-                            <img src="logo.png" alt="Logo" onerror="this.style.display='none'" />
-                            <h1>AGNI SYSTEMS LIMITED</h1>
+                            <img class="js-logo" src="logo.png" alt="Logo" onerror="this.style.display='none'" />
+                            <h1 class="js-sitename">AGNI SYSTEMS LIMITED</h1>
                             <h2>ইন্টারনেট সেবা ব্যবহার সংক্রান্ত অঙ্গীকারনামা</h2>
                             <h3>Internet Service and Equipment Usage Agreement</h3>
                         </div>
@@ -3876,7 +3884,7 @@
                         </tr>
                     </table>
                     <div class="sec-hdr" style="margin-top:14px;font-size:13px">অঙ্গীকারকারীর বিবরণ,</div>
-                    <p style="font-size:11px;margin:3px 0">আমি <b>AGNI SYSTEMS LTD</b> থেকে ইন্টারনেট সেবা গ্রহণের জন্য
+                    <p style="font-size:11px;margin:3px 0">আমি <b class="js-co">AGNI SYSTEMS LTD</b> থেকে ইন্টারনেট সেবা গ্রহণের জন্য
                         নিম্নলিখিত প্রয়োজনীয় সরঞ্জামাদি গ্রহণ করছি এবং শর্তাবলী মেনে চলার অঙ্গীকার করছি।</p>
 
 
@@ -4137,7 +4145,7 @@
                     <br /><br />
                     <div class="sec-hdr" style="font-weight:bold;font-size:19px">সরঞ্জাম ফেরত প্রদান প্রসঙ্গে:</div>
                     <div class="terms" style="font-size:14px">কোন কারণবশত যদি আমি ইন্টারনেট সেবা গ্রহণ বন্ধ করি, তবে আমি
-                        সরবরাহকৃত সমস্ত সরঞ্জাম অবিলম্বে <strong>AGNI SYSTEMS LTD</strong> কে ফেরত দেব।</div>
+                        সরবরাহকৃত সমস্ত সরঞ্জাম অবিলম্বে <strong class="js-co">AGNI SYSTEMS LTD</strong> কে ফেরত দেব।</div>
                     <br /><br />
                     <div class="sec-hdr" style="font-weight:bold;font-size:19px">ক্ষতি বা চুরির দায়িত্ব:</div>
                     <div class="terms" style="font-size:14px">সরবরাহকৃত সরঞ্জামের কোন ক্ষতি হলে বা চুরি হলে, আমি
@@ -4167,8 +4175,8 @@
                     <div
                         style="margin-top:18px;font-size:15px;color:#555;border:1px solid #ddd;padding:9px;border-radius:4px">
                         <b>বিঃদ্রঃ</b> গ্রাহক যদি পূর্বের ইন্টারনেট সেবাদাতা প্রতিষ্ঠানের সরঞ্জাম (Cable Router, ONU, বা
-                        অন্যান্য ডিভাইস) ব্যবহার করে <br> <strong> AGNI SYSTEMS LTD </strong>-এর সংযোগ গ্রহণ করেন, তবে
-                        উক্ত সরঞ্জামের কোন প্রকার ত্রুটি বা সমস্যার জন্য <strong> AGNI SYSTEMS LTD </strong> দায়বদ্ধ
+                        অন্যান্য ডিভাইস) ব্যবহার করে <br> <strong class="js-co"> AGNI SYSTEMS LTD </strong>-এর সংযোগ গ্রহণ করেন, তবে
+                        উক্ত সরঞ্জামের কোন প্রকার ত্রুটি বা সমস্যার জন্য <strong class="js-co"> AGNI SYSTEMS LTD </strong> দায়বদ্ধ
                         থাকবে না। সরঞ্জামের কারনে সংযোগে কোনো সমস্যা দেখা দিলে বা তা সমাধানের সম্পুর্ণ দ্বায়িত্ব
                         গ্রাহকের ওপর বর্তাবে। <br /><br /> অর্থাৎ, হার্ডওয়্যারজনিত কোনো জটিলতা অথবা পূর্বের ইন্টারনেট
                         সেবাতাদা প্রতিষ্ঠানের জবাবদিহিতার ক্ষেত্রে কোম্পানি কোন দায়ভার গ্রহণ করবে না। </div>
@@ -4281,6 +4289,33 @@
         </div>
     </div>
 
+    <div class="pop-bg" id="siteBg" style="z-index:3000">
+        <div class="pop" style="max-width:640px;width:96vw">
+            <div class="pop-hdr"><h3>🛠 সাইট সেটিংস</h3><button class="pop-x" onclick="closeSite()">✕</button></div>
+            <div class="pop-body" style="max-height:72vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
+                <div class="st-tabs"><button id="stT1" class="on" onclick="siteTab(1)">🏷 সাইট ও লোগো</button><button id="stT2" onclick="siteTab(2)">🏘 ওয়ার্ড ও এলাকা</button></div>
+                <div id="stP1">
+                    <div class="st-logo"><div class="st-lbox"><img id="stLogoPrev" alt=""></div>
+                        <div><b>লোগো</b><small>PNG/JPG, ছবি নিজে ছোট করা হবে</small>
+                            <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><button class="pbtn blue" style="padding:6px 12px;font-size:12px" onclick="document.getElementById('stLogoFile').click()">📷 লোগো বদলান</button><button class="pbtn grey" style="padding:6px 12px;font-size:12px" onclick="siteLogoReset()">↺ আসল লোগো</button></div>
+                            <input type="file" id="stLogoFile" accept="image/*" style="display:none" onchange="siteLogoPick(this)"></div></div>
+                    <label class="st-l">সাইটের নাম (লগইন ও ফর্মের উপরে)</label><input class="adm-in" id="stName">
+                    <label class="st-l">সাইডবারের নাম</label><input class="adm-in" id="stBrand">
+                    <label class="st-l">সাইডবারের নিচের লেখা</label><input class="adm-in" id="stSub">
+                    <label class="st-l">লগইন পেজের উপশিরোনাম</label><input class="adm-in" id="stLoginSub">
+                    <label class="st-l">লগইন পেজের ফুটার লেখা</label><input class="adm-in" id="stFoot">
+                    <label class="st-l">কোম্পানির নাম (অঙ্গীকারনামার লেখায়)</label><input class="adm-in" id="stCo">
+                    <label class="st-l">থানা (নতুন ফর্মে ডিফল্ট)</label><input class="adm-in" id="stThana">
+                    <div style="margin-top:14px"><button class="pbtn green" onclick="siteSave()">✓ সেভ করুন</button></div>
+                </div>
+                <div id="stP2" style="display:none">
+                    <div class="st-note">এখানে নাম বদলালে বা এলাকা অন্য ওয়ার্ডে নিলে সব গ্রাহকের ডাটায় (Customers, Pending, Trash) নিজে নিজে বদলে যায়। "🗑" শুধু তালিকা থেকে সরায়, গ্রাহকের ডাটা মোছে না।</div>
+                    <div id="stWards"></div>
+                    <div class="st-add"><input class="adm-in" id="stNewWard" placeholder="নতুন ওয়ার্ড নং (যেমন 10)"><button class="pbtn green" onclick="stAddWard()">＋ ওয়ার্ড</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="pop-bg" id="permBg" style="z-index:3000">
         <div class="pop">
             <div class="pop-hdr">
@@ -4647,6 +4682,8 @@
             // রিপোর্ট প্রিন্ট: Coder, Admin ও Management। Editor নয়
             var sRp = document.getElementById("sReport");
             if (sRp) sRp.style.display = canReport(currentUser) ? "flex" : "none";
+            var sSt = document.getElementById("sSite"); if (sSt) sSt.style.display = (role === "coder") ? "flex" : "none";
+            loadSite();
             // Viewer: নতুন গ্রাহক যোগের বাটন লুকানো
             var hideNew = isViewer();
             var nb = document.querySelectorAll(".new-item, .hm-quick-btn.primary");
@@ -4843,7 +4880,7 @@ function onAreaInput() {
             if (d && d.id) { curId = d.id; localStorage.setItem("agni_page", "view"); localStorage.setItem("agni_cur_id", d.id); }
             var _fp = document.getElementById("fPorishod");
             if (_fp) _fp.value = d.porishod || "";
-            var map = { fId: "id", fName: "name", fLogin: "login", fPass: "pass", fMob: "mobile", fRch: "recharge", fNid: "nid", fDob: "dob", fHouse: "house", fArea: "area", fThana: "thana", fConn: "conn", fRem: "remark" }; Object.keys(map).forEach(function (k) { var el = document.getElementById(k); if (el) el.value = d[map[k]] || (k === "fThana" ? "PANCHAGARH SADAR" : ""); }); document.querySelectorAll('[name="ct"]').forEach(function (r) { r.checked = (r.value === d.customer_type); }); document.querySelectorAll('[name="pt"]').forEach(function (r) { r.checked = (r.value === d.package_type); }); var sv = (d.splitter_type || "").split(","); document.querySelectorAll('[name="spl"]').forEach(function (r) { r.checked = (sv.indexOf(r.value) >= 0); }); for (var i = 0; i < EQ.length; i++) { var el = document.getElementById(EQ[i]); if (el) el.value = d[EQ[i]] || ""; }
+            var map = { fId: "id", fName: "name", fLogin: "login", fPass: "pass", fMob: "mobile", fRch: "recharge", fNid: "nid", fDob: "dob", fHouse: "house", fArea: "area", fThana: "thana", fConn: "conn", fRem: "remark" }; Object.keys(map).forEach(function (k) { var el = document.getElementById(k); if (el) el.value = d[map[k]] || (k === "fThana" ? SITE.thana : ""); }); document.querySelectorAll('[name="ct"]').forEach(function (r) { r.checked = (r.value === d.customer_type); }); document.querySelectorAll('[name="pt"]').forEach(function (r) { r.checked = (r.value === d.package_type); }); var sv = (d.splitter_type || "").split(","); document.querySelectorAll('[name="spl"]').forEach(function (r) { r.checked = (sv.indexOf(r.value) >= 0); }); for (var i = 0; i < EQ.length; i++) { var el = document.getElementById(EQ[i]); if (el) el.value = d[EQ[i]] || ""; }
             document.getElementById("sigName").textContent = d.name || ""; document.getElementById("sigMob").textContent = d.mobile || ""; var wardEl = document.getElementById("fWard");
 var wardVal = d.ward || findWardByArea(d.area) || "";
 if (wardEl) wardEl.value = wardVal;
@@ -4853,7 +4890,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
 
             var _fpc = document.getElementById("fPorishod");
             if (_fpc) _fpc.value = "";
-            ["fId", "fName", "fLogin", "fPass", "fMob", "fRch", "fNid", "fDob", "fHouse", "fArea", "fConn", "fRem"].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ""; }); document.getElementById("fThana").value = "PANCHAGARH SADAR"; var _fwc = document.getElementById("fWard"); if (_fwc) _fwc.value = ""; updateAreaDatalist(""); for (var i = 0; i < EQ.length; i++) { var el = document.getElementById(EQ[i]); if (el) el.value = ""; } document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function (r) { r.checked = false; }); var _tbl = document.getElementById("totPriceTable"); if (_tbl) _tbl.textContent = "0"; var _sbPrc = document.getElementById("sbPrc"); if (_sbPrc) _sbPrc.textContent = "0"; document.getElementById("sigName").textContent = ""; document.getElementById("sigMob").textContent = ""; var _sbSer = document.getElementById("sbSer"); if (_sbSer) _sbSer.textContent = "-"; var ab = document.getElementById("auditBar"); ab.className = "audit"; ab.innerHTML = "";
+            ["fId", "fName", "fLogin", "fPass", "fMob", "fRch", "fNid", "fDob", "fHouse", "fArea", "fConn", "fRem"].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ""; }); document.getElementById("fThana").value = SITE.thana; var _fwc = document.getElementById("fWard"); if (_fwc) _fwc.value = ""; updateAreaDatalist(""); for (var i = 0; i < EQ.length; i++) { var el = document.getElementById(EQ[i]); if (el) el.value = ""; } document.querySelectorAll('[name="ct"],[name="pt"],[name="spl"]').forEach(function (r) { r.checked = false; }); var _tbl = document.getElementById("totPriceTable"); if (_tbl) _tbl.textContent = "0"; var _sbPrc = document.getElementById("sbPrc"); if (_sbPrc) _sbPrc.textContent = "0"; document.getElementById("sigName").textContent = ""; document.getElementById("sigMob").textContent = ""; var _sbSer = document.getElementById("sbSer"); if (_sbSer) _sbSer.textContent = "-"; var ab = document.getElementById("auditBar"); ab.className = "audit"; ab.innerHTML = "";
         }
 
         function showAudit(log) {
@@ -6039,6 +6076,172 @@ function buildRevenueList(arr) {
             });
         }
 
+// ═══════ সাইট সেটিংস (শুধু Coder) ═══════
+var SITE_DEF = { name: "AGNI SYSTEMS LIMITED", brand: "AGNI SYSTEMS", sub: "Management Portal", loginSub: "Customer Management Portal", footer: "© 2025 Agni Systems Limited · Panchagarh", company: "AGNI SYSTEMS LTD", thana: "PANCHAGARH SADAR", logo: "" };
+var SITE = {}; Object.keys(SITE_DEF).forEach(function (k) { SITE[k] = SITE_DEF[k]; });
+var _stLogo = "", _sw = [];
+function siteApply() {
+    document.title = SITE.name;
+    function all(c, f) { var n = document.querySelectorAll(c); for (var i = 0; i < n.length; i++) f(n[i]); }
+    all(".js-sitename", function (e) { e.textContent = SITE.name; });
+    all(".js-brand", function (e) { e.textContent = SITE.brand; });
+    all(".js-brandsub", function (e) { e.textContent = SITE.sub; });
+    all(".js-loginsub", function (e) { e.textContent = SITE.loginSub; });
+    all(".js-foot", function (e) { e.textContent = SITE.footer; });
+    all(".js-co", function (e) { e.textContent = SITE.company; });
+    if (SITE.logo) all(".js-logo", function (e) { e.src = SITE.logo; e.style.display = ""; });
+    var th = document.getElementById("fThana"); if (th && (!th.value || th.value === th.getAttribute("value"))) { th.value = SITE.thana; th.setAttribute("value", SITE.thana); }
+    siteFillWardSelect(); updateAreaDatalist("");
+}
+function siteFillWardSelect() {
+    var sel = document.getElementById("fWard"); if (!sel) return;
+    var cv = sel.value, ks = Object.keys(WARD_AREAS).sort();
+    sel.innerHTML = '<option value="">-- Please select --</option>' + ks.map(function (k) { return '<option value="' + escHtml(k) + '">' + escHtml(k) + '</option>'; }).join("");
+    if (cv && ks.indexOf(cv) < 0) sel.innerHTML += '<option value="' + escHtml(cv) + '">' + escHtml(cv) + '</option>';
+    sel.value = cv;
+}
+function siteTake(d) {
+    Object.keys(SITE_DEF).forEach(function (k) { if (typeof d[k] === "string" && (d[k] || k === "logo")) SITE[k] = d[k]; });
+    if (d.wards && typeof d.wards === "object" && Object.keys(d.wards).length) WARD_AREAS = d.wards;
+}
+function siteCacheLoad() { try { var c = JSON.parse(localStorage.getItem("agniSite") || "null"); if (c) siteTake(c); } catch (e) { } }
+function loadSite() {
+    fsdb.collection("settings").doc("site").get().then(function (sn) {
+        if (sn.exists) { var d = sn.data(); siteTake(d); try { localStorage.setItem("agniSite", JSON.stringify(d)); } catch (e) { } }
+        siteApply();
+    }).catch(function () { siteApply(); });
+}
+function openSite() {
+    if (!currentUser || currentUser.role !== "coder") return;
+    ["Name:name", "Brand:brand", "Sub:sub", "LoginSub:loginSub", "Foot:footer", "Co:company", "Thana:thana"].forEach(function (x) { var p = x.split(":"); document.getElementById("st" + p[0]).value = SITE[p[1]]; });
+    _stLogo = SITE.logo || ""; document.getElementById("stLogoPrev").src = _stLogo || "logo.png";
+    siteTab(1); document.getElementById("siteBg").classList.add("on");
+}
+function closeSite() { document.getElementById("siteBg").classList.remove("on"); }
+function siteTab(n) {
+    document.getElementById("stP1").style.display = n === 1 ? "" : "none"; document.getElementById("stP2").style.display = n === 2 ? "" : "none";
+    document.getElementById("stT1").className = n === 1 ? "on" : ""; document.getElementById("stT2").className = n === 2 ? "on" : "";
+    if (n === 2) renderSiteWards();
+}
+function siteLogoPick(inp) {
+    var f = inp.files && inp.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+            var m = 300, sc = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement("canvas");
+            c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+            var u = c.toDataURL("image/png"); if (u.length > 250000) u = c.toDataURL("image/jpeg", .85);
+            _stLogo = u; document.getElementById("stLogoPrev").src = u;
+        };
+        im.onerror = function () { showPop("ছবিটি পড়া যায়নি। অন্য ছবি দিন।", "error"); };
+        im.src = r.result;
+    };
+    r.readAsDataURL(f); inp.value = "";
+}
+function siteLogoReset() { _stLogo = ""; document.getElementById("stLogoPrev").src = "logo.png"; }
+function siteSave() {
+    if (!navigator.onLine) { showPop("📴 ইন্টারনেট ছাড়া সাইট সেটিংস সেভ করা যাবে না।", "warning"); return; }
+    var g = function (i, d) { return (document.getElementById(i).value || "").trim() || d; };
+    var d = { name: g("stName", SITE_DEF.name), brand: g("stBrand", SITE_DEF.brand), sub: g("stSub", SITE_DEF.sub), loginSub: g("stLoginSub", SITE_DEF.loginSub), footer: g("stFoot", SITE_DEF.footer), company: g("stCo", SITE_DEF.company), thana: g("stThana", SITE_DEF.thana), logo: _stLogo };
+    fsdb.collection("settings").doc("site").set(d, { merge: true }).then(function () {
+        Object.keys(d).forEach(function (k) { SITE[k] = d[k]; });
+        try { var c = {}; Object.keys(SITE).forEach(function (k) { c[k] = SITE[k]; }); c.wards = WARD_AREAS; localStorage.setItem("agniSite", JSON.stringify(c)); } catch (e) { }
+        if (!d.logo) { var im = document.querySelectorAll(".js-logo"); for (var i = 0; i < im.length; i++) im[i].src = "logo.png"; }
+        siteApply(); showPop("✅ সাইট সেটিংস সেভ হয়েছে। অন্যরা পরের লোডে নতুন সেটিংস পাবে।", "success");
+    }).catch(function (e) { showPop("সেভ ব্যর্থ: " + ((e && (e.code || e.message)) || ""), "error"); });
+}
+// ── ওয়ার্ড ও এলাকা ──
+function stWardOf(c) { return c.ward || findWardByArea(c.area) || ""; }
+function renderSiteWards() {
+    _sw = Object.keys(WARD_AREAS).sort();
+    var wc = {}, ac = {};
+    DB.forEach(function (c) { var w = stWardOf(c); if (w) wc[w] = (wc[w] || 0) + 1; var a = c.area || ""; if (a) ac[w + "|" + a] = (ac[w + "|" + a] || 0) + 1; });
+    var h = "";
+    _sw.forEach(function (w, wi) {
+        h += '<div class="st-w"><div class="st-wh">🏘 ওয়ার্ড ' + escHtml(w) + ' <span class="c">(' + (wc[w] || 0) + ' জন)</span><span class="sp"></span><button class="st-ib e" data-sa="rw" data-wi="' + wi + '">✏️ নাম</button><button class="st-ib d" data-sa="dw" data-wi="' + wi + '">🗑</button></div>';
+        WARD_AREAS[w].forEach(function (a, ai) {
+            h += '<div class="st-a"><span class="n">📍 ' + escHtml(a) + '<i>' + (ac[w + "|" + a] || 0) + ' জন</i></span><select data-sa="mv" data-wi="' + wi + '" data-ai="' + ai + '"><option value="">↔ ওয়ার্ড বদল</option>' + _sw.filter(function (x) { return x !== w; }).map(function (x) { return '<option value="' + escHtml(x) + '">' + escHtml(x) + '</option>'; }).join("") + '</select><button class="st-ib e" data-sa="ra" data-wi="' + wi + '" data-ai="' + ai + '">✏️</button><button class="st-ib d" data-sa="da" data-wi="' + wi + '" data-ai="' + ai + '">🗑</button></div>';
+        });
+        h += '<div class="st-add"><input class="adm-in" id="stNA' + wi + '" placeholder="এই ওয়ার্ডে নতুন এলাকা"><button class="pbtn green" style="padding:6px 12px;font-size:12px" data-sa="aa" data-wi="' + wi + '">＋ এলাকা</button></div></div>';
+    });
+    document.getElementById("stWards").innerHTML = h || '<div class="empty"><p>কোনো ওয়ার্ড নেই। নিচে যোগ করুন।</p></div>';
+}
+function stNeedOnline() { if (!navigator.onLine) { showPop("📴 ইন্টারনেট ছাড়া এটা করা যাবে না।", "warning"); return true; } return false; }
+function stPersist(okMsg) {
+    // শুধু wards ফিল্ড বদলায়, বাকি সেটিংস অক্ষত
+    return fsdb.collection("settings").doc("site").set({ wards: WARD_AREAS }, { merge: true }).then(function () {
+        try { var c = JSON.parse(localStorage.getItem("agniSite") || "{}"); c.wards = WARD_AREAS; localStorage.setItem("agniSite", JSON.stringify(c)); } catch (e) { }
+        siteFillWardSelect(); updateAreaDatalist(""); renderSiteWards(); if (okMsg) showPop(okMsg, "success");
+    });
+}
+// সব গ্রাহক-সংগ্রহে (customers, pending, trash) field বদলানো। where: কোন ফিল্ড == কোন মান, set: কী লিখতে হবে
+function stCascade(whereField, whereVal, setObj) {
+    var cols = ["customers", "pending", "trash"], total = 0;
+    return Promise.all(cols.map(function (col) {
+        return fsdb.collection(col).where(whereField, "==", whereVal).get().then(function (snap) {
+            var docs = []; snap.forEach(function (d) { docs.push(d.ref); }); total += docs.length;
+            var chain = Promise.resolve();
+            for (var i = 0; i < docs.length; i += 400) (function (part) {
+                chain = chain.then(function () { var b = fsdb.batch(); part.forEach(function (r) { b.update(r, setObj); }); return b.commit(); });
+            })(docs.slice(i, i + 400));
+            return chain;
+        });
+    })).then(function () { return total; });
+}
+function stRefreshData() { return new Promise(function (res) { cloudSync(function () { res(); }); }); }
+function stFail(e) { console.error(e); showPop("ব্যর্থ: " + ((e && (e.code || e.message)) || "অজানা ত্রুটি"), "error"); }
+function stAddWard() {
+    var el = document.getElementById("stNewWard"), v = (el.value || "").trim(); if (!v) return;
+    if (WARD_AREAS[v]) { showPop("এই ওয়ার্ড আগেই আছে।", "warning"); return; }
+    if (stNeedOnline()) return;
+    WARD_AREAS[v] = []; stPersist("✅ ওয়ার্ড " + v + " যোগ হয়েছে।").then(function () { el.value = ""; }).catch(function (e) { delete WARD_AREAS[v]; stFail(e); });
+}
+function stClick(e) {
+    var t = e.target.closest ? e.target.closest("[data-sa]") : null; if (!t || t.tagName === "SELECT") return;
+    var act = t.getAttribute("data-sa"), w = _sw[+t.getAttribute("data-wi")], ai = t.getAttribute("data-ai");
+    if (w == null || stNeedOnline()) return;
+    var list = WARD_AREAS[w];
+    if (act === "aa") {
+        var inp = document.getElementById("stNA" + t.getAttribute("data-wi")), v = (inp.value || "").trim(); if (!v) return;
+        if (list.indexOf(v) >= 0) { showPop("এই এলাকা এই ওয়ার্ডে আগেই আছে।", "warning"); return; }
+        list.push(v); stPersist("✅ এলাকা যোগ হয়েছে।").catch(function (er) { list.pop(); stFail(er); });
+    } else if (act === "ra") {
+        var old = list[+ai], nv = prompt("এলাকার নতুন নাম (ওয়ার্ড " + w + "):", old); if (nv == null) return; nv = nv.trim(); if (!nv || nv === old) return;
+        if (list.indexOf(nv) >= 0) { showPop("এই নামে এলাকা আগেই আছে।", "warning"); return; }
+        if (!confirm('"' + old + '" → "' + nv + '"\nসব গ্রাহকের ডাটায় এলাকার নাম বদলে যাবে। চালিয়ে যাবেন?')) return;
+        showPop("⏳ সব ডাটায় বদলানো হচ্ছে...", "info");
+        stCascade("area", old, { area: nv }).then(function (n) { list[+ai] = nv; return stPersist("✅ এলাকার নাম বদলেছে। " + n + " টি রেকর্ড আপডেট হয়েছে।"); }).then(stRefreshData).then(renderSiteWards).catch(stFail);
+    } else if (act === "da") {
+        var a = list[+ai];
+        if (!confirm('"' + a + '" এলাকা তালিকা থেকে সরাবেন?\n(গ্রাহকদের ডাটা মোছা হবে না, শুধু ড্রপডাউন তালিকা থেকে সরবে)')) return;
+        list.splice(+ai, 1); stPersist("🗑 এলাকা তালিকা থেকে সরানো হয়েছে।").catch(function (er) { list.splice(+ai, 0, a); stFail(er); });
+    } else if (act === "rw") {
+        var nw = prompt("ওয়ার্ডের নতুন নাম/নং (এখন: " + w + "):", w); if (nw == null) return; nw = nw.trim(); if (!nw || nw === w) return;
+        if (WARD_AREAS[nw]) { showPop("এই ওয়ার্ড আগেই আছে।", "warning"); return; }
+        if (!confirm("ওয়ার্ড " + w + " → " + nw + "\nসব গ্রাহকের ডাটায় বদলে যাবে। চালিয়ে যাবেন?")) return;
+        showPop("⏳ সব ডাটায় বদলানো হচ্ছে...", "info");
+        stCascade("ward", w, { ward: nw }).then(function (n) { WARD_AREAS[nw] = WARD_AREAS[w]; delete WARD_AREAS[w]; return stPersist("✅ ওয়ার্ডের নাম বদলেছে। " + n + " টি রেকর্ড আপডেট হয়েছে।"); }).then(stRefreshData).then(renderSiteWards).catch(stFail);
+    } else if (act === "dw") {
+        if (!confirm("ওয়ার্ড " + w + " ও এর " + list.length + " টি এলাকা তালিকা থেকে সরাবেন?\n(গ্রাহকদের ডাটা মোছা হবে না)")) return;
+        var bak = WARD_AREAS[w]; delete WARD_AREAS[w]; stPersist("🗑 ওয়ার্ড তালিকা থেকে সরানো হয়েছে।").catch(function (er) { WARD_AREAS[w] = bak; stFail(er); });
+    }
+}
+function stChange(e) {
+    var t = e.target; if (t.getAttribute("data-sa") !== "mv" || !t.value || stNeedOnline()) { return; }
+    var w = _sw[+t.getAttribute("data-wi")], ai = +t.getAttribute("data-ai"), nw = t.value, a = WARD_AREAS[w][ai];
+    if (WARD_AREAS[nw].indexOf(a) >= 0) { showPop("ওই ওয়ার্ডে এই নামে এলাকা আগেই আছে।", "warning"); t.value = ""; return; }
+    if (!confirm('"' + a + '" এলাকা ওয়ার্ড ' + w + " থেকে ওয়ার্ড " + nw + "-এ নেবেন?\nসংশ্লিষ্ট সব গ্রাহকের ওয়ার্ডও বদলে যাবে।")) { t.value = ""; return; }
+    showPop("⏳ সব ডাটায় বদলানো হচ্ছে...", "info");
+    stCascade("area", a, { ward: nw }).then(function (n) { WARD_AREAS[w].splice(ai, 1); WARD_AREAS[nw].push(a); return stPersist("✅ এলাকা ওয়ার্ড " + nw + "-এ গেছে। " + n + " টি রেকর্ড আপডেট হয়েছে।"); }).then(stRefreshData).then(renderSiteWards).catch(stFail);
+}
+siteCacheLoad();
+window.addEventListener("load", function () {
+    var w = document.getElementById("stWards"); if (w) { w.addEventListener("click", stClick); w.addEventListener("change", stChange); }
+    siteApply();
+});
+
         window.addEventListener("load", function () {
             applyTheme(curTheme);
             updateAreaDatalist("");
@@ -6078,8 +6281,8 @@ function buildRevenueList(arr) {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.0.5";
-        var APP_DATE = "2026-11-06";
+        var APP_VERSION = "2.1.1";
+        var APP_DATE = "2026-11-07";
         (function () {
             function fill() {
                 var v = document.getElementById("appVer"), d = document.getElementById("appVerDate"), y = document.getElementById("afYear");
@@ -6121,8 +6324,8 @@ function buildRevenueList(arr) {
                 return sig === "||" ? null : sig;
             }).catch(function () { return null; });
         }
-
-        var DEV_WA = "+8801786945337";
+        // ডেভেলপারের WhatsApp নম্বর (দেশের কোড সহ, + ছাড়া, যেমন 8801XXXXXXXXX)। এখানে বসান।
+        var DEV_WA = "";
         function showUpdateBar(sig) {
             if (_updShown || _updDismissed === sig) return;
             _updShown = true;
