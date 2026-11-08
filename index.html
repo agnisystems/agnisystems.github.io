@@ -1900,6 +1900,9 @@
             background: var(--pri);
         }
 
+        .srch-ico{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:linear-gradient(135deg,#e63b2e,#f97316);box-shadow:0 3px 10px rgba(230,59,46,.35);-webkit-tap-highlight-color:transparent}
+        .srch-ico:active{transform:translateY(-50%) scale(.92)}
+        #lsIn::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
         .ls-wrap {
             padding: 11px 15px;
             background: #f8fafc;
@@ -4261,8 +4264,9 @@
             <div class="pop-hdr">
                 <h3 id="lpTtl">তালিকা</h3><button class="pop-x" onclick="closeLP()">✕</button>
             </div>
-            <div class="ls-wrap"><input type="text" id="lsIn" placeholder="🔍 ID / নাম / মোবাইল..."
-                    oninput="filterL()" /></div>
+            <div class="ls-wrap" style="position:relative"><input type="search" id="lsIn" placeholder="ID / নাম / মোবাইল / Login ID লিখে খুঁজুন..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" style="padding-right:46px"
+                    oninput="filterL()" onkeyup="filterL()" onsearch="filterL()" oncompositionend="filterL()" onkeydown="if(event.key==='Enter'){event.preventDefault();filterL();this.blur();}" />
+                <button type="button" class="srch-ico" id="lsGo" aria-label="সার্চ" title="সার্চ" onclick="filterL();var i=document.getElementById('lsIn');if(i)i.focus();"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></div>
             <div class="pop-body" id="lpBody"
                 style="max-height:50vh;overflow-y:auto;padding:0;-webkit-overflow-scrolling:touch;"></div>
             <div class="pop-foot"><button class="pbtn grey" onclick="closeLP()">বন্ধ করুন</button></div>
@@ -4289,7 +4293,8 @@
                 <div class="adm-sec">
                     <h4>📋 অনুমোদিত Gmail <span id="gmCount" style="color:#64748b;font-weight:400"></span></h4>
                     <div style="display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap">
-                        <input class="adm-in" id="gmSearch" oninput="renderGmail()" placeholder="🔍 Gmail / নাম খুঁজুন" style="margin-bottom:0;flex:1;min-width:160px" />
+                        <div style="position:relative;flex:1;min-width:160px"><input class="adm-in" id="gmSearch" type="search" oninput="renderGmail()" onsearch="renderGmail()" onkeyup="renderGmail()" oncompositionend="renderGmail()" enterkeyhint="search" autocomplete="off" placeholder="Gmail ঠিকানা বা নাম লিখে খুঁজুন..." style="margin-bottom:0;width:100%;padding-right:46px;box-sizing:border-box" />
+                            <button type="button" class="srch-ico" style="right:6px" aria-label="সার্চ" onclick="renderGmail();document.getElementById('gmSearch').focus()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button></div>
                         <button class="pbtn orange" id="gmSessBtn" onclick="showAllSessions()">🖥 Active Sessions</button>
                     </div>
                     <div id="gmList" style="overflow-x:auto"></div>
@@ -5154,7 +5159,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             return h.join("");
         }
 
-                function filterL() { var q = document.getElementById("lsIn").value.toLowerCase(); var filtered = _la.filter(function (c) { return [c.id, c.name, c.mobile, c.login].some(function (f) { return f && f.toLowerCase().indexOf(q) >= 0; }); }); document.getElementById("lpBody").innerHTML = buildList(filtered, _lm); }
+                function filterL() { var q = String(document.getElementById("lsIn").value || "").trim().toLowerCase(); var filtered = _la.filter(function (c) { return !q || [c.id, c.name, c.mobile, c.login].some(function (f) { return f != null && String(f).toLowerCase().indexOf(q) >= 0; }); }); document.getElementById("lpBody").innerHTML = buildList(filtered, _lm); }
         function closeLP() {
             document.getElementById("lpBg").classList.remove("on");
             document.querySelector(".ls-wrap").style.display = "block";
@@ -6291,7 +6296,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.1.2";
+        var APP_VERSION = "2.1.5";
         var APP_DATE = "2026-11-07";
         (function () {
             function fill() {
