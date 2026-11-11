@@ -1925,7 +1925,37 @@
             border-color: var(--pri);
         }
 
-        #lpBody .ltbl.rec-tbl th, #lpBody .ltbl.rec-tbl td { display: table-cell !important; }
+        /* ─── সাম্প্রতিক যোগ তালিকা (কার্ড ডিজাইন) ─── */
+        .rcl-wrap { padding: 14px 16px 18px; background: #f8fafc; }
+        .rcl-sum { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+        .rcl-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; color: #475569; box-shadow: 0 1px 2px rgba(15,23,42,.04); }
+        .rcl-chip b { color: #0f172a; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+        .rcl-grp { display: flex; align-items: center; gap: 10px; margin: 16px 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #94a3b8; }
+        .rcl-grp:after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
+        .rcl-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px; background: #fff; border: 1px solid #e8edf4; border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.04); transition: box-shadow .18s, transform .18s, border-color .18s; }
+        .rcl-item:hover { box-shadow: 0 6px 18px rgba(15,23,42,.09); transform: translateY(-1px); border-color: #c7d2fe; }
+        .rcl-av { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; }
+        .rcl-main { flex: 1.3; min-width: 0; }
+        .rcl-name { font-size: 14px; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rcl-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; font-size: 11px; color: #64748b; }
+        .rcl-id { font-family: "JetBrains Mono", monospace; color: #4f46e5; background: #eef2ff; padding: 1px 7px; border-radius: 6px; font-weight: 700; }
+        .rcl-pk { background: #dcfce7; color: #166534; padding: 1px 8px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+        .rcl-ty { padding: 1px 8px; border-radius: 999px; font-weight: 700; }
+        .rcl-who { flex: 1.2; min-width: 0; padding-left: 12px; border-left: 2px solid #eef2f7; }
+        .rcl-wl { font-size: 10px; font-weight: 700; color: #94a3b8; letter-spacing: .4px; }
+        .rcl-wn { font-size: 13px; font-weight: 700; color: #1e293b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rcl-wn span { font-weight: 500; color: #94a3b8; font-size: 11px; }
+        .rcl-wt { font-size: 11px; color: #64748b; margin-top: 1px; }
+        .rcl-wt i { font-style: normal; color: #6366f1; font-weight: 700; }
+        .rcl-lu { margin-top: 5px; font-size: 10.5px; color: #64748b; background: #f8fafc; border: 1px dashed #dbe3ee; border-radius: 8px; padding: 3px 8px; display: inline-block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .rcl-act { display: flex; gap: 4px; flex-shrink: 0; }
+        @media (max-width: 700px) {
+            .rcl-item { flex-wrap: wrap; }
+            .rcl-main { flex: 1 1 calc(100% - 60px); }
+            .rcl-who { flex: 1 1 100%; padding-left: 0; border-left: 0; border-top: 1px solid #eef2f7; padding-top: 8px; order: 3; }
+            .rcl-act { order: 4; width: 100%; }
+            .rcl-act .abtn { flex: 1; padding: 8px 10px; }
+        }
         .empty {
             text-align: center;
             padding: 40px 20px;
@@ -5218,6 +5248,57 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("lpBg").classList.remove("on");
             document.querySelector(".ls-wrap").style.display = "block";
         }
+        function toBn(n) { return String(n).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯".charAt(d); }); }
+        function relAgo(ms) {
+            var m = Math.floor(Math.max(0, Date.now() - ms) / 60000);
+            if (m < 1) return "এইমাত্র"; if (m < 60) return toBn(m) + " মিনিট আগে";
+            var h = Math.floor(m / 60); if (h < 24) return toBn(h) + " ঘণ্টা আগে";
+            var d = Math.floor(h / 24); if (d < 30) return toBn(d) + " দিন আগে";
+            var mo = Math.floor(d / 30); if (mo < 12) return toBn(mo) + " মাস আগে";
+            return toBn(Math.floor(mo / 12)) + " বছর আগে";
+        }
+        function recDate(c) {
+            var f = (c.auditLog || [])[0]; if (!f) return null;
+            if (f.ts) return new Date(Number(f.ts));
+            var m = String(f.time || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+        }
+        function buildRecent(arr) {
+            if (!arr.length) return '<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>';
+            var isA = isPrivileged(), canEd = canEditDirect();
+            var td = new Date(); td.setHours(0, 0, 0, 0);
+            var MN = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+            var pal = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"];
+            var tcol = { Home: "#8b5cf6", Office: "#3b82f6", Mess: "#10b981" };
+            var nm = { created: "তৈরি", updated: "আপডেট", approved: "অনুমোদন" };
+            var nToday = 0, nWeek = 0;
+            arr.forEach(function (c) { var d = recDate(c); if (!d) return; var diff = Math.floor((td - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000); if (diff <= 0) nToday++; if (diff < 7) nWeek++; });
+            var h = '<div class="rcl-wrap"><div class="rcl-sum"><span class="rcl-chip">👥 দেখাচ্ছে <b>' + toBn(arr.length) + '</b> জন</span><span class="rcl-chip">🟢 আজ যোগ <b>' + toBn(nToday) + '</b></span><span class="rcl-chip">📅 শেষ ৭ দিনে <b>' + toBn(nWeek) + '</b></span></div>';
+            var lastG = null;
+            arr.forEach(function (c) {
+                var l = c.auditLog || [], f = l[0], la = l.length > 1 ? l[l.length - 1] : null, d = recDate(c), g = "আরও আগে";
+                if (d) { var diff = Math.floor((td - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000); g = diff <= 0 ? "আজ" : diff === 1 ? "গতকাল" : toBn(d.getDate()) + " " + MN[d.getMonth()] + " " + toBn(d.getFullYear()); }
+                if (g !== lastG) { h += '<div class="rcl-grp">' + escHtml(g) + '</div>'; lastG = g; }
+                var vid = c.id, nmv = String(c.name || "?").trim(), ini = escHtml(nmv.charAt(0).toUpperCase() || "?"), col = pal[(parseInt(String(c.id).replace(/\D/g, ""), 10) || 0) % pal.length], tc = tcol[c.customer_type] || "#64748b";
+                var btns = isA ? '<button class="abtn v" onclick="openVP(\'' + vid + '\',\'list\')">👁 View</button>' : '<button class="abtn v" onclick="openFullPage(\'' + vid + '\')">👁 View</button>';
+                if (!isA && canEd) btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>';
+                else if (!isA && !isViewer()) {
+                    var hasPend = false, hasApr = false;
+                    for (var j = 0; j < EREQS.length; j++) { if (String(EREQS[j].recordId) === String(vid) && EREQS[j].requestedBy === currentUser.username) { if (EREQS[j].status === "approved") hasApr = true; else hasPend = true; } }
+                    if (hasApr) btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>';
+                    else if (hasPend) btns += '<button class="abtn" style="background:#94a3b8;cursor:not-allowed" disabled>⏳</button>';
+                    else btns += '<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\'' + vid + '\')">📨</button>';
+                }
+                if (isA) btns += '<button class="abtn d" onclick="delFromList(\'' + vid + '\')">🗑️</button>';
+                var who = f ? '<div class="rcl-wl">যোগ করেছেন</div><div class="rcl-wn">' + escHtml(auditWho(f).display || "—") + ' <span>(' + escHtml(auditWho(f).by || "") + ')</span></div><div class="rcl-wt">🕒 ' + escHtml(f.time || "—") + (f.ts ? ' · <i>' + relAgo(Number(f.ts)) + '</i>' : "") + '</div>' : '<div class="rcl-wl">যোগ করেছেন</div><div class="rcl-wn" style="color:#94a3b8">তথ্য নেই</div>';
+                if (la) who += '<div class="rcl-lu">✏️ শেষ ' + (nm[la.action] || "পরিবর্তন") + ': ' + escHtml(auditWho(la).display || "") + ' · ' + escHtml(la.time || "") + '</div>';
+                h += '<div class="rcl-item"><div class="rcl-av" style="background:linear-gradient(135deg,' + col + ',' + col + 'bb)">' + ini + '</div>' +
+                    '<div class="rcl-main"><div class="rcl-name" title="' + escAttr(nmv) + '">' + escHtml(nmv) + '</div><div class="rcl-meta"><span class="rcl-id">#' + escHtml(c.id || "") + '</span>' +
+                    (c.package_type ? '<span class="rcl-pk">' + escHtml(c.package_type) + '</span>' : '') + (c.customer_type ? '<span class="rcl-ty" style="background:' + tc + '1f;color:' + tc + '">' + escHtml(c.customer_type) + '</span>' : '') +
+                    (c.mobile ? '<span>📞 ' + escHtml(c.mobile) + '</span>' : '') + '</div></div>' +
+                    '<div class="rcl-who">' + who + '</div><div class="rcl-act">' + btns + '</div></div>';
+            });
+            return h + '</div>';
+        }
         function recWhoTd(c) {
             var l = c.auditLog || [], f = l[0], la = l.length > 1 ? l[l.length - 1] : null, nm = { created: "তৈরি", updated: "আপডেট", approved: "অনুমোদন" };
             var t = f ? '<td style="font-size:11px;white-space:nowrap">' + escHtml(f.time || "—") + '</td>' : '<td style="font-size:11px;color:#94a3b8">—</td>';
@@ -5225,7 +5306,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             return t + w;
         }
         function buildList(arr, mode) {
-            var recent = (mode === "recent"); if (recent) mode = "list";
+            if (mode === "recent") return buildRecent(arr); var recent = false;
             if (!arr.length) return '<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>'; var isA = isPrivileged(); var canAp = canApprove(), canEd = canEditDirect(); var isCoder = currentUser && currentUser.role === "coder"; var isAdmin = currentUser && currentUser.role === "admin"; var showCb = isAdmin && mode === "list"; var cbHead = showCb ? '<th><input type="checkbox" id="cbAll" onclick="toggleAllCb(this)" style="width:15px;height:15px;cursor:pointer"/></th>' : ''; var h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">' + (showCb ? '<div style="padding:8px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:8px"><button onclick="deleteSelected()" style="padding:6px 14px;background:#dc2626;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hind Siliguri\',sans-serif">🗑️ Selected Delete</button><span id="selCount" style="font-size:12px;color:#64748b">০ টি নির্বাচিত</span></div>' : '') +
                 '<table class="ltbl' + (recent ? ' rec-tbl' : '') + '"><thead><tr>' + cbHead + '<th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th>' + (recent ? '<th>🕒 কখন সেভ</th><th>👤 কে সেভ করেছেন</th>' : '<th>সংযোগ</th>') + '<th>একশন</th></tr></thead><tbody>'; for (var i = 0; i < arr.length; i++) {
                     var c = arr[i], vid = c.id || c.pendingId; var viewBtn; if (!isA && mode === "list") viewBtn = '<button class="abtn v" onclick="openFullPage(\'' + vid + '\')">👁 View</button>'; else viewBtn = '<button class="abtn v" onclick="openVP(\'' + vid + '\',\'' + mode + '\')">👁 View</button>'; var btns = viewBtn; if (!isA && mode === "list" && canEd) { btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>'; } else if (!isA && mode === "list") { var hasPend = false, hasApr = false; for (var j = 0; j < EREQS.length; j++) { if (String(EREQS[j].recordId) === String(vid) && EREQS[j].requestedBy === currentUser.username) { if (EREQS[j].status === "approved") hasApr = true; else hasPend = true; } } if (hasApr) btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>'; else if (hasPend) btns += '<button class="abtn" style="background:#94a3b8;cursor:not-allowed" disabled>⏳</button>'; else btns += '<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\'' + vid + '\')">📨</button>'; } if (isA && mode === "list") btns += '<button class="abtn d" onclick="delFromList(\'' + c.id + '\')">🗑️</button>'; if (canAp && mode === "pending") { btns = '<button class="abtn ok" onclick="approveP(\'' + c.pendingId + '\')">✔</button>' + viewBtn + '<button class="abtn no" onclick="rejectP(\'' + c.pendingId + '\')">✕</button>'; } var cbTd = showCb ? '<td><input type="checkbox" class="rowCb" data-id="' + c.id + '" onchange="updateSelCount()" style="width:15px;height:15px;cursor:pointer"/></td>' : '';
