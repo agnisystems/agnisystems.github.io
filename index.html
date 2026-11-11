@@ -1925,6 +1925,45 @@
             border-color: var(--pri);
         }
 
+        /* ─── প্রিমিয়াম গ্রাহক তালিকা ─── */
+        .pl-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: linear-gradient(90deg, #fef2f2, #fff); border-bottom: 1px solid #fee2e2; font-size: 12px; font-weight: 600; color: #64748b; }
+        .pl-tbl { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+        .pl-tbl thead th { position: sticky; top: 0; z-index: 2; background: linear-gradient(180deg, #f8fafc, #f1f5f9); padding: 11px 12px; font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; text-align: left; white-space: nowrap; }
+        .pl-tbl tbody td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; background: #fff; transition: background .15s; }
+        .pl-tbl tbody tr:hover td { background: #f5f7ff; }
+        .pl-tbl tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 #6366f1; }
+        #lpBody .pl-tbl th, #lpBody .pl-tbl td { display: table-cell; }
+        .pl-cb { width: 16px; height: 16px; cursor: pointer; accent-color: #6366f1; }
+        .pl-ix { text-align: center; color: #cbd5e1; font-weight: 700; font-size: 11px; }
+        .pl-id { display: inline-block; font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; color: #4f46e5; background: #eef2ff; padding: 3px 8px; border-radius: 7px; }
+        .pl-nmw { display: flex; align-items: center; gap: 10px; min-width: 170px; }
+        .pl-av { width: 36px; height: 36px; flex-shrink: 0; border-radius: 11px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; box-shadow: 0 2px 6px rgba(15,23,42,.15); }
+        .pl-n { font-weight: 700; color: #0f172a; font-size: 13px; line-height: 1.3; }
+        .pl-s { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; font-size: 11px; color: #64748b; }
+        .pl-t { padding: 0 8px; border-radius: 999px; font-weight: 700; font-size: 10px; line-height: 17px; }
+        .pl-due { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 0 8px; border-radius: 999px; font-weight: 700; font-size: 10px; line-height: 16px; }
+        .pl-mob { font-family: "JetBrains Mono", monospace; font-size: 12px; color: #334155; white-space: nowrap; }
+        .pl-pk { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 11px; font-weight: 700; color: #166534; background: linear-gradient(135deg, #dcfce7, #bbf7d0); border: 1px solid #bbf7d0; white-space: nowrap; }
+        .pl-dt { font-size: 12px; color: #475569; white-space: nowrap; }
+        .pl-m-sm { display: none; }
+        .pl-act { display: flex; gap: 5px; justify-content: flex-end; white-space: nowrap; }
+        .pl-b { display: inline-flex; align-items: center; gap: 5px; border: 0; border-radius: 9px; padding: 7px 11px; font: 700 12px "Hind Siliguri", sans-serif; color: #fff; cursor: pointer; box-shadow: 0 1px 2px rgba(15,23,42,.14); transition: transform .12s, box-shadow .15s, filter .15s; }
+        .pl-b:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(15,23,42,.2); filter: brightness(1.06); }
+        .pl-b:active { transform: scale(.96); }
+        .pl-b.view { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .pl-b.edit, .pl-b.ok { background: linear-gradient(135deg, #10b981, #059669); }
+        .pl-b.req { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .pl-b.del { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; box-shadow: none; }
+        .pl-b.del:hover { background: #dc2626; color: #fff; }
+        .pl-b.no { background: #e2e8f0; color: #475569; box-shadow: none; }
+        .pl-b.wait { background: #e2e8f0; color: #64748b; cursor: not-allowed; box-shadow: none; }
+        @media (max-width: 700px) {
+            #lpBody .pl-tbl .pl-hide-sm { display: none; }
+            .pl-m-sm { display: inline; }
+            .pl-b span { display: none; }
+            .pl-b { padding: 8px 10px; }
+            .pl-nmw { min-width: 0; }
+        }
         /* ─── সাম্প্রতিক যোগ তালিকা (কার্ড ডিজাইন) ─── */
         .rcl-wrap { padding: 14px 16px 18px; background: #f8fafc; }
         .rcl-sum { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
@@ -5299,19 +5338,43 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             });
             return h + '</div>';
         }
-        function recWhoTd(c) {
-            var l = c.auditLog || [], f = l[0], la = l.length > 1 ? l[l.length - 1] : null, nm = { created: "তৈরি", updated: "আপডেট", approved: "অনুমোদন" };
-            var t = f ? '<td style="font-size:11px;white-space:nowrap">' + escHtml(f.time || "—") + '</td>' : '<td style="font-size:11px;color:#94a3b8">—</td>';
-            var w = f ? '<td style="font-size:11px;white-space:nowrap"><b>' + escHtml(auditWho(f).display || "—") + '</b> <span style="color:#94a3b8">(' + escHtml(auditWho(f).by || "") + ')</span>' + (la ? '<div style="color:#64748b;margin-top:2px">✏️ শেষ ' + (nm[la.action] || "পরিবর্তন") + ': ' + escHtml(auditWho(la).display || "") + ' · ' + escHtml(la.time || "") + '</div>' : "") + '</td>' : '<td style="font-size:11px;color:#94a3b8">—</td>';
-            return t + w;
-        }
+        function plColor(id) { var pal = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"]; return pal[(parseInt(String(id).replace(/\D/g, ""), 10) || 0) % pal.length]; }
         function buildList(arr, mode) {
-            if (mode === "recent") return buildRecent(arr); var recent = false;
-            if (!arr.length) return '<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>'; var isA = isPrivileged(); var canAp = canApprove(), canEd = canEditDirect(); var isCoder = currentUser && currentUser.role === "coder"; var isAdmin = currentUser && currentUser.role === "admin"; var showCb = isAdmin && mode === "list"; var cbHead = showCb ? '<th><input type="checkbox" id="cbAll" onclick="toggleAllCb(this)" style="width:15px;height:15px;cursor:pointer"/></th>' : ''; var h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">' + (showCb ? '<div style="padding:8px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:8px"><button onclick="deleteSelected()" style="padding:6px 14px;background:#dc2626;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Hind Siliguri\',sans-serif">🗑️ Selected Delete</button><span id="selCount" style="font-size:12px;color:#64748b">০ টি নির্বাচিত</span></div>' : '') +
-                '<table class="ltbl' + (recent ? ' rec-tbl' : '') + '"><thead><tr>' + cbHead + '<th>#</th><th>ID</th><th>নাম</th><th>মোবাইল</th><th>প্যাকেজ</th>' + (recent ? '<th>🕒 কখন সেভ</th><th>👤 কে সেভ করেছেন</th>' : '<th>সংযোগ</th>') + '<th>একশন</th></tr></thead><tbody>'; for (var i = 0; i < arr.length; i++) {
-                    var c = arr[i], vid = c.id || c.pendingId; var viewBtn; if (!isA && mode === "list") viewBtn = '<button class="abtn v" onclick="openFullPage(\'' + vid + '\')">👁 View</button>'; else viewBtn = '<button class="abtn v" onclick="openVP(\'' + vid + '\',\'' + mode + '\')">👁 View</button>'; var btns = viewBtn; if (!isA && mode === "list" && canEd) { btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>'; } else if (!isA && mode === "list") { var hasPend = false, hasApr = false; for (var j = 0; j < EREQS.length; j++) { if (String(EREQS[j].recordId) === String(vid) && EREQS[j].requestedBy === currentUser.username) { if (EREQS[j].status === "approved") hasApr = true; else hasPend = true; } } if (hasApr) btns += '<button class="abtn ok" onclick="goEditFromApproved(\'' + vid + '\',\'\')">✏ Edit</button>'; else if (hasPend) btns += '<button class="abtn" style="background:#94a3b8;cursor:not-allowed" disabled>⏳</button>'; else btns += '<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\'' + vid + '\')">📨</button>'; } if (isA && mode === "list") btns += '<button class="abtn d" onclick="delFromList(\'' + c.id + '\')">🗑️</button>'; if (canAp && mode === "pending") { btns = '<button class="abtn ok" onclick="approveP(\'' + c.pendingId + '\')">✔</button>' + viewBtn + '<button class="abtn no" onclick="rejectP(\'' + c.pendingId + '\')">✕</button>'; } var cbTd = showCb ? '<td><input type="checkbox" class="rowCb" data-id="' + c.id + '" onchange="updateSelCount()" style="width:15px;height:15px;cursor:pointer"/></td>' : '';
-                    h += '<tr>' + cbTd + '<td style="color:#94a3b8;text-align:center">' + (i + 1) + '</td><td style="font-family:\'JetBrains Mono\',monospace;font-size:11px;color:#2563eb">' + (c.id || c.pendingId || "") + '</td><td style="font-weight:500">' + (c.name || "") + '</td><td>' + (c.mobile || "") + '</td><td><span style="background:#dcfce7;color:#166534;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600">' + (c.package_type || "—") + '</span></td>' + (recent ? recWhoTd(c) : '<td style="font-size:11px;white-space:nowrap">' + (c.conn || "—") + '</td>') + '<td style="white-space:nowrap">' + btns + '</td></tr>';
-                } h += '</tbody></table></div>'; return h;
+            if (mode === "recent") return buildRecent(arr);
+            if (!arr.length) return '<div class="empty"><div class="ei">🚫</div><p>কোনো ডাটা নেই।</p></div>';
+            var isA = isPrivileged(), canAp = canApprove(), canEd = canEditDirect();
+            var showCb = currentUser && currentUser.role === "admin" && mode === "list";
+            var tcol = { Home: "#8b5cf6", Office: "#3b82f6", Mess: "#10b981" };
+            var h = (showCb ? '<div class="pl-bar"><button class="pl-b del" style="background:#dc2626;color:#fff;border-color:#dc2626" onclick="deleteSelected()">🗑️ <span>Selected Delete</span></button><span id="selCount">০ টি নির্বাচিত</span></div>' : '') +
+                '<table class="ltbl pl-tbl"><thead><tr>' + (showCb ? '<th style="width:36px"><input type="checkbox" id="cbAll" class="pl-cb" onclick="toggleAllCb(this)"/></th>' : '') +
+                '<th style="width:44px;text-align:center">#</th><th>ID</th><th>গ্রাহক</th><th class="pl-hide-sm">মোবাইল</th><th>প্যাকেজ</th><th class="pl-hide-sm">সংযোগ</th><th style="text-align:right">একশন</th></tr></thead><tbody>';
+            for (var i = 0; i < arr.length; i++) {
+                var c = arr[i], vid = c.id || c.pendingId;
+                var viewBtn = (!isA && mode === "list")
+                    ? `<button class="pl-b view" title="দেখুন" onclick="openFullPage('${vid}')">👁<span>View</span></button>`
+                    : `<button class="pl-b view" title="দেখুন" onclick="openVP('${vid}','${mode}')">👁<span>View</span></button>`;
+                var btns = viewBtn;
+                if (!isA && mode === "list" && canEd) {
+                    btns += `<button class="pl-b edit" title="এডিট করুন" onclick="goEditFromApproved('${vid}','')">✏️</button>`;
+                } else if (!isA && mode === "list" && !isViewer()) {
+                    var hasPend = false, hasApr = false;
+                    for (var j = 0; j < EREQS.length; j++) { if (String(EREQS[j].recordId) === String(vid) && EREQS[j].requestedBy === currentUser.username) { if (EREQS[j].status === "approved") hasApr = true; else hasPend = true; } }
+                    if (hasApr) btns += `<button class="pl-b edit" title="এডিট করুন" onclick="goEditFromApproved('${vid}','')">✏️</button>`;
+                    else if (hasPend) btns += `<button class="pl-b wait" title="অনুমোদনের অপেক্ষায়" disabled>⏳</button>`;
+                    else btns += `<button class="pl-b req" title="Edit Request পাঠান" onclick="sendReqFor('${vid}')">📨</button>`;
+                }
+                if (isA && mode === "list") btns += `<button class="pl-b del" title="Trash-এ পাঠান" onclick="delFromList('${c.id}')">🗑️</button>`;
+                if (canAp && mode === "pending") btns = `<button class="pl-b ok" title="অনুমোদন" onclick="approveP('${c.pendingId}')">✔<span>Approve</span></button>` + viewBtn + `<button class="pl-b no" title="বাতিল" onclick="rejectP('${c.pendingId}')">✕</button>`;
+                var nmv = String(c.name || "—").trim(), col = plColor(c.id || c.pendingId || i), tc = tcol[c.customer_type] || "#64748b", due = Number(c.totPrice) || 0;
+                var sub = (c.customer_type ? '<span class="pl-t" style="background:' + tc + '1f;color:' + tc + '">' + escHtml(c.customer_type) + '</span>' : '') +
+                    (c.area ? '<span>📍 ' + escHtml(c.area) + '</span>' : '') + (c.mobile ? '<span class="pl-m-sm">📞 ' + escHtml(c.mobile) + '</span>' : '') + (due ? '<span class="pl-due">বাকি ৳' + due + '</span>' : '');
+                h += '<tr class="pl-row">' + (showCb ? '<td><input type="checkbox" class="rowCb pl-cb" data-id="' + escAttr(c.id) + '" onchange="updateSelCount()"/></td>' : '') +
+                    '<td class="pl-ix">' + (i + 1) + '</td><td><span class="pl-id">' + escHtml(c.id || c.pendingId || "") + '</span></td>' +
+                    '<td><div class="pl-nmw"><div class="pl-av" style="background:linear-gradient(135deg,' + col + ',' + col + 'bb)">' + escHtml(nmv.charAt(0).toUpperCase()) + '</div><div class="pl-nmt"><div class="pl-n">' + escHtml(nmv) + '</div><div class="pl-s">' + sub + '</div></div></div></td>' +
+                    '<td class="pl-hide-sm pl-mob">' + (c.mobile ? escHtml(c.mobile) : "—") + '</td><td>' + (c.package_type ? '<span class="pl-pk">' + escHtml(c.package_type) + '</span>' : '<span style="color:#cbd5e1">—</span>') + '</td>' +
+                    '<td class="pl-hide-sm"><span class="pl-dt">' + (c.conn ? '📅 ' + escHtml(c.conn) : "—") + '</span></td><td><div class="pl-act">' + btns + '</div></td></tr>';
+            }
+            return h + '</tbody></table>';
         }
 
         // ─── VIEW POPUP ───
