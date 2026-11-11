@@ -3528,6 +3528,7 @@
         <div class="sb-item new-item" onclick="startNew();closeSidebar();"><span class="sb-ico">✚</span> Add New</div>
         <div class="sb-item" onclick="showList();closeSidebar();"><span class="sb-ico">📋</span> Data List <span
                 class="sb-badge green" id="sBadgeList">0</span></div>
+        <div class="sb-item" onclick="showRecent();closeSidebar();"><span class="sb-ico">🆕</span> Recently Added</div>
         <div class="sb-item" id="sMyReqs" style="display:none" onclick="showMyApproved();closeSidebar();"><span
                 class="sb-ico">✅</span> Approved <span class="sb-badge green" id="sBadgeMyApr">0</span></div>
         <div class="sb-div"></div>
@@ -3716,7 +3717,7 @@
                 <div class="hm-recent">
                     <div class="hm-recent-head">
                         <h3>🕐 সাম্প্রতিক গ্রাহক</h3>
-                        <button onclick="showList()"
+                        <button onclick="showRecent()"
                             style="font-size:11px;padding:5px 12px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);border-radius:6px;cursor:pointer;font-family:'Hind Siliguri',sans-serif;transition:.15s"
                             id="seeAllBtn">সব দেখুন →</button>
                     </div>
@@ -5080,6 +5081,21 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                     }
                     foot.innerHTML = extra + '<button class="pbtn grey" onclick="closeLP()">বন্ধ করুন</button>';
                 }
+                document.getElementById("lpBg").classList.add("on");
+            });
+        }
+        // ─── সাম্প্রতিক যোগ হওয়া গ্রাহক (নতুন আগে) ───
+        function recentTs(c) { var l = c.auditLog; return (l && l.length && l[0].ts) ? Number(l[0].ts) : 0; }
+        function showRecent() {
+            cloudSync(function () {
+                var arr = DB.slice().sort(function (a, b) { return (recentTs(b) - recentTs(a)) || ((Number(b.id) || 0) - (Number(a.id) || 0)); }).slice(0, 50);
+                _lm = "list"; _la = arr;
+                document.getElementById("lpTtl").textContent = "🆕 সাম্প্রতিক যোগ — সর্বশেষ " + arr.length + " জন";
+                document.getElementById("lpBody").innerHTML = buildList(arr, "list");
+                document.getElementById("lsIn").value = "";
+                document.querySelector(".ls-wrap").style.display = "block";
+                var foot = document.querySelector("#lpBg .pop-foot");
+                if (foot) foot.innerHTML = '<button class="pbtn grey" onclick="closeLP()">বন্ধ করুন</button>';
                 document.getElementById("lpBg").classList.add("on");
             });
         }
