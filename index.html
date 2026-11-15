@@ -3511,6 +3511,39 @@
         .app-foot .af-msg { font-weight: 600; margin-top: 2px; }
             .rp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(148,163,184,.4); cursor: pointer; font-size: 13px; font-weight: 600; user-select: none; }
         .rp-chip:has(input:checked) { background: rgba(99,102,241,.2); border-color: #818cf8; }
+
+        /* ─── এডিট মোড: স্পষ্ট বার + বদলানো ঘর হলুদ ─── */
+        #editBar { display: none; position: sticky; top: 76px; z-index: 50; margin: 0 0 10px; padding: 9px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; align-items: center; gap: 10px; flex-wrap: wrap; border: 2px solid; box-shadow: 0 4px 14px rgba(0,0,0,.14); font-family: "Hind Siliguri", sans-serif; }
+        #editBar .eb-t { flex: 1; min-width: 200px; }
+        #editBar .eb-b { border: 0; border-radius: 8px; padding: 6px 12px; font: 700 12px "Hind Siliguri", sans-serif; color: #fff; cursor: pointer; }
+        #editBar .eb-n { display: inline-block; padding: 1px 9px; border-radius: 999px; background: #f59e0b; color: #fff; font-weight: 800; }
+        .a4-page td.fchg { background: #fef08a !important; box-shadow: inset 4px 0 0 #f59e0b; }
+        body.md-edit .tbl td input[type=text], body.md-edit .tbl td select, body.md-edit #eqTbl input[type=text], body.md-edit #fPorishod { background: #eff6ff !important; box-shadow: inset 0 0 0 1px #93c5fd; border-radius: 3px; }
+        body.md-edit .tbl td.fchg input[type=text], body.md-edit .tbl td.fchg select, body.md-edit #eqTbl td.fchg input[type=text] { background: #fde047 !important; box-shadow: inset 0 0 0 1px #f59e0b; }
+        .rc-btn.save.pulse, .mab-btn.pulse { animation: savePulse 1.4s infinite; }
+        @keyframes savePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,.6); } 50% { box-shadow: 0 0 0 9px rgba(245,158,11,0); } }
+        @media print { #editBar { display: none !important; } .a4-page td.fchg { background: none !important; box-shadow: none !important; } body.md-edit .tbl td input[type=text], body.md-edit .tbl td select, body.md-edit #eqTbl input[type=text], body.md-edit #fPorishod { background: transparent !important; box-shadow: none !important; } }
+
+        /* ─── মার্জ: বামে ছিল · ডানে নতুন · শেষে থাকবে ─── */
+        .mg-tbl { width: 100%; border-collapse: separate; border-spacing: 6px; font-size: 13px; table-layout: fixed; }
+        .mg-tbl th { font-size: 11px; font-weight: 800; letter-spacing: .3px; padding: 4px 6px; text-align: center; color: #475569; }
+        .mg-tbl td { vertical-align: middle; }
+        .mg-tbl td.mg-lbl { width: 92px; font-weight: 700; color: #334155; font-size: 12px; word-break: break-word; }
+        .mg-opt { display: block; position: relative; cursor: pointer; border: 2px solid #e2e8f0; border-radius: 10px; padding: 7px 9px; min-height: 44px; background: #fff; transition: all .15s; -webkit-tap-highlight-color: transparent; }
+        .mg-opt input { position: absolute; opacity: 0; pointer-events: none; }
+        .mg-opt .mg-v { display: block; word-break: break-word; font-weight: 600; color: #0f172a; }
+        .mg-opt .mg-tag { display: block; font-size: 10px; font-weight: 800; margin-top: 3px; color: #94a3b8; }
+        .mg-opt .mg-tag::before { content: "○ রাখবো"; }
+        .mg-opt:hover { border-color: #86efac; }
+        .mg-opt:has(input:checked) { border-color: #16a34a; background: #f0fdf4; box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+        .mg-opt:has(input:checked) .mg-tag { color: #15803d; }
+        .mg-opt:has(input:checked) .mg-tag::before { content: "✓ রাখা হবে"; }
+        .mg-opt:not(:has(input:checked)) { opacity: .72; }
+        .mg-opt.mg-id .mg-tag::before { content: "○ এই ID থাকবে"; }
+        .mg-opt.mg-id:has(input:checked) .mg-tag::before { content: "✓ এই ID থাকবে"; }
+        .mg-res { background: #ecfdf5; border: 2px dashed #34d399; border-radius: 10px; padding: 7px 9px; font-weight: 800; color: #065f46; word-break: break-word; }
+        .mg-hl { text-align: center; }
+        .mg-hl.old { color: #b45309; } .mg-hl.new { color: #1d4ed8; } .mg-hl.res { color: #047857; }
     </style>
 </head>
 
@@ -3824,6 +3857,7 @@
                 <div class="right-bar" id="mobileRightBar" style="display:none"><!-- mobile right bar injected by JS -->
                 </div>
                 <div class="a4-page" id="page1">
+                    <div id="editBar"></div>
                     <div class="banner b-lock show" id="bLock"><span>🔒</span><span>এন্ট্রি লক। <b>নতুন এন্ট্রি</b> বা
                             <b>List</b> ব্যবহার করুন।</span></div>
                     <div class="banner b-pend" id="bPend"><span>⌛</span><span>এই রেকর্ড <b>Admin অনুমোদনের
@@ -5112,9 +5146,10 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             else if (mode === "view" && !isA && !isViewer() && canEditDirect()) { document.getElementById("btnEdit").style.display = "flex"; }
             else if (mode === "view" && !isA && !isViewer()) { var pendReq = null, aprReq = null; for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(curId) && EREQS[i].requestedBy === currentUser.username) { if (EREQS[i].status === "approved") aprReq = EREQS[i]; else if (EREQS[i].status === "pending") pendReq = EREQS[i]; } } if (aprReq) { document.getElementById("bOk").classList.add("show"); bLoadEd.style.display = "flex"; } else if (pendReq) { document.getElementById("bReq").classList.add("show"); document.getElementById("bReqTxt").textContent = "Edit Request পাঠানো হয়েছে। Admin অনুমোদনের অপেক্ষায়।"; } else { bReq.style.display = "flex"; } }
             syncMobileBar();
+            fSnap();
         }
         function startNew() { if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); showHome(); return; } localStorage.setItem("agni_page", "new"); hideHome(); fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("new"); document.getElementById("fId").focus(); }
-        function goDisabled() { fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("disabled"); showHome(); }
+        function goDisabled() { if (_dirtyN > 0 && !confirm("⚠️ সেভ না করা " + _dirtyN + " টি পরিবর্তন আছে। বাদ দিয়ে বের হবেন?")) return; _dirtyN = 0; fClear(); cur = -1; curId = null; document.getElementById("hdrNum").textContent = "#" + String(DB.length + 1).padStart(4, "0"); setMode("disabled"); showHome(); }
         function backFromFullPage() {
             if (!_fullPageBack) return;
             var fb = _fullPageBack; _fullPageBack = null;
@@ -6419,31 +6454,35 @@ function mgFilled(c) { var n = 0; mgKeys().forEach(function (k) { if (mgV(c[k]) 
 function mgDupRender() {
     var groups = mgGroups(), keys = mgKeys(); _mgd = groups;
     var h = '<div style="padding:12px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0">' +
-        '<div style="font-size:13px;color:#475569;line-height:1.7">একই লগইন আইডি, NID, অথবা একই মোবাইল + নাম থাকা গ্রাহকদের এখানে দেখানো হচ্ছে। যে ID রাখবেন সেটা বাছুন, আর যেসব ঘরে পার্থক্য আছে সেখানে কোনটা থাকবে তা বাছুন। বাকি রেকর্ড Trash-এ যাবে (পরে Restore করা যাবে)।</div>' +
+        '<div style="font-size:13px;color:#475569;line-height:1.8">বামে <b style="color:#b45309">ছিল</b> · ডানে <b style="color:#1d4ed8">নতুন</b> · শেষে <b style="color:#047857">থাকবে</b>। প্রতিটি ঘরে যেটা রাখতে চান সেই বক্সে ট্যাপ/ক্লিক করুন, ডানের সবুজ ঘরে দেখাবে কী থাকবে। উপরের বক্সে ট্যাপ করে বাছুন কোন <b>ID</b> থাকবে, বাকি রেকর্ড Trash-এ যাবে (Restore করা যাবে)।</div>' +
         '<div style="margin-top:8px"><span style="display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700;background:#d9770622;color:#d97706;border:1px solid #d9770655">🔀 ডুপ্লিকেট গ্রুপ ' + groups.length + '</span> ' +
         '<button class="abtn v" style="margin-left:6px" onclick="document.getElementById(\'mgFile\').click()">📂 অন্য JSON ফাইল থেকে মার্জ</button></div></div>';
     if (!groups.length) h += '<div class="empty"><div class="ei">✅</div><p>কোনো ডুপ্লিকেট গ্রাহক পাওয়া যায়নি।</p></div>';
     groups.forEach(function (g, gi) {
         var best = 0, bf = -1; g.forEach(function (c, i) { var n = mgFilled(c); if (n > bf) { bf = n; best = i; } });
+        var colW = Math.floor(72 / g.length);
         h += '<div style="border:1px solid #e2e8f0;border-radius:12px;margin:10px 12px;overflow:hidden">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#fffbeb;border-bottom:1px solid #fde68a"><b>গ্রুপ ' + (gi + 1) + ' — ' + g.length + ' টি রেকর্ড</b>' +
             '<label style="font-size:12px;font-weight:700;color:#b91c1c;cursor:pointer"><input type="checkbox" id="mgdSkip' + gi + '"> মার্জ করবেন না</label></div>' +
-            '<div style="padding:6px 12px 2px;font-size:12px;font-weight:700;color:#475569">কোন ID রাখবেন:</div><table class="ltbl"><tbody>';
+            '<div style="overflow-x:auto"><table class="mg-tbl"><thead><tr><th style="width:92px">কোন ID থাকবে?</th>';
         g.forEach(function (c, i) {
-            h += '<tr><td style="width:30px"><input type="radio" name="mgp' + gi + '" value="' + i + '"' + (i === best ? ' checked' : '') + '></td><td><b>#' + escHtml(c.id || "") + '</b> ' + escHtml(c.name || "—") + '</td><td>' + escHtml(c.login || "—") + '</td><td>' + escHtml(c.mobile || "—") + '</td><td>' + escHtml(c.package_type || "—") + '</td><td>' + escHtml(c.conn || "—") + '</td></tr>';
+            h += '<th class="mg-hl ' + (i === 0 ? 'old' : 'new') + '" style="width:' + colW + '%">' + (i === 0 ? '⬅ ছিল' : (g.length > 2 ? 'নতুন ' + i : 'নতুন ➡')) + '</th>';
         });
-        h += '</tbody></table>';
-        var rows = '';
+        h += '<th class="mg-hl res">✔ থাকবে</th></tr><tr><td></td>';
+        g.forEach(function (c, i) {
+            h += '<td><label class="mg-opt mg-id"><input type="radio" name="mgp' + gi + '" value="' + i + '"' + (i === best ? ' checked' : '') + '><span class="mg-v">#' + escHtml(c.id || "") + ' ' + escHtml(c.name || "—") + '</span><span style="display:block;font-size:11px;color:#64748b">' + escHtml(c.login || "—") + ' · ' + escHtml(c.mobile || "—") + '</span><span class="mg-tag"></span></label></td>';
+        });
+        h += '<td style="font-size:11px;color:#64748b;text-align:center">উপরে যে ID বাছবেন সেটাই থাকবে</td></tr></thead><tbody>';
+        var rows = 0;
         keys.forEach(function (k, ki) {
             var vals = g.map(function (c) { return mgV(c[k]); });
             if (vals.every(function (v) { return v === vals[0]; })) return;
-            var def = vals[best] !== "" ? best : vals.findIndex(function (v) { return v !== ""; });
-            rows += '<tr><td style="font-weight:600;white-space:nowrap">' + escHtml(FIELD_LABELS[k] || k) + '</td><td>' + vals.map(function (v, i) {
-                return '<label style="cursor:pointer;display:inline-block;margin:2px 12px 2px 0"><input type="radio" name="mgd' + gi + '_' + ki + '" value="' + i + '"' + (i === def ? ' checked' : '') + '> <span style="font-size:11px;color:#94a3b8">#' + escHtml(g[i].id || "") + '</span> ' + mgShow(v) + '</label>';
-            }).join('') + '</td></tr>';
+            rows++;
+            var def = vals[best] !== "" ? best : vals.findIndex(function (v) { return v !== ""; }), nm = 'mgd' + gi + '_' + ki;
+            h += '<tr><td class="mg-lbl">' + escHtml(FIELD_LABELS[k] || k) + '</td>' + vals.map(function (v, i) { return '<td>' + mgOpt(nm, i, i === def, v) + '</td>'; }).join('') + '<td class="mg-res" id="r_' + nm + '">' + mgShow(vals[def]) + '</td></tr>';
         });
-        h += rows ? '<div style="padding:6px 12px 2px;font-size:12px;font-weight:700;color:#475569">যেসব ঘরে পার্থক্য আছে, কোনটা থাকবে:</div><table class="ltbl"><tbody>' + rows + '</tbody></table>' : '<div style="padding:8px 12px;font-size:12px;color:#64748b">সব ঘরের তথ্য একই, শুধু একটি রেকর্ড রাখা হবে।</div>';
-        h += '</div>';
+        if (!rows) h += '<tr><td colspan="' + (g.length + 2) + '" style="padding:10px;font-size:12px;color:#64748b;text-align:center">সব ঘরের তথ্য একই, শুধু একটি রেকর্ড রাখা হবে।</td></tr>';
+        h += '</tbody></table></div></div>';
     });
     document.getElementById("mgBody").innerHTML = h;
     document.getElementById("mgFoot").innerHTML = (groups.length ? '<button class="pbtn green" onclick="mgDupApply()">✓ মার্জ করুন</button>' : '') + '<button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
@@ -6513,6 +6552,8 @@ function mgAnalyze(arr, fname) {
     });
 }
 function mgShow(v) { return v === "" ? '<span style="color:#94a3b8">— ফাঁকা —</span>' : escHtml(v); }
+function mgOpt(name, val, checked, text, cls) { return '<label class="mg-opt' + (cls ? ' ' + cls : '') + '"><input type="radio" name="' + name + '" value="' + val + '" data-v="' + escAttr(text) + '"' + (checked ? ' checked' : '') + '><span class="mg-v">' + mgShow(text) + '</span><span class="mg-tag"></span></label>'; }
+function mgResUpd(e) { var t = e.target; if (t && t.type === "radio" && t.hasAttribute("data-v")) { var r = document.getElementById("r_" + t.name); if (r) r.innerHTML = mgShow(t.getAttribute("data-v")); } }
 function mgRender() {
     var conf = [], news = [];
     _mg.items.forEach(function (it, i) { it.i = i; (it.ex ? conf : news).push(it); });
@@ -6529,12 +6570,10 @@ function mgRender() {
             '<div style="min-width:0"><b>' + escHtml(e.name || r.name || "—") + '</b> <span style="font-size:11px;color:#64748b">বর্তমান #' + escHtml(e.id || "") + ' · ফাইলে #' + escHtml(r.id || "—") + (e.login ? ' · ' + escHtml(e.login) : '') + '</span></div>' +
             '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="abtn no" onclick="mgSet(' + it.i + ',\'ex\')">বর্তমান</button><button class="abtn v" onclick="mgSet(' + it.i + ',\'imp\')">ফাইলের</button>' +
             '<label style="font-size:12px;font-weight:700;color:#b91c1c;cursor:pointer"><input type="checkbox" id="mgSkip' + it.i + '"> বাদ দিন</label></div></div>' +
-            '<table class="ltbl"><thead><tr><th>ঘর</th><th>বর্তমান (রাখুন)</th><th>ফাইলের (নিন)</th></tr></thead><tbody>';
+            '<table class="mg-tbl"><thead><tr><th style="width:92px"></th><th class="mg-hl old">⬅ ছিল (বর্তমান)</th><th class="mg-hl new">নতুন (ফাইলের) ➡</th><th class="mg-hl res">✔ থাকবে</th></tr></thead><tbody>';
         it.diffs.forEach(function (d, di) {
             var nm = 'mg' + it.i + '_' + di, defImp = d.a === "";
-            h += '<tr><td style="font-weight:600;white-space:nowrap">' + escHtml(d.label) + '</td>' +
-                '<td><label style="cursor:pointer;display:block"><input type="radio" name="' + nm + '" value="ex"' + (defImp ? '' : ' checked') + '> ' + mgShow(d.a) + '</label></td>' +
-                '<td><label style="cursor:pointer;display:block"><input type="radio" name="' + nm + '" value="imp"' + (defImp ? ' checked' : '') + '> ' + mgShow(d.b) + '</label></td></tr>';
+            h += '<tr><td class="mg-lbl">' + escHtml(d.label) + '</td><td>' + mgOpt(nm, 'ex', !defImp, d.a) + '</td><td>' + mgOpt(nm, 'imp', defImp, d.b) + '</td><td class="mg-res" id="r_' + nm + '">' + mgShow(defImp ? d.b : d.a) + '</td></tr>';
         });
         h += '</tbody></table></div>';
     });
@@ -6546,7 +6585,7 @@ function mgRender() {
     document.getElementById("mgBody").innerHTML = h;
     document.getElementById("mgFoot").innerHTML = (conf.length || news.length ? '<button class="pbtn green" onclick="mgApply()">✓ মার্জ করুন</button>' : '') + '<button class="pbtn blue" onclick="openMerge()">← ডুপ্লিকেট তালিকা</button><button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
 }
-function mgSet(i, who) { var it = _mg.items[i]; if (!it || !it.diffs) return; it.diffs.forEach(function (d, di) { var r = document.querySelector('input[name="mg' + i + '_' + di + '"][value="' + who + '"]'); if (r) r.checked = true; }); }
+function mgSet(i, who) { var it = _mg.items[i]; if (!it || !it.diffs) return; it.diffs.forEach(function (d, di) { var r = document.querySelector('input[name="mg' + i + '_' + di + '"][value="' + who + '"]'); if (r) { r.checked = true; mgResUpd({ target: r }); } }); }
 function mgAll(who) { _mg.items.forEach(function (it, i) { if (it.diffs) mgSet(i, who); }); }
 function mgApply() {
     if (!currentUser || !isPrivileged() || !_mg) return;
@@ -6586,6 +6625,60 @@ function mgApply() {
     showPop("✅ মার্জ সম্পন্ন!\n🔀 মার্জ হয়েছে: " + merged + " টি\n🆕 নতুন যোগ: " + added + " টি\n⏭ বাদ: " + (skipped + _mg0skip()) + " টি" + (dups ? "\n⚠️ ডুপ্লিকেট লগইন আইডির কারণে বাদ: " + dups + " টি" : ""), "success");
 }
 function _mg0skip() { return 0; }
+
+// ═══════ এডিট মোড: কী বদলাচ্ছে তা স্পষ্ট দেখানো ═══════
+var _snap = null, _dirtyN = 0;
+var FM_TEXT = ["fId", "fName", "fLogin", "fPass", "fMob", "fRch", "fNid", "fDob", "fHouse", "fArea", "fThana", "fConn", "fRem", "fPorishod", "fWard"].concat(EQ, ["eTsSerial"]);
+function fVals() {
+    var v = {}; FM_TEXT.forEach(function (id) { var e = document.getElementById(id); if (e) v[id] = e.value; });
+    var ct = document.querySelector('[name="ct"]:checked'); v.ct = ct ? ct.value : "";
+    var pt = document.querySelector('[name="pt"]:checked'); v.pt = pt ? pt.value : "";
+    var sp = []; document.querySelectorAll('[name="spl"]:checked').forEach(function (x) { sp.push(x.value); }); v.spl = sp.join(",");
+    return v;
+}
+function fSnap() { _snap = fVals(); fCheck(); }
+function fKeyEl(k) { return (k === "ct" || k === "pt" || k === "spl") ? document.querySelector('[name="' + k + '"]') : document.getElementById(k); }
+function fLabelOf(k) { var m = { ct: "গ্রাহকের ধরন", pt: "প্যাকেজ", spl: "Splitter", fId: "ID", fName: "নাম", fLogin: "লগইন আইডি", fPass: "পাসওয়ার্ড", fMob: "মোবাইল", fRch: "রিচার্জ", fNid: "NID", fDob: "জন্ম তারিখ", fHouse: "বাসা", fArea: "এলাকা", fWard: "ওয়ার্ড", fThana: "থানা", fConn: "সংযোগ তারিখ", fRem: "মন্তব্য", fPorishod: "পরিশোধ" }; return m[k] || "সরঞ্জাম"; }
+function fCheck() {
+    var page = document.getElementById("page1"); if (!page) return;
+    var b = document.body.classList;
+    var editable = _snap && !b.contains("user-view") && (pageMode === "edit" || (pageMode === "view" && isPrivileged()));
+    var cur = fVals(), n = 0, names = [];
+    Array.prototype.forEach.call(page.querySelectorAll("td.fchg"), function (t) { t.classList.remove("fchg"); });
+    Object.keys(cur).forEach(function (k) {
+        var el = fKeyEl(k), changed = editable && cur[k] !== _snap[k];
+        if (el && el.tagName === "INPUT" && el.type === "text") { if (changed) el.title = "আগে ছিল: " + (_snap[k] === "" ? "ফাঁকা" : _snap[k]); else el.removeAttribute("title"); }
+        if (!changed) return;
+        n++; if (names.length < 4) names.push(fLabelOf(k));
+        var td = el && el.closest ? el.closest("td") : null; if (td) td.classList.add("fchg");
+    });
+    _dirtyN = n; fBar(n, names);
+}
+function fBar(n, names) {
+    var bar = document.getElementById("editBar"); if (!bar) return;
+    var b = document.body.classList, nm = (document.getElementById("fName").value || "").trim(), id = (document.getElementById("fId").value || "").trim();
+    var who = (id ? "#" + escHtml(id) + " " : "") + escHtml(nm), html = "", bg = "", col = "", bd = "";
+    var canEdit = !b.contains("user-view") && (pageMode === "edit" || (pageMode === "view" && isPrivileged()));
+    if (b.contains("md-disabled")) { bar.style.display = "none"; }
+    else if (b.contains("md-new")) { bg = "#dcfce7"; col = "#166534"; bd = "#4ade80"; html = '<div class="eb-t">✚ <b>নতুন গ্রাহক যোগ হচ্ছে</b> — ঘরগুলো পূরণ করে <b>Save</b> চাপুন</div>'; }
+    else if (canEdit) {
+        bg = n ? "#fef9c3" : "#dbeafe"; col = n ? "#854d0e" : "#1e40af"; bd = n ? "#f59e0b" : "#60a5fa";
+        html = n ? '<div class="eb-t">✏️ <b>' + who + '</b> · <span class="eb-n">' + n + '</span> টি ঘর বদলেছে (<b>হলুদ</b> ঘর): ' + escHtml(names.join(", ")) + (n > names.length ? " ..." : "") + '<br><span style="font-size:11px;opacity:.85">⚠️ <b>Save</b> না চাপা পর্যন্ত বদল জমা হবে না</span></div><button class="eb-b" style="background:#16a34a" onclick="doSave()">💾 Save</button><button class="eb-b" style="background:#64748b" onclick="fRevert()">↺ আগের অবস্থায়</button>'
+            : '<div class="eb-t">✏️ <b>এডিট মোড চালু</b> — ' + who + '<br><span style="font-size:11px;opacity:.85">যেকোনো ঘর বদলান। যে ঘর বদলাবে সেটা <b>হলুদ</b> হবে, তারপর <b>Save</b> চাপুন।</span></div>';
+    }
+    else { bg = "#f1f5f9"; col = "#475569"; bd = "#cbd5e1"; html = '<div class="eb-t">👁 <b>শুধু দেখা হচ্ছে</b> — ' + who + ' · এখানে কিছু বদলানো যাবে না</div>'; }
+    if (!b.contains("md-disabled")) { bar.style.display = "flex"; bar.style.background = bg; bar.style.color = col; bar.style.borderColor = bd; bar.innerHTML = html; }
+    var sv = document.getElementById("btnSave"), mv = document.getElementById("mabSave");
+    if (sv) { sv.textContent = "💾 Save" + (n ? " (" + n + ")" : ""); sv.classList.toggle("pulse", n > 0); }
+    if (mv) { mv.textContent = "💾 Save" + (n ? " (" + n + ")" : ""); mv.classList.toggle("pulse", n > 0); }
+}
+function fRevert() {
+    if (!_dirtyN || !confirm(_dirtyN + " টি পরিবর্তন বাদ দিয়ে আগের তথ্য ফিরিয়ে আনবেন?")) return;
+    var rec = null; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { rec = DB[i]; break; } }
+    if (rec) { fSet(rec); fSnap(); }
+}
+window.addEventListener("beforeunload", function (e) { if (_dirtyN > 0) { e.preventDefault(); e.returnValue = ""; } });
+window.addEventListener("load", function () { var mb = document.getElementById("mgBody"); if (mb) mb.addEventListener("change", mgResUpd); var pg = document.getElementById("page1"); if (pg) { pg.addEventListener("input", fCheck); pg.addEventListener("change", fCheck); } });
 
 // ═══════ সাইট সেটিংস (শুধু Coder) ═══════
 var SITE_DEF = { name: "AGNI SYSTEMS LIMITED", brand: "AGNI SYSTEMS", sub: "Management Portal", loginSub: "Customer Management Portal", footer: "© 2025 Agni Systems Limited · Panchagarh", company: "AGNI SYSTEMS LTD", thana: "PANCHAGARH SADAR", logo: "" };
@@ -6792,7 +6885,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.2.1";
+        var APP_VERSION = "2.2.3";
         var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
