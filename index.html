@@ -5183,13 +5183,13 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             for (var j = 0; j < PENDING.length; j++) { var q = PENDING[j]; if (skipPendingId != null && String(q.pendingId) === String(skipPendingId)) continue; if (String(q.login || "").trim().toLowerCase() === lg) return { rec: q, where: "Pending তালিকায়" }; }
             return null;
         }
-        function dupLoginMsg(dup) { return "⚠️ এই লগইন আইডি (" + escHtml(dup.rec.login) + ") আগে থেকেই আছে (" + dup.where + ")!\nগ্রাহক: " + escHtml(dup.rec.name || "—") + " · ID: " + escHtml(dup.rec.id || "—") + "\nএকই লগইন আইডি দিয়ে দ্বিতীয় ফর্ম সেভ করা যাবে না।"; }
+        function dupLoginMsg(dup) { return "⚠️ লগইন আইডি " + escHtml(dup.rec.login) + " ইতিমধ্যে অন্য একজন গ্রাহকের নামে ব্যবহৃত হচ্ছে (" + dup.where + ")।\nগ্রাহক: " + escHtml(dup.rec.name || "—") + " · ID: " + escHtml(dup.rec.id || "—") + "\nএকই লগইন আইডি দুজনকে দেওয়া যায় না। অনুগ্রহ করে ভিন্ন লগইন আইডি দিন।"; }
 
         // ─── SAVE ───
         function doSave() { if (!currentUser) return; if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } if (pageMode === "new") { for (var _pi = 0; _pi < PENDING.length; _pi++) { if (String(PENDING[_pi].id) === String(d.id)) { showPop("এই ID (" + d.id + ") Pending তালিকায় আগে থেকেই আছে!", "error"); return; } } }
             var _dup = findDupLogin(d.login, existIdx >= 0 ? DB[existIdx].id : null, null);
             if (_dup && isPrivileged() && _dup.where === "গ্রাহক তালিকায়") { mgPendOpen(d, _dup.rec, "form", null); return; }
-            if (_dup) { showPop(dupLoginMsg(_dup), "error", "ডুপ্লিকেট লগইন আইডি"); var _fl = document.getElementById("fLogin"); if (_fl) _fl.focus(); return; }
+            if (_dup) { showPop(dupLoginMsg(_dup), "error", "লগইন আইডি ব্যবহৃত"); var _fl = document.getElementById("fLogin"); if (_fl) _fl.focus(); return; }
             if (window._saveLock) return; window._saveLock = true; setTimeout(function () { window._saveLock = false; }, 4000);
              var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
         function lockSaveShowEdit() { var bSave = document.getElementById("btnSave"), bEdit = document.getElementById("btnEdit"); bSave.disabled = true; bSave.style.opacity = "0.4"; bSave.style.cursor = "not-allowed"; if (isPrivileged()) bEdit.style.display = "flex"; syncMobileBar(); }
@@ -5511,7 +5511,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
 
         // ─── PENDING ───
         function showPending() { if (!currentUser || !canApprove()) return; cloudSync(function () { _lm = "pending"; _la = PENDING.slice(); document.getElementById("lpTtl").textContent = "⏳ Pending — " + PENDING.length + " টি"; document.getElementById("lpBody").innerHTML = buildList(PENDING, "pending"); document.getElementById("lsIn").value = ""; document.getElementById("lpBg").classList.add("on"); }); }
-        function approveP(pid) { if (!canApprove()) { showPop("🔒 অনুমোদনের অনুমতি নেই।", "warning"); return; } var rec = null; for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { rec = PENDING[i]; break; } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } if (!isPrivileged() && rec._by === currentUser.username) { showPop("🔒 নিজের তৈরি করা এন্ট্রি নিজে অনুমোদন করা যাবে না।", "warning"); return; } var _dupA = findDupLogin(rec.login, null, rec.pendingId); if (_dupA) { if (isPrivileged() && _dupA.where === "গ্রাহক তালিকায়") { mgPendOpen(rec, _dupA.rec, "pending", pid); return; } showPop(dupLoginMsg(_dupA) + "\nএটি অনুমোদন করা যাবে না, বাতিল করুন বা লগইন আইডি বদলান।", "error", "ডুপ্লিকেট লগইন আইডি"); return; } var prevLog = rec.auditLog || []; rec.auditLog = prevLog.concat([mkAudit("approved")]); if (!rec.id) rec.id = nextId(); fbSet("customers", rec.id, rec, function (ok) { if (!ok) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } var found = false; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(rec.id)) { DB[i] = rec; found = true; break; } } if (!found) { DB.push(rec); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } updateBadges(); showPop("✔️ Approved!", "success"); closeVP(); showPending(); }); }
+        function approveP(pid) { if (!canApprove()) { showPop("🔒 অনুমোদনের অনুমতি নেই।", "warning"); return; } var rec = null; for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { rec = PENDING[i]; break; } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } if (!isPrivileged() && rec._by === currentUser.username) { showPop("🔒 নিজের তৈরি করা এন্ট্রি নিজে অনুমোদন করা যাবে না।", "warning"); return; } var _dupA = findDupLogin(rec.login, null, rec.pendingId); if (_dupA) { if (isPrivileged() && _dupA.where === "গ্রাহক তালিকায়") { mgPendOpen(rec, _dupA.rec, "pending", pid); return; } showPop(dupLoginMsg(_dupA) + "\nএটি অনুমোদন করা যাবে না, বাতিল করুন বা লগইন আইডি বদলান।", "error", "লগইন আইডি ব্যবহৃত"); return; } var prevLog = rec.auditLog || []; rec.auditLog = prevLog.concat([mkAudit("approved")]); if (!rec.id) rec.id = nextId(); fbSet("customers", rec.id, rec, function (ok) { if (!ok) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } var found = false; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(rec.id)) { DB[i] = rec; found = true; break; } } if (!found) { DB.push(rec); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } updateBadges(); showPop("✔️ Approved!", "success"); closeVP(); showPending(); }); }
         function rejectP(pid) { if (!canApprove()) { showPop("🔒 অনুমতি নেই।", "warning"); return; } if (!confirm("এই Pending বাতিল করবেন?")) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } updateBadges(); showPop("✕ বাতিল।", "warning"); closeVP(); showPending(); }
 
         // ─── EDIT REQUESTS ───
@@ -6700,24 +6700,46 @@ window.addEventListener("load", function () { var mb = document.getElementById("
 
 // ── ডুপ্লিকেট লগইন আইডি পেলে: মার্জ করে একটি রেকর্ড রাখা (Admin/Coder) ──
 var _mgp = null;
+function mgSamePerson(a, b) {
+    var n1 = mgN(a.name), n2 = mgN(b.name), m1 = mgN(a.mobile), m2 = mgN(b.mobile), i1 = mgN(a.nid), i2 = mgN(b.nid);
+    return (n1 && n1 === n2) || (m1 && m1 === m2) || (i1.length >= 5 && i1 === i2);
+}
 function mgPendOpen(src, ex, kind, pid) {
     _mgp = { src: src, ex: ex, kind: kind, pid: pid };
-    var keys = mgKeys(), rows = "", n = 0;
+    var keys = mgKeys(), rows = "", n = 0, same = mgSamePerson(src, ex), isP = kind === "pending";
     keys.forEach(function (k, ki) {
         var a = mgV(ex[k]), b = mgV(src[k]); if (a === b) return; n++;
         var nm = "mgq_" + ki, defNew = a === "";
         rows += '<tr><td class="mg-lbl">' + escHtml(FIELD_LABELS[k] || k) + '</td><td>' + mgOpt(nm, "ex", !defNew, a) + '</td><td>' + mgOpt(nm, "imp", defNew, b) + '</td><td class="mg-res" id="r_' + nm + '">' + mgShow(defNew ? b : a) + '</td></tr>';
     });
-    var srcName = kind === "pending" ? "Pending এন্ট্রি" : "এই ফর্ম";
-    var h = '<div style="padding:12px 14px;background:#fef2f2;border-bottom:1px solid #fecaca;color:#991b1b;line-height:1.7">' +
-        '<b>⚠️ লগইন আইডি ' + escHtml(ex.login || "") + ' আগে থেকেই আছে</b><br>গ্রাহক: ' + escHtml(ex.name || "—") + ' · ID #' + escHtml(ex.id || "") + '<br>' +
-        '<span style="color:#7f1d1d;font-size:12px">একই লগইন আইডিতে দুটি এন্ট্রি হবে না। নিচে ' + srcName + ' ও বর্তমান রেকর্ড মিলিয়ে <b>একটি রেকর্ড</b> রাখুন।</span></div>';
-    h += n ? '<div style="overflow-x:auto;padding:8px 10px"><table class="mg-tbl"><thead><tr><th style="width:92px"></th><th class="mg-hl old">⬅ ছিল (বর্তমান #' + escHtml(ex.id || "") + ')</th><th class="mg-hl new">নতুন (' + (kind === "pending" ? "Pending" : "ফর্ম") + ') ➡</th><th class="mg-hl res">✔ থাকবে</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-        : '<div style="padding:18px;text-align:center;color:#64748b">দুটির সব তথ্য একই। মার্জ করলে শুধু ডুপ্লিকেট এন্ট্রিটি বাদ যাবে, বর্তমান রেকর্ড যেমন আছে তেমনই থাকবে।</div>';
+    var tbl = n ? '<div style="overflow-x:auto;padding:8px 10px"><table class="mg-tbl"><thead><tr><th style="width:92px"></th><th class="mg-hl old">⬅ ছিল (বর্তমান #' + escHtml(ex.id || "") + ')</th><th class="mg-hl new">নতুন (' + (isP ? "Pending" : "ফর্ম") + ') ➡</th><th class="mg-hl res">✔ থাকবে</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        : '<div style="padding:18px;text-align:center;color:#64748b">দুটির সব তথ্য একই। মার্জ করলে শুধু নতুন এন্ট্রিটি বাদ যাবে, বর্তমান রেকর্ড যেমন আছে তেমনই থাকবে।</div>';
+    var lg = escHtml(ex.login || ""), h = "";
+    if (same) {
+        h = '<div style="padding:12px 14px;background:#fffbeb;border-bottom:1px solid #fde68a;color:#92400e;line-height:1.7"><b>🔁 এই গ্রাহক আগে থেকেই যুক্ত আছেন</b><br>' +
+            'লগইন আইডি <b>' + lg + '</b> — বর্তমান রেকর্ড: ' + escHtml(ex.name || "—") + ' (ID #' + escHtml(ex.id || "") + ')<br><span style="font-size:12px">নাম/মোবাইল/NID মিলেছে, তাই এটি একই গ্রাহকের দ্বিতীয় এন্ট্রি মনে হচ্ছে। নিচে মিলিয়ে <b>একটি রেকর্ড</b> রাখুন।</span></div>' + tbl;
+    } else {
+        h = '<div style="padding:12px 14px;background:#fef2f2;border-bottom:1px solid #fecaca;color:#991b1b;line-height:1.7"><b>⚠️ এই লগইন আইডি অন্য গ্রাহকের নামে ব্যবহৃত</b><br>' +
+            'লগইন আইডি <b>' + lg + '</b> ইতিমধ্যে <b>' + escHtml(ex.name || "—") + '</b> (ID #' + escHtml(ex.id || "") + ') এর নামে আছে।<br>' +
+            (isP ? 'আপনার এই ' : 'এই ') + (isP ? 'Pending এন্ট্রি' : 'ফর্ম') + ' <b>' + escHtml(src.name || "—") + '</b> এর। নাম, মোবাইল বা NID মেলেনি, তাই এটি <b>আলাদা গ্রাহক</b> হওয়ার সম্ভাবনা বেশি। একই লগইন আইডি দুজনকে দেওয়া যায় না।</div>';
+        if (isP) h += '<div style="padding:12px 14px;border-bottom:1px solid #e2e8f0"><div style="font-weight:700;margin-bottom:6px">✏️ আলাদা গ্রাহক হলে: ভিন্ন লগইন আইডি দিয়ে অনুমোদন করুন</div><div style="display:flex;gap:8px;flex-wrap:wrap"><input class="adm-in" id="mgNewLg" placeholder="নতুন লগইন আইডি লিখুন" style="flex:1;min-width:180px;margin:0"><button class="pbtn green" onclick="mgPendNewLogin()">✓ এটি দিয়ে অনুমোদন</button></div></div>';
+        else h += '<div style="padding:12px 14px;border-bottom:1px solid #e2e8f0"><button class="pbtn blue" onclick="closeMerge();var f=document.getElementById(\'fLogin\');if(f){f.focus();f.select();}">✏️ ফর্মে ফিরে লগইন আইডি বদলান</button></div>';
+        h += '<details style="padding:10px 14px"><summary style="cursor:pointer;font-weight:700;color:#b45309">🔀 আসলে একই গ্রাহক হলে: মার্জ করুন (সাবধান, বর্তমান রেকর্ডের তথ্য বদলাতে পারে)</summary>' + tbl + '</details>';
+    }
     document.getElementById("mgBody").innerHTML = h;
-    document.getElementById("mgFoot").innerHTML = '<button class="pbtn green" onclick="mgPendApply()">✓ মার্জ করে ' + (kind === "pending" ? "অনুমোদন" : "সেভ") + ' করুন</button>' +
-        (kind === "pending" ? '<button class="pbtn red" onclick="var p=_mgp&&_mgp.pid;closeMerge();rejectP(p)">✕ Pending বাতিল</button>' : '') + '<button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
+    var mbtn = same ? '✓ মার্জ করে ' + (isP ? 'অনুমোদন' : 'সেভ') + ' করুন' : '🔀 তবুও মার্জ করুন';
+    document.getElementById("mgFoot").innerHTML = '<button class="pbtn ' + (same ? 'green' : 'orange') + '" onclick="mgPendApply()">' + mbtn + '</button>' +
+        (isP ? '<button class="pbtn red" onclick="var p=_mgp&&_mgp.pid;closeMerge();rejectP(p)">✕ Pending বাতিল</button>' : '') + '<button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
     document.getElementById("mgBg").classList.add("on");
+}
+function mgPendNewLogin() {
+    var m = _mgp; if (!m || m.kind !== "pending" || !isPrivileged()) return;
+    var v = (document.getElementById("mgNewLg").value || "").trim();
+    if (!v) { showPop("নতুন লগইন আইডি লিখুন।", "warning"); return; }
+    var dup = findDupLogin(v, null, m.pid); if (dup) { showPop(dupLoginMsg(dup), "error", "লগইন আইডি ব্যবহৃত"); return; }
+    var rec = null; for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(m.pid)) { rec = PENDING[i]; break; } }
+    if (!rec) { showPop("Pending এন্ট্রি পাওয়া যায়নি।", "error"); return; }
+    rec.login = v; var pid = m.pid; closeMerge(); _mgp = null; approveP(pid);
 }
 function mgPendApply() {
     var m = _mgp; if (!m || !currentUser || !isPrivileged()) return;
@@ -6943,7 +6965,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.2.6";
+        var APP_VERSION = "2.2.7";
         var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
