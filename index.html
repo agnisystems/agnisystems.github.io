@@ -3622,6 +3622,30 @@
         .vtbl tr.vid td.vl { background: #bbf7d0; color: #14532d; }
         .vtbl tr.vid td:last-child { color: #15803d; font-family: "JetBrains Mono", monospace; font-size: 14px; }
         .pl-tbl .pl-id { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+
+        /* ─── লাইট থিমে অদৃশ্য লেখা ঠিক করা ─── */
+        body.lg-light .hm-stat { background: #fff; border-color: #e2e8f0; box-shadow: 0 2px 10px rgba(15,23,42,.06); }
+        body.lg-light .hm-stat:hover { border-color: #cbd5e1; box-shadow: 0 8px 22px rgba(15,23,42,.12); }
+        body.lg-light .hm-stat .st-glow { opacity: .18; }
+        body.lg-light .hm-stat .st-lbl { color: #64748b; }
+        body.lg-light .hm-req-card { background: #fff; border-color: #e2e8f0; box-shadow: 0 2px 10px rgba(15,23,42,.06); }
+        body.lg-light .hm-req-card:hover { border-color: #cbd5e1; box-shadow: 0 8px 22px rgba(15,23,42,.12); }
+        body.lg-light .hm-req-title { color: #1e293b; }
+        body.lg-light .hm-req-sub { color: #64748b; }
+        body.lg-light .app-foot { border-top-color: #cbd5e1; }
+        body.lg-light .app-foot .af-line { color: #64748b; }
+        body.lg-light .app-foot .af-line b { color: #1e293b; }
+        body.lg-light .app-foot .af-date { color: #64748b; }
+        body.lg-light .app-foot a { color: #4f46e5; }
+        body.lg-light .app-foot .af-btn { color: #4338ca; background: rgba(99,102,241,.1); border-color: rgba(99,102,241,.45); }
+        body.lg-light .app-foot .af-btn:hover { background: rgba(99,102,241,.2); }
+        body.lg-light .hm-card-title .htag { color: #64748b; }
+        body.lg-light .pkg-count { filter: brightness(.85); }
+        body.lg-light .hm-alert .al-sub { opacity: .85; }
+        body.lg-light #syncBadge.synced { color: #047857; background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.4); }
+        body.lg-light #syncBadge.syncing { color: #b45309; } body.lg-light #syncBadge.error { color: #b91c1c; }
+        body.lg-light .tb-btn.ghost { color: #334155; }
+        body.lg-light .rc-head { background: #cbd5e1; color: #1e293b; }
     </style>
 </head>
 
@@ -7093,7 +7117,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.3.1";
+        var APP_VERSION = "2.3.2";
         var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
