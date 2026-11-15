@@ -3554,6 +3554,65 @@
         .vtbl tr.vlg td { background: #fffbeb; font-weight: 800; }
         .vtbl tr.vlg td.vl { background: #fde68a; color: #78350f; }
         .vtbl tr.vlg td:last-child { color: #1d4ed8; font-family: "JetBrains Mono", monospace; font-size: 14px; }
+
+        /* ═══ থিম কাস্টমাইজার ═══ */
+        #thTab { display: none; position: fixed; right: 0; top: 42%; z-index: 1300; width: 42px; height: 42px; border: 0; border-radius: 12px 0 0 12px; background: var(--pri); color: #fff; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); -webkit-tap-highlight-color: transparent; }
+        #thTab svg { transition: transform .5s; } #thTab:hover svg { transform: rotate(90deg); }
+        #thPanel { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; max-width: 92vw; z-index: 4500; background: #1e293b; color: #e2e8f0; transform: translateX(106%); transition: transform .28s ease; box-shadow: -10px 0 40px rgba(0,0,0,.45); display: flex; flex-direction: column; font-family: "Hind Siliguri", sans-serif; }
+        #thPanel.on { transform: none; }
+        #thPanel .th-hd { padding: 14px 18px; border-bottom: 1px solid rgba(148,163,184,.22); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        #thPanel .th-hd b { font-size: 16px; display: block; } #thPanel .th-hd small { color: #94a3b8; font-size: 12px; }
+        #thPanel .th-ib { width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(148,163,184,.3); background: transparent; color: inherit; font-size: 17px; cursor: pointer; }
+        #thPanel .th-bd { padding: 6px 18px 40px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+        #thPanel .th-tag { display: inline-block; padding: 4px 14px; border-radius: 7px; background: rgba(129,140,248,.18); color: #a5b4fc; font-weight: 700; font-size: 13px; margin: 14px 0 4px; }
+        #thPanel .th-h { font-weight: 700; font-size: 14px; margin: 16px 0 8px; }
+        #thPanel .th-h small { font-weight: 500; color: #94a3b8; font-size: 11px; margin-left: 4px; }
+        #thPanel .th-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: stretch; }
+        #thPanel .th-opt { border: 2px solid rgba(148,163,184,.3); background: rgba(255,255,255,.04); border-radius: 11px; padding: 6px; cursor: pointer; color: inherit; font-family: inherit; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 64px; position: relative; -webkit-tap-highlight-color: transparent; }
+        #thPanel .th-opt.on { border-color: var(--pri); background: rgba(255,255,255,.09); box-shadow: 0 0 0 3px rgba(255,255,255,.06); }
+        #thPanel .th-opt.on::after { content: "✓"; position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 50%; background: var(--pri); color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        #thPanel .th-sw { width: 32px; height: 32px; border-radius: 9px; display: block; }
+        #thPanel .th-ic { font-size: 22px; line-height: 1; } #thPanel .th-ic svg { width: 92px; height: 58px; display: block; color: #94a3b8; }
+        #thPanel .th-big { padding: 10px 16px; } #thPanel .th-lb { font-size: 12px; color: #94a3b8; }
+        #thPanel .th-opt.on .th-lb { color: inherit; font-weight: 700; }
+        #thPanel input[type=color] { width: 32px; height: 32px; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 8px; }
+        #thPanel input[type=range] { width: 100%; accent-color: var(--pri); }
+        #thPanel .th-sw2 { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-weight: 600; font-size: 14px; }
+        #thPanel .th-note { font-size: 11px; color: #94a3b8; margin-top: 18px; line-height: 1.6; }
+        body.lg-light #thPanel { background: #fff; color: #334155; box-shadow: -10px 0 40px rgba(0,0,0,.18); }
+        body.lg-light #thPanel .th-opt { background: #fff; } body.lg-light #thPanel .th-opt.on { background: #f8fafc; }
+        body.lg-light #thPanel .th-hd, body.lg-light #thPanel .th-opt { border-color: #e2e8f0; } body.lg-light #thPanel .th-opt.on { border-color: var(--pri); }
+        body.lg-light #thPanel .th-tag { background: #eef2ff; color: #4f46e5; }
+        @media print { #thTab, #thPanel { display: none !important; } }
+        /* স্কিন: Bordered */
+        html.skin-bordered .hm-card, html.skin-bordered .hm-stat, html.skin-bordered .hm-isp-card, html.skin-bordered .hm-recent, html.skin-bordered .hm-welcome, html.skin-bordered .hm-req-card { box-shadow: none !important; border: 1px solid rgba(148,163,184,.5) !important; }
+        /* কনটেন্ট: Compact */
+        html.ct-compact #homePage { max-width: 960px; }
+        /* সেমি-ডার্ক মেনু (লাইট থিমে সাইডবার ডার্ক) */
+        html.semi-dark body.lg-light #sidebar { background: #0f172a; border-right-color: rgba(255,255,255,.07); }
+        html.semi-dark body.lg-light .sb-brand, html.semi-dark body.lg-light .sb-user, html.semi-dark body.lg-light .sb-logout { border-color: rgba(255,255,255,.07); }
+        html.semi-dark body.lg-light .sb-brand:hover { background: rgba(255,255,255,.04); }
+        html.semi-dark body.lg-light .sb-brand-txt, html.semi-dark body.lg-light .sb-uname { color: #fff; }
+        html.semi-dark body.lg-light .sb-brand-sub, html.semi-dark body.lg-light .sb-urole { color: rgba(255,255,255,.42); }
+        html.semi-dark body.lg-light .sb-user { background: rgba(255,255,255,.03); }
+        html.semi-dark body.lg-light .sb-sec { color: rgba(255,255,255,.3); }
+        html.semi-dark body.lg-light .sb-item { color: rgba(255,255,255,.65); }
+        html.semi-dark body.lg-light .sb-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+        html.semi-dark body.lg-light .sb-item.active { background: rgba(255,255,255,.09); color: #fff; }
+        html.semi-dark body.lg-light .sb-div { background: rgba(255,255,255,.07); }
+        html.semi-dark body.lg-light .sb-logout button { background: linear-gradient(135deg, rgba(220,38,38,.55), rgba(185,28,28,.65)); border-color: rgba(220,38,38,.35); color: #fff; }
+        /* লেআউট: Collapsed (আইকন-মেনু, মাউস রাখলে খোলে) */
+        @media (min-width: 861px) {
+            html.sb-collapsed { --sb-width: 68px; }
+            html.sb-collapsed #sidebar { overflow-x: hidden; transition: width .2s, background .3s; }
+            html.sb-collapsed #sidebar:hover { width: 218px; box-shadow: 8px 0 30px rgba(0,0,0,.35); }
+            html.sb-collapsed #sidebar:not(:hover) .sb-item { font-size: 0; justify-content: center; padding: 10px 0; }
+            html.sb-collapsed #sidebar:not(:hover) .sb-ico { font-size: 18px; width: auto; }
+            html.sb-collapsed #sidebar:not(:hover) .sb-badge, html.sb-collapsed #sidebar:not(:hover) .sb-sec, html.sb-collapsed #sidebar:not(:hover) .sb-user, html.sb-collapsed #sidebar:not(:hover) .sb-brand-txt, html.sb-collapsed #sidebar:not(:hover) .sb-brand-sub, html.sb-collapsed #sidebar:not(:hover) .sb-home-dot { display: none; }
+            html.sb-collapsed #sidebar:not(:hover) .sb-logo { width: 46px !important; } html.sb-collapsed #sidebar:not(:hover) .sb-logo img { width: 44px !important; }
+            html.sb-collapsed #sidebar:not(:hover) .sb-logout button { font-size: 0; padding: 10px 0; } html.sb-collapsed #sidebar:not(:hover) .sb-logout button::before { content: "🚪"; font-size: 16px; }
+            html.sb-collapsed #sidebar:not(:hover) .sb-logout { padding: 10px 8px; }
+        }
     </style>
 </head>
 
@@ -4530,6 +4589,9 @@
             <div class="pop-foot"><button class="pbtn grey" onclick="closeSess()">বন্ধ করুন</button></div>
         </div>
     </div>
+
+    <button id="thTab" type="button" onclick="thToggle()" aria-label="থিম সেটিংস" title="থিম সেটিংস"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    <div id="thPanel" aria-hidden="true"></div>
 
     <button id="pwaBtn" onclick="installApp()" style="display:none;position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:10050;background:#6366f1;color:#fff;border:0;border-radius:24px;padding:11px 18px;font:600 13px 'Hind Siliguri',sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer">📲 App Install</button>
     <div id="offBadge" style="display:none;position:fixed;left:50%;transform:translateX(-50%);top:calc(8px + env(safe-area-inset-top));z-index:10050;background:#b45309;color:#fff;border-radius:16px;padding:5px 14px;font:600 12px 'Hind Siliguri',sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.4)">📴 অফলাইন মোড — ইন্টারনেট এলে ডাটা সিঙ্ক হবে</div>
@@ -6378,6 +6440,7 @@ function buildRevenueList(arr) {
 }
 
         function doLogout(skipEnd) {
+            thShow(false);
             if (_selfUnsub) { try { _selfUnsub(); } catch (e) { } _selfUnsub = null; }
             if (skipEnd !== true) endSessionAndSignOut();
             currentUser = null;
@@ -6399,6 +6462,7 @@ function buildRevenueList(arr) {
 
         // ─── INIT ───
         function initApp() {
+            thShow(true);
             updateTotal();
             initEqTabOrder();
             cloudSync(function () {
@@ -6760,6 +6824,61 @@ function mgPendApply() {
 }
 function closePendingListRefresh() { try { closeVP(); showPending(); } catch (e) { } }
 
+// ═══════ থিম কাস্টমাইজার ═══════
+var UI_DEF = { mode: "dark", primary: "#16a34a", skin: "default", semi: false, layout: "vertical", content: "wide", font: 100 };
+var UI = {};
+var TH_COLORS = [["#16a34a", "সবুজ"], ["#7367f0", "বেগুনি"], ["#0ea5e9", "নীল"], ["#f59e0b", "হলুদ"], ["#ef4444", "লাল"], ["#ec4899", "গোলাপি"]];
+function thLoad() { UI = {}; Object.keys(UI_DEF).forEach(function (k) { UI[k] = UI_DEF[k]; }); try { var s = JSON.parse(localStorage.getItem("agni_ui") || "null"); if (s) Object.keys(UI_DEF).forEach(function (k) { if (s[k] !== undefined) UI[k] = s[k]; }); } catch (e) { } }
+function thSave() { try { localStorage.setItem("agni_ui", JSON.stringify(UI)); } catch (e) { } }
+function applyUI() {
+    var m = UI.mode;
+    if (m === "system") m = (window.matchMedia && matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+    applyTheme(m);
+    var r = document.documentElement, pri = /^#[0-9a-fA-F]{6}$/.test(UI.primary) ? UI.primary : UI_DEF.primary;
+    r.style.setProperty("--pri", pri); r.style.setProperty("--pri2", darkenHex(pri, .12));
+    r.classList.toggle("skin-bordered", UI.skin === "bordered"); r.classList.toggle("semi-dark", !!UI.semi);
+    r.classList.toggle("sb-collapsed", UI.layout === "collapsed"); r.classList.toggle("ct-compact", UI.content === "compact");
+    var z = Math.min(140, Math.max(80, Number(UI.font) || 100)) / 100, els = document.querySelectorAll("#homePage, .pop");
+    for (var i = 0; i < els.length; i++) els[i].style.zoom = z === 1 ? "" : z;
+}
+function thWire(side, cw, bordered) {
+    var W = 110, left = side + (W - side - cw) / 2, cardFill = bordered ? 'fill="none" stroke="currentColor" stroke-opacity=".5"' : 'fill="currentColor" fill-opacity=".22"';
+    return '<svg viewBox="0 0 110 70"><rect x=".5" y=".5" width="109" height="69" rx="7" fill="currentColor" fill-opacity=".07" stroke="currentColor" stroke-opacity=".25"/>' +
+        (side ? '<rect x="1" y="1" width="' + side + '" height="68" rx="6" fill="currentColor" fill-opacity=".3"/>' : '') +
+        '<rect x="' + left + '" y="7" width="' + cw + '" height="7" rx="2" fill="currentColor" fill-opacity=".25"/>' +
+        '<rect x="' + left + '" y="20" width="' + (cw * .36) + '" height="16" rx="3" ' + cardFill + '/><rect x="' + (left + cw * .42) + '" y="20" width="' + (cw * .58) + '" height="16" rx="3" ' + cardFill + '/>' +
+        '<rect x="' + left + '" y="42" width="' + cw + '" height="18" rx="3" ' + cardFill + '/></svg>';
+}
+function thOpt(k, v, inner, label, cls) { return '<button type="button" class="th-opt ' + (cls || "") + '" data-k="' + k + '" data-v="' + v + '">' + inner + (label ? '<span class="th-lb">' + label + '</span>' : '') + '</button>'; }
+function thBuild() {
+    var h = '<div class="th-hd"><div><b>থিম কাস্টমাইজার</b><small>বদলানো মাত্র সাথে সাথে দেখুন</small></div><div style="display:flex;gap:6px"><button type="button" class="th-ib" title="ডিফল্টে ফিরুন" onclick="thReset()">↺</button><button type="button" class="th-ib" onclick="thToggle()">✕</button></div></div><div class="th-bd">';
+    h += '<span class="th-tag">🎨 থিমিং</span><div class="th-h">প্রধান রং <small>(Primary Color)</small></div><div class="th-row">';
+    TH_COLORS.forEach(function (c) { h += thOpt("primary", c[0], '<span class="th-sw" style="background:' + c[0] + '"></span>', "", ""); });
+    h += '<label class="th-opt" title="নিজের পছন্দের রং"><span class="th-ic">🎨</span><input type="color" id="thColor" oninput="thSet(\'primary\',this.value)"></label></div>';
+    h += '<div class="th-h">থিম <small>(Theme)</small></div><div class="th-row">' + thOpt("mode", "light", '<span class="th-ic">☀️</span>', "লাইট", "th-big") + thOpt("mode", "dark", '<span class="th-ic">🌙</span>', "ডার্ক", "th-big") + thOpt("mode", "system", '<span class="th-ic">🖥</span>', "সিস্টেম", "th-big") + '</div>';
+    h += '<div class="th-h">স্কিন <small>(Skins)</small></div><div class="th-row">' + thOpt("skin", "default", '<span class="th-ic">' + thWire(22, 80, false) + '</span>', "ডিফল্ট") + thOpt("skin", "bordered", '<span class="th-ic">' + thWire(22, 80, true) + '</span>', "বর্ডার") + '</div>';
+    h += '<div class="th-sw2"><span>সেমি-ডার্ক মেনু <small style="color:#94a3b8;font-weight:500">(লাইট থিমে)</small></span><label class="tgl"><input type="checkbox" id="thSemi" onchange="thSet(\'semi\',this.checked)"><span></span></label></div>';
+    h += '<span class="th-tag" style="margin-top:22px">📐 লেআউট</span><div class="th-h">মেনু <small>(Layout)</small></div><div class="th-row">' + thOpt("layout", "vertical", '<span class="th-ic">' + thWire(22, 76, false) + '</span>', "ভার্টিকাল") + thOpt("layout", "collapsed", '<span class="th-ic">' + thWire(9, 86, false) + '</span>', "ছোট মেনু") + '</div>';
+    h += '<div class="th-h">কনটেন্ট <small>(Content)</small></div><div class="th-row">' + thOpt("content", "compact", '<span class="th-ic">' + thWire(0, 62, false) + '</span>', "কমপ্যাক্ট") + thOpt("content", "wide", '<span class="th-ic">' + thWire(0, 98, false) + '</span>', "ওয়াইড") + '</div>';
+    h += '<span class="th-tag" style="margin-top:22px">🔤 লেখা</span><div class="th-h">ফন্ট সাইজ <small>(ড্যাশবোর্ড ও পপআপ)</small><span id="thFontV" style="float:right;font-weight:700"></span></div><input type="range" id="thFont" min="80" max="140" step="5" oninput="thSet(\'font\',Number(this.value))"><div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8"><span>৮০%</span><span>ডিফল্ট ১০০%</span><span>১৪০%</span></div>';
+    h += '<div class="th-note">ℹ️ এই পছন্দ শুধু এই ডিভাইসের ব্রাউজারে সেভ থাকে, অন্যদের স্ক্রিনে বদলায় না। অঙ্গীকারনামা ফর্ম ও প্রিন্টে থিমের কোনো প্রভাব পড়ে না।</div></div>';
+    document.getElementById("thPanel").innerHTML = h;
+    document.getElementById("thPanel").addEventListener("click", function (e) { var b = e.target.closest ? e.target.closest(".th-opt[data-k]") : null; if (b) thSet(b.getAttribute("data-k"), b.getAttribute("data-v")); });
+}
+function thSync() {
+    var p = document.getElementById("thPanel"); if (!p) return;
+    Array.prototype.forEach.call(p.querySelectorAll(".th-opt[data-k]"), function (b) { b.classList.toggle("on", String(UI[b.getAttribute("data-k")]).toLowerCase() === b.getAttribute("data-v").toLowerCase()); });
+    var c = document.getElementById("thColor"); if (c) c.value = /^#[0-9a-fA-F]{6}$/.test(UI.primary) ? UI.primary : UI_DEF.primary;
+    var sm = document.getElementById("thSemi"); if (sm) sm.checked = !!UI.semi;
+    var f = document.getElementById("thFont"); if (f) f.value = UI.font; var fv = document.getElementById("thFontV"); if (fv) fv.textContent = toBn(UI.font) + "%";
+}
+function thSet(k, v) { if (k === "semi") v = !!v; UI[k] = v; thSave(); applyUI(); thSync(); }
+function thReset() { Object.keys(UI_DEF).forEach(function (k) { UI[k] = UI_DEF[k]; }); try { localStorage.removeItem("agni_ui"); } catch (e) { } applyUI(); thSync(); }
+function thToggle() { var p = document.getElementById("thPanel"); p.classList.toggle("on"); p.setAttribute("aria-hidden", p.classList.contains("on") ? "false" : "true"); }
+function thShow(on) { var t = document.getElementById("thTab"); if (t) t.style.display = on ? "flex" : "none"; if (!on) { var p = document.getElementById("thPanel"); if (p) p.classList.remove("on"); } }
+thLoad();
+window.addEventListener("load", function () { thBuild(); thSync(); applyUI(); if (window.matchMedia) { var mq = matchMedia("(prefers-color-scheme: light)"), fn = function () { if (UI.mode === "system") applyUI(); }; if (mq.addEventListener) mq.addEventListener("change", fn); } });
+
 // ═══════ সাইট সেটিংস (শুধু Coder) ═══════
 var SITE_DEF = { name: "AGNI SYSTEMS LIMITED", brand: "AGNI SYSTEMS", sub: "Management Portal", loginSub: "Customer Management Portal", footer: "© 2025 Agni Systems Limited · Panchagarh", company: "AGNI SYSTEMS LTD", thana: "PANCHAGARH SADAR", logo: "" };
 var SITE = {}; Object.keys(SITE_DEF).forEach(function (k) { SITE[k] = SITE_DEF[k]; });
@@ -6927,7 +7046,7 @@ window.addEventListener("load", function () {
 });
 
         window.addEventListener("load", function () {
-            applyTheme(curTheme);
+            applyUI();
             updateAreaDatalist("");
             ["pkgList", "wardList", "areaList"].forEach(function (id) { var el = document.getElementById(id); if (el) el.addEventListener("click", groupClick); });
             var gl = document.getElementById("gmList"); if (gl) { gl.addEventListener("click", gmClick); gl.addEventListener("change", gmChange); }
@@ -6965,7 +7084,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.2.7";
+        var APP_VERSION = "2.3.0";
         var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
