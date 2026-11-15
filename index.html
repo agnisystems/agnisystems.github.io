@@ -3542,6 +3542,7 @@
         .mg-opt.mg-id .mg-tag::before { content: "○ এই ID থাকবে"; }
         .mg-opt.mg-id:has(input:checked) .mg-tag::before { content: "✓ এই ID থাকবে"; }
         .mg-res { background: #ecfdf5; border: 2px dashed #34d399; border-radius: 10px; padding: 7px 9px; font-weight: 800; color: #065f46; word-break: break-word; }
+        .mg-card.mg-on { border-color: #16a34a !important; box-shadow: 0 0 0 3px rgba(22,163,74,.18); }
         .mg-hl { text-align: center; }
         .mg-hl.old { color: #b45309; } .mg-hl.new { color: #1d4ed8; } .mg-hl.res { color: #047857; }
     </style>
@@ -6454,16 +6455,18 @@ function mgFilled(c) { var n = 0; mgKeys().forEach(function (k) { if (mgV(c[k]) 
 function mgDupRender() {
     var groups = mgGroups(), keys = mgKeys(); _mgd = groups;
     var h = '<div style="padding:12px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0">' +
-        '<div style="font-size:13px;color:#475569;line-height:1.8">বামে <b style="color:#b45309">ছিল</b> · ডানে <b style="color:#1d4ed8">নতুন</b> · শেষে <b style="color:#047857">থাকবে</b>। প্রতিটি ঘরে যেটা রাখতে চান সেই বক্সে ট্যাপ/ক্লিক করুন, ডানের সবুজ ঘরে দেখাবে কী থাকবে। উপরের বক্সে ট্যাপ করে বাছুন কোন <b>ID</b> থাকবে, বাকি রেকর্ড Trash-এ যাবে (Restore করা যাবে)।</div>' +
+        '<div style="font-size:13px;color:#475569;line-height:1.8">বামে <b style="color:#b45309">ছিল</b> · ডানে <b style="color:#1d4ed8">নতুন</b> · শেষে <b style="color:#047857">থাকবে</b>। <b>যে গ্রুপ মার্জ করতে চান শুধু তার "মার্জ করুন" সুইচ ON করুন</b> (সবগুলো আগে থেকে OFF, OFF গ্রুপে হাত পড়বে না)। ON করলে ঘরগুলো খুলবে, যেটা রাখতে চান সেই বক্সে ট্যাপ করুন, সবুজ ঘরে দেখাবে কী থাকবে। উপরের বক্সে ট্যাপ করে বাছুন কোন <b>ID</b> থাকবে, বাকি রেকর্ড Trash-এ যাবে (Restore করা যাবে)।</div>' +
         '<div style="margin-top:8px"><span style="display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700;background:#d9770622;color:#d97706;border:1px solid #d9770655">🔀 ডুপ্লিকেট গ্রুপ ' + groups.length + '</span> ' +
-        '<button class="abtn v" style="margin-left:6px" onclick="document.getElementById(\'mgFile\').click()">📂 অন্য JSON ফাইল থেকে মার্জ</button></div></div>';
+        '<button class="abtn no" style="margin-left:6px" onclick="mgdAll(false)">সব OFF</button><button class="abtn ok" onclick="mgdAll(true)">সব ON</button><button class="abtn v" onclick="document.getElementById(\'mgFile\').click()">📂 অন্য JSON ফাইল থেকে মার্জ</button></div></div>';
     if (!groups.length) h += '<div class="empty"><div class="ei">✅</div><p>কোনো ডুপ্লিকেট গ্রাহক পাওয়া যায়নি।</p></div>';
     groups.forEach(function (g, gi) {
         var best = 0, bf = -1; g.forEach(function (c, i) { var n = mgFilled(c); if (n > bf) { bf = n; best = i; } });
         var colW = Math.floor(72 / g.length);
-        h += '<div style="border:1px solid #e2e8f0;border-radius:12px;margin:10px 12px;overflow:hidden">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#fffbeb;border-bottom:1px solid #fde68a"><b>গ্রুপ ' + (gi + 1) + ' — ' + g.length + ' টি রেকর্ড</b>' +
-            '<label style="font-size:12px;font-weight:700;color:#b91c1c;cursor:pointer"><input type="checkbox" id="mgdSkip' + gi + '"> মার্জ করবেন না</label></div>' +
+        h += '<div class="mg-card" style="border:1px solid #e2e8f0;border-radius:12px;margin:10px 12px;overflow:hidden">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;background:#fffbeb;border-bottom:1px solid #fde68a"><b>গ্রুপ ' + (gi + 1) + ' — ' + g.length + ' টি রেকর্ড</b>' +
+            '<div style="display:flex;align-items:center;gap:8px"><button type="button" class="abtn no" onclick="mgPeek(\'mgdb' + gi + '\')">👁 দেখুন</button><span style="font-size:12px;font-weight:700">মার্জ করুন</span><label class="tgl"><input type="checkbox" id="mgdOn' + gi + '" onchange="mgTog(this,\'mgdb' + gi + '\')"><span></span></label></div></div>' +
+            '<div style="padding:7px 12px;font-size:12px;color:#64748b">' + g.map(function (c) { return '<b style="color:#334155">#' + escHtml(c.id || "") + '</b> ' + escHtml(c.name || "—"); }).join(' &nbsp;·&nbsp; ') + ' &nbsp;|&nbsp; লগইন: ' + escHtml(g[0].login || "—") + '</div>' +
+            '<div id="mgdb' + gi + '" style="display:none">' +
             '<div style="overflow-x:auto"><table class="mg-tbl"><thead><tr><th style="width:92px">কোন ID থাকবে?</th>';
         g.forEach(function (c, i) {
             h += '<th class="mg-hl ' + (i === 0 ? 'old' : 'new') + '" style="width:' + colW + '%">' + (i === 0 ? '⬅ ছিল' : (g.length > 2 ? 'নতুন ' + i : 'নতুন ➡')) + '</th>';
@@ -6482,7 +6485,7 @@ function mgDupRender() {
             h += '<tr><td class="mg-lbl">' + escHtml(FIELD_LABELS[k] || k) + '</td>' + vals.map(function (v, i) { return '<td>' + mgOpt(nm, i, i === def, v) + '</td>'; }).join('') + '<td class="mg-res" id="r_' + nm + '">' + mgShow(vals[def]) + '</td></tr>';
         });
         if (!rows) h += '<tr><td colspan="' + (g.length + 2) + '" style="padding:10px;font-size:12px;color:#64748b;text-align:center">সব ঘরের তথ্য একই, শুধু একটি রেকর্ড রাখা হবে।</td></tr>';
-        h += '</tbody></table></div></div>';
+        h += '</tbody></table></div></div></div>';
     });
     document.getElementById("mgBody").innerHTML = h;
     document.getElementById("mgFoot").innerHTML = (groups.length ? '<button class="pbtn green" onclick="mgDupApply()">✓ মার্জ করুন</button>' : '') + '<button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
@@ -6491,14 +6494,14 @@ function mgDupApply() {
     if (!currentUser || !isPrivileged() || !_mgd) return;
     var keys = mgKeys(), plan = [];
     _mgd.forEach(function (g, gi) {
-        var sk = document.getElementById("mgdSkip" + gi); if (sk && sk.checked) return;
+        var on = document.getElementById("mgdOn" + gi); if (!on || !on.checked) return;
         var pr = document.querySelector('input[name="mgp' + gi + '"]:checked'); if (!pr) return;
         var pi = Number(pr.value), d = {}; Object.keys(g[pi]).forEach(function (x) { d[x] = g[pi][x]; });
         keys.forEach(function (k, ki) { var r = document.querySelector('input[name="mgd' + gi + '_' + ki + '"]:checked'); if (r) d[k] = g[Number(r.value)][k] == null ? "" : g[Number(r.value)][k]; });
         mgTotals(d); d.auditLog = (g[pi].auditLog || []).concat([mkAudit("updated", g[pi], d)]);
         plan.push({ keep: g[pi], d: d, drop: g.filter(function (c, i) { return i !== pi; }) });
     });
-    if (!plan.length) { showPop("মার্জ করার মতো কোনো গ্রুপ বাছা নেই।", "info"); return; }
+    if (!plan.length) { showPop("কোনো গ্রুপ ON করা নেই। যে গ্রুপ মার্জ করতে চান তার \"মার্জ করুন\" সুইচ ON করুন।", "info"); return; }
     var nd = 0; plan.forEach(function (x) { nd += x.drop.length; });
     if (!confirm(plan.length + " টি গ্রুপ মার্জ হবে, " + nd + " টি বাড়তি রেকর্ড Trash-এ যাবে। নিশ্চিত?")) return;
     plan.forEach(function (x) {
@@ -6565,26 +6568,31 @@ function mgRender() {
     if (!conf.length && !news.length) h += '<div class="empty"><div class="ei">✅</div><p>দুটি ফাইলের ডাটা হুবহু এক। মার্জ করার কিছু নেই।</p></div>';
     conf.forEach(function (it) {
         var e = it.ex, r = it.imp;
-        h += '<div style="border:1px solid #e2e8f0;border-radius:12px;margin:10px 12px;overflow:hidden">' +
+        h += '<div class="mg-card" style="border:1px solid #e2e8f0;border-radius:12px;margin:10px 12px;overflow:hidden">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;background:#fffbeb;border-bottom:1px solid #fde68a">' +
             '<div style="min-width:0"><b>' + escHtml(e.name || r.name || "—") + '</b> <span style="font-size:11px;color:#64748b">বর্তমান #' + escHtml(e.id || "") + ' · ফাইলে #' + escHtml(r.id || "—") + (e.login ? ' · ' + escHtml(e.login) : '') + '</span></div>' +
             '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="abtn no" onclick="mgSet(' + it.i + ',\'ex\')">বর্তমান</button><button class="abtn v" onclick="mgSet(' + it.i + ',\'imp\')">ফাইলের</button>' +
-            '<label style="font-size:12px;font-weight:700;color:#b91c1c;cursor:pointer"><input type="checkbox" id="mgSkip' + it.i + '"> বাদ দিন</label></div></div>' +
+            '<span style="font-size:12px;font-weight:700">মার্জ করুন</span><label class="tgl"><input type="checkbox" id="mgOn' + it.i + '" onchange="mgTog(this,\'mgfb' + it.i + '\')"><span></span></label></div></div>' +
+            '<div id="mgfb' + it.i + '" style="display:none">' +
             '<table class="mg-tbl"><thead><tr><th style="width:92px"></th><th class="mg-hl old">⬅ ছিল (বর্তমান)</th><th class="mg-hl new">নতুন (ফাইলের) ➡</th><th class="mg-hl res">✔ থাকবে</th></tr></thead><tbody>';
         it.diffs.forEach(function (d, di) {
             var nm = 'mg' + it.i + '_' + di, defImp = d.a === "";
             h += '<tr><td class="mg-lbl">' + escHtml(d.label) + '</td><td>' + mgOpt(nm, 'ex', !defImp, d.a) + '</td><td>' + mgOpt(nm, 'imp', defImp, d.b) + '</td><td class="mg-res" id="r_' + nm + '">' + mgShow(defImp ? d.b : d.a) + '</td></tr>';
         });
-        h += '</tbody></table></div>';
+        h += '</tbody></table></div></div>';
     });
     if (news.length) {
-        h += '<div style="margin:12px 12px 4px;font-size:13px;font-weight:700">🆕 নতুন গ্রাহক (যোগ হবে)</div><table class="ltbl"><thead><tr><th style="width:34px"></th><th>নাম</th><th>লগইন</th><th>মোবাইল</th><th>প্যাকেজ</th></tr></thead><tbody>';
-        news.forEach(function (it) { var r = it.imp; h += '<tr><td><input type="checkbox" id="mgNew' + it.i + '" checked></td><td>' + escHtml(r.name || "—") + '</td><td>' + escHtml(r.login || "—") + '</td><td>' + escHtml(r.mobile || "—") + '</td><td>' + escHtml(r.package_type || "—") + '</td></tr>'; });
+        h += '<div style="margin:12px 12px 4px;font-size:13px;font-weight:700">🆕 নতুন গ্রাহক (যাদের টিক দেবেন শুধু তারাই যোগ হবে)</div><table class="ltbl"><thead><tr><th style="width:34px"><input type="checkbox" onclick="mgNewAll(this)" title="সব বাছুন"></th><th>নাম</th><th>লগইন</th><th>মোবাইল</th><th>প্যাকেজ</th></tr></thead><tbody>';
+        news.forEach(function (it) { var r = it.imp; h += '<tr><td><input type="checkbox" id="mgNew' + it.i + '"></td><td>' + escHtml(r.name || "—") + '</td><td>' + escHtml(r.login || "—") + '</td><td>' + escHtml(r.mobile || "—") + '</td><td>' + escHtml(r.package_type || "—") + '</td></tr>'; });
         h += '</tbody></table>';
     }
     document.getElementById("mgBody").innerHTML = h;
     document.getElementById("mgFoot").innerHTML = (conf.length || news.length ? '<button class="pbtn green" onclick="mgApply()">✓ মার্জ করুন</button>' : '') + '<button class="pbtn blue" onclick="openMerge()">← ডুপ্লিকেট তালিকা</button><button class="pbtn grey" onclick="closeMerge()">বন্ধ করুন</button>';
 }
+function mgTog(cb, bodyId) { var b = document.getElementById(bodyId); if (b) b.style.display = cb.checked ? "" : "none"; var c = cb.closest ? cb.closest(".mg-card") : null; if (c) c.classList.toggle("mg-on", cb.checked); }
+function mgPeek(bodyId) { var b = document.getElementById(bodyId); if (b) b.style.display = b.style.display === "none" ? "" : "none"; }
+function mgdAll(on) { (_mgd || []).forEach(function (g, gi) { var c = document.getElementById("mgdOn" + gi); if (c) { c.checked = on; mgTog(c, "mgdb" + gi); } }); }
+function mgNewAll(m) { var l = document.querySelectorAll('input[id^="mgNew"]'); for (var i = 0; i < l.length; i++) l[i].checked = m.checked; }
 function mgSet(i, who) { var it = _mg.items[i]; if (!it || !it.diffs) return; it.diffs.forEach(function (d, di) { var r = document.querySelector('input[name="mg' + i + '_' + di + '"][value="' + who + '"]'); if (r) { r.checked = true; mgResUpd({ target: r }); } }); }
 function mgAll(who) { _mg.items.forEach(function (it, i) { if (it.diffs) mgSet(i, who); }); }
 function mgApply() {
@@ -6592,7 +6600,7 @@ function mgApply() {
     var merged = 0, added = 0, skipped = 0, dups = 0, upd = [], adds = [];
     _mg.items.forEach(function (it, i) {
         if (it.ex) {
-            var sk = document.getElementById("mgSkip" + i); if (sk && sk.checked) { skipped++; return; }
+            var on = document.getElementById("mgOn" + i); if (!on || !on.checked) { skipped++; return; }
             var cur = null; for (var k = 0; k < DB.length; k++) { if (String(DB[k].id) === String(it.ex.id)) { cur = DB[k]; break; } }
             if (!cur) { skipped++; return; }
             var d = {}; Object.keys(cur).forEach(function (x) { d[x] = cur[x]; }); var ch = false;
@@ -6601,11 +6609,11 @@ function mgApply() {
             mgTotals(d); d.auditLog = (cur.auditLog || []).concat([mkAudit("updated", cur, d)]);
             upd.push(d);
         } else {
-            var cb = document.getElementById("mgNew" + i); if (cb && !cb.checked) { skipped++; return; }
+            var cb = document.getElementById("mgNew" + i); if (!cb || !cb.checked) { skipped++; return; }
             adds.push(it.imp);
         }
     });
-    if (!upd.length && !adds.length) { showPop("মার্জ করার মতো কোনো পরিবর্তন নেই।", "info"); return; }
+    if (!upd.length && !adds.length) { showPop("কিছু বাছা নেই। মার্জ করতে চাইলে গ্রুপের সুইচ ON করুন বা নতুন গ্রাহকের টিক দিন।", "info"); return; }
     if (!confirm(upd.length + " টি রেকর্ড মার্জ এবং " + adds.length + " টি নতুন গ্রাহক যোগ হবে। নিশ্চিত?")) return;
     upd.forEach(function (d) {
         for (var k = 0; k < DB.length; k++) { if (String(DB[k].id) === String(d.id)) { DB[k] = d; break; } }
@@ -6885,7 +6893,7 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.2.3";
+        var APP_VERSION = "2.2.4";
         var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
