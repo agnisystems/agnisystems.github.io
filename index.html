@@ -5119,8 +5119,21 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
             document.getElementById("vpBackBtn").style.display = _vpBackState ? "flex" : "none";
         }
 
+        // ─── Login ID ডুপ্লিকেট যাচাই ───
+        function findDupLogin(login, skipDbId, skipPendingId) {
+            var lg = String(login || "").trim().toLowerCase(); if (!lg) return null;
+            for (var i = 0; i < DB.length; i++) { var c = DB[i]; if (skipDbId != null && String(c.id) === String(skipDbId)) continue; if (String(c.login || "").trim().toLowerCase() === lg) return { rec: c, where: "গ্রাহক তালিকায়" }; }
+            for (var j = 0; j < PENDING.length; j++) { var q = PENDING[j]; if (skipPendingId != null && String(q.pendingId) === String(skipPendingId)) continue; if (String(q.login || "").trim().toLowerCase() === lg) return { rec: q, where: "Pending তালিকায়" }; }
+            return null;
+        }
+        function dupLoginMsg(dup) { return "⚠️ এই লগইন আইডি (" + escHtml(dup.rec.login) + ") আগে থেকেই আছে (" + dup.where + ")!\nগ্রাহক: " + escHtml(dup.rec.name || "—") + " · ID: " + escHtml(dup.rec.id || "—") + "\nএকই লগইন আইডি দিয়ে দ্বিতীয় ফর্ম সেভ করা যাবে না।"; }
+
         // ─── SAVE ───
-        function doSave() { if (!currentUser) return; if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
+        function doSave() { if (!currentUser) return; if (isViewer()) { showPop("💎 Management শুধু দেখতে পারেন, পরিবর্তন করতে পারেন না।", "warning"); return; } var d = fGet(); if (!d.name) { showPop("গ্রাহকের নাম লিখুন", "warning"); return; } var isA = isPrivileged(); if (!d.id) { d.id = nextId(); document.getElementById("fId").value = d.id; } var existIdx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(d.id)) { existIdx = i; break; } } if (existIdx >= 0 && pageMode === "new") { showPop("এই ID (" + d.id + ") ইতিমধ্যে আছে!", "error"); return; } if (pageMode === "new") { for (var _pi = 0; _pi < PENDING.length; _pi++) { if (String(PENDING[_pi].id) === String(d.id)) { showPop("এই ID (" + d.id + ") Pending তালিকায় আগে থেকেই আছে!", "error"); return; } } }
+            var _dup = findDupLogin(d.login, existIdx >= 0 ? DB[existIdx].id : null, null);
+            if (_dup) { showPop(dupLoginMsg(_dup), "error", "ডুপ্লিকেট লগইন আইডি"); var _fl = document.getElementById("fLogin"); if (_fl) _fl.focus(); return; }
+            if (window._saveLock) return; window._saveLock = true; setTimeout(function () { window._saveLock = false; }, 4000);
+             var prevLog = (existIdx >= 0 && DB[existIdx].auditLog) ? DB[existIdx].auditLog : []; if (isA) { var _oldRec = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit(existIdx >= 0 ? "updated" : "created", _oldRec, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else { DB.push(d); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } curId = d.id; setMode("view"); lockSaveShowEdit(); showAudit(d.auditLog); updateBadges(); showPop("✅ রেকর্ড সফলভাবে সেভ হয়েছে!", "success"); }); } else if (pageMode === "edit") { var _oldRecEdit = (existIdx >= 0) ? DB[existIdx] : null; d.auditLog = prevLog.concat([mkAudit("updated", _oldRecEdit, d)]); sync2("syncing", "সেভ হচ্ছে..."); fbSet("customers", d.id, d, function (ok) { if (!ok) { showPop("Firebase সেভ ব্যর্থ!", "error"); return; } if (existIdx >= 0) DB[existIdx] = d; else DB.push(d); for (var i = 0; i < EREQS.length; i++) { if (String(EREQS[i].recordId) === String(d.id) && EREQS[i].requestedBy === currentUser.username && EREQS[i].status === "approved") { fbDel("editreqs", EREQS[i].reqId, function () { }); EREQS.splice(i, 1); break; } } updateBadges(); showAudit(d.auditLog); curId = d.id; setMode("view"); lockSaveShowEdit(); showPop("✅ সেভ হয়েছে!", "success"); }); } else { d.pendingId = "p_" + Date.now(); d._by = currentUser.username; d._byd = currentUser.display; d._t = nowStr(); d.auditLog = prevLog.concat([mkAudit("created")]); fbSet("pending", d.pendingId, d, function (ok) { if (ok) { PENDING.push(d); updateBadges(); showPop("✅ Admin অনুমোদনের জন্য পাঠানো হয়েছে।", "info"); goDisabled(); } else showPop("পাঠানো ব্যর্থ!", "error"); }); } }
         function lockSaveShowEdit() { var bSave = document.getElementById("btnSave"), bEdit = document.getElementById("btnEdit"); bSave.disabled = true; bSave.style.opacity = "0.4"; bSave.style.cursor = "not-allowed"; if (isPrivileged()) bEdit.style.display = "flex"; syncMobileBar(); }
         function enterEditMode() { if (!curId || isViewer() || !canEditDirect()) return; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(curId)) { cur = i; fSet(DB[i]); setMode("edit"); document.getElementById("navId").value = i + 1; showPop("✏️ Edit মোড সক্রিয়!", "info"); return; } } }
 
@@ -5328,6 +5341,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                     else btns += '<button class="abtn" style="background:#ea580c" onclick="sendReqFor(\'' + vid + '\')">📨</button>';
                 }
                 if (isA) btns += '<button class="abtn d" onclick="delFromList(\'' + vid + '\')">🗑️</button>';
+                else if (!isViewer() && f && f.by === currentUser.username) btns += '<button class="abtn" style="background:#7c3aed" title="Coder/Admin অনুমোদনে আবার পাঠান" onclick="resendApproval(\'' + vid + '\')">↩ অনুমোদনে</button>';
                 var who = f ? '<div class="rcl-wl">যোগ করেছেন</div><div class="rcl-wn">' + escHtml(auditWho(f).display || "—") + ' <span>(' + escHtml(auditWho(f).by || "") + ')</span></div><div class="rcl-wt">🕒 ' + escHtml(f.time || "—") + (f.ts ? ' · <i>' + relAgo(Number(f.ts)) + '</i>' : "") + '</div>' : '<div class="rcl-wl">যোগ করেছেন</div><div class="rcl-wn" style="color:#94a3b8">তথ্য নেই</div>';
                 if (la) who += '<div class="rcl-lu">✏️ শেষ ' + (nm[la.action] || "পরিবর্তন") + ': ' + escHtml(auditWho(la).display || "") + ' · ' + escHtml(la.time || "") + '</div>';
                 h += '<div class="rcl-item"><div class="rcl-av" style="background:linear-gradient(135deg,' + col + ',' + col + 'bb)">' + ini + '</div>' +
@@ -5337,6 +5351,28 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
                     '<div class="rcl-who">' + who + '</div><div class="rcl-act">' + btns + '</div></div>';
             });
             return h + '</div>';
+        }
+        // ─── Recent থেকে রেকর্ড আবার Pending (অনুমোদনের জন্য) পাঠানো ───
+        function resendApproval(id) {
+            if (!currentUser || isPrivileged() || isViewer()) return;
+            var idx = -1; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(id)) { idx = i; break; } }
+            if (idx < 0) { showPop("রেকর্ড পাওয়া যায়নি।", "error"); return; }
+            var rec = DB[idx], f = (rec.auditLog || [])[0];
+            if (!f || f.by !== currentUser.username) { showPop("🔒 শুধু নিজের যোগ করা গ্রাহক আবার অনুমোদনে পাঠানো যায়।", "warning"); return; }
+            if (!confirm("#" + id + " — " + (rec.name || "") + "\nএই গ্রাহককে তালিকা থেকে সরিয়ে আবার Admin/Coder অনুমোদনের জন্য পাঠাবেন?")) return;
+            var np = {}; Object.keys(rec).forEach(function (k) { np[k] = rec[k]; });
+            np.pendingId = "p_" + Date.now(); np._by = currentUser.username; np._byd = currentUser.display; np._t = nowStr();
+            np.auditLog = (rec.auditLog || []).concat([mkAudit("updated")]);
+            fbDel("customers", rec.id, function (ok) {
+                if (!ok) { showPop("পাঠানো ব্যর্থ! (অনুমতি বা নেটওয়ার্ক সমস্যা)", "error"); return; }
+                fbSet("pending", np.pendingId, np, function (ok2) {
+                    if (!ok2) { fbSet("customers", rec.id, rec, function () { }); showPop("পাঠানো ব্যর্থ! রেকর্ড আগের মতোই আছে।", "error"); return; }
+                    for (var j = 0; j < DB.length; j++) { if (String(DB[j].id) === String(rec.id)) { DB.splice(j, 1); break; } }
+                    PENDING.push(np); updateBadges();
+                    showPop("✅ আবার অনুমোদনের জন্য পাঠানো হয়েছে।", "success");
+                    showRecent();
+                });
+            });
         }
         function plColor(id) { var pal = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"]; return pal[(parseInt(String(id).replace(/\D/g, ""), 10) || 0) % pal.length]; }
         function buildList(arr, mode) {
@@ -5417,7 +5453,7 @@ updateAreaDatalist(wardVal); updateTotal(); initEqTabOrder(); var idx = -1; for 
 
         // ─── PENDING ───
         function showPending() { if (!currentUser || !canApprove()) return; cloudSync(function () { _lm = "pending"; _la = PENDING.slice(); document.getElementById("lpTtl").textContent = "⏳ Pending — " + PENDING.length + " টি"; document.getElementById("lpBody").innerHTML = buildList(PENDING, "pending"); document.getElementById("lsIn").value = ""; document.getElementById("lpBg").classList.add("on"); }); }
-        function approveP(pid) { if (!canApprove()) { showPop("🔒 অনুমোদনের অনুমতি নেই।", "warning"); return; } var rec = null; for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { rec = PENDING[i]; break; } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } if (!isPrivileged() && rec._by === currentUser.username) { showPop("🔒 নিজের তৈরি করা এন্ট্রি নিজে অনুমোদন করা যাবে না।", "warning"); return; } var prevLog = rec.auditLog || []; rec.auditLog = prevLog.concat([mkAudit("approved")]); if (!rec.id) rec.id = nextId(); fbSet("customers", rec.id, rec, function (ok) { if (!ok) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } var found = false; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(rec.id)) { DB[i] = rec; found = true; break; } } if (!found) { DB.push(rec); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } updateBadges(); showPop("✔️ Approved!", "success"); closeVP(); showPending(); }); }
+        function approveP(pid) { if (!canApprove()) { showPop("🔒 অনুমোদনের অনুমতি নেই।", "warning"); return; } var rec = null; for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { rec = PENDING[i]; break; } } if (!rec) { showPop("পাওয়া যায়নি", "error"); return; } if (!isPrivileged() && rec._by === currentUser.username) { showPop("🔒 নিজের তৈরি করা এন্ট্রি নিজে অনুমোদন করা যাবে না।", "warning"); return; } var _dupA = findDupLogin(rec.login, null, rec.pendingId); if (_dupA) { showPop(dupLoginMsg(_dupA) + "\nএটি অনুমোদন করা যাবে না, বাতিল করুন বা লগইন আইডি বদলান।", "error", "ডুপ্লিকেট লগইন আইডি"); return; } var prevLog = rec.auditLog || []; rec.auditLog = prevLog.concat([mkAudit("approved")]); if (!rec.id) rec.id = nextId(); fbSet("customers", rec.id, rec, function (ok) { if (!ok) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } var found = false; for (var i = 0; i < DB.length; i++) { if (String(DB[i].id) === String(rec.id)) { DB[i] = rec; found = true; break; } } if (!found) { DB.push(rec); DB.sort(function (a, b) { return (Number(a.id) || 0) - (Number(b.id) || 0); }); } updateBadges(); showPop("✔️ Approved!", "success"); closeVP(); showPending(); }); }
         function rejectP(pid) { if (!canApprove()) { showPop("🔒 অনুমতি নেই।", "warning"); return; } if (!confirm("এই Pending বাতিল করবেন?")) return; fbDel("pending", pid, function () { }); for (var i = 0; i < PENDING.length; i++) { if (String(PENDING[i].pendingId) === String(pid)) { PENDING.splice(i, 1); break; } } updateBadges(); showPop("✕ বাতিল।", "warning"); closeVP(); showPending(); }
 
         // ─── EDIT REQUESTS ───
@@ -6538,8 +6574,8 @@ window.addEventListener("load", function () {
     <!--clean autocomplete সিস্টেম-->
     <script>
         // ── অ্যাপের সংস্করণ: নতুন আপডেট দিলে নিচের দুটো মান বদলান ──
-        var APP_VERSION = "2.1.6";
-        var APP_DATE = "2026-11-07";
+        var APP_VERSION = "2.1.8";
+        var APP_DATE = "2026-11-15";
         (function () {
             function fill() {
                 var v = document.getElementById("appVer"), d = document.getElementById("appVerDate"), y = document.getElementById("afYear");
